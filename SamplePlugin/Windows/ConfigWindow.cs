@@ -1,16 +1,16 @@
-﻿using System;
+using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
 
-namespace SamplePlugin.Windows;
+namespace SimonSays.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration Configuration;
 
     public ConfigWindow(Plugin plugin) : base(
-        "A Wonderful Configuration Window",
+        "SimonSays Settings",
         ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
         ImGuiWindowFlags.NoScrollWithMouse)
     {
@@ -21,6 +21,26 @@ public class ConfigWindow : Window, IDisposable
     }
 
     public void Dispose() { }
+
+    private static void DrawCheckbox(int index)
+    {
+        if (index % 4 != 0)
+        {
+            ImGui.SameLine();
+        }
+        bool enabled = Service.Configuration.EnabledChannels[index].Enabled;
+        if (ImGui.Checkbox(this.configuration.EnabledChannels[index].Name, ref enabled))
+        {
+            this.configuration.EnabledChannels[index].Enabled = enabled;
+            this.configuration.Save();
+            if (this.configuration.EnabledChannels[index].Enabled)
+            {
+                this.enabledChannels.Add(this.configuration.EnabledChannels[index].ChatType);
+                return;
+            }
+            this.enabledChannels.Remove(this.configuration.EnabledChannels[index].ChatType);
+        }
+    }
 
     public override void Draw()
     {
