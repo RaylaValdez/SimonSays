@@ -2,7 +2,7 @@
     "Author": "Rayla Valdez",
     "Name": "SimonSays",
     "Punchline": "Sync emotes like never before!",
-    "Description": "By simply sending a message including the emote command in chats of your choosing in the config, you and whoever else has this plugin enabled, will perfectly sync your emotes with one another!",
+    "Description": "By providing channels that you wish for SimonSays to listen to & a catchphrase, you can recieve emote instructions from chat. Making a perfectly synced hug, IDK what you were thinking.",
     "RepoUrl": "https://github.com/RaylaValdez/SimonSays",
     "IconUrl": "https://imgpile.com/images/dG9ogk.png",
     "ImageUrls": [ "https://imgpile.com/images/dG9ogk.png" ],
