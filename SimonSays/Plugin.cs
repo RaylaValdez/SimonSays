@@ -5,6 +5,8 @@ using System.IO;
 using System.Reflection;
 using Dalamud.Interface.Windowing;
 using SimonSays.Windows;
+using Dalamud.Game.Gui;
+using XivCommon;
 
 namespace SimonSays
 {
@@ -15,7 +17,7 @@ namespace SimonSays
 
         private DalamudPluginInterface PluginInterface { get; init; }
         private CommandManager CommandManager { get; init; }
-        public Configuration Configuration { get; init; }
+        public static Configuration Configuration { get; private set; }
         public WindowSystem WindowSystem = new("SimonSays");
 
         public Plugin(
@@ -25,35 +27,36 @@ namespace SimonSays
             this.PluginInterface = pluginInterface;
             this.CommandManager = commandManager;
 
-            this.Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            this.Configuration.Initialize(this.PluginInterface);
-
-            // you might normally want to embed resources and load them from the manifest stream
-            var imagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
-            var goatImage = this.PluginInterface.UiBuilder.LoadImage(imagePath);
+            Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            Configuration.Initialize(this.PluginInterface);
 
             WindowSystem.AddWindow(new ConfigWindow(this));
-            WindowSystem.AddWindow(new MainWindow(this, goatImage));
 
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
-                HelpMessage = "A useful message to display in /xlhelp"
+                HelpMessage = "Open SimonSays Settings"
             });
 
             this.PluginInterface.UiBuilder.Draw += DrawUI;
             this.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
+
+            PluginInterface.Create<Service>();
+
+            Service.ChatGui.ChatMessage += Meat.OnChatMessage;
+
+            Service.CreateEmoteList();
         }
 
         public void Dispose()
         {
             this.WindowSystem.RemoveAllWindows();
             this.CommandManager.RemoveHandler(CommandName);
+            Service.ChatGui.ChatMessage -= Meat.OnChatMessage;
         }
 
         private void OnCommand(string command, string args)
         {
-            // in response to the slash command, just display our main ui
-            WindowSystem.GetWindow("My Amazing Window").IsOpen = true;
+            WindowSystem.GetWindow("SimonSays Settings").IsOpen = true;
         }
 
         private void DrawUI()
@@ -63,7 +66,7 @@ namespace SimonSays
 
         public void DrawConfigUI()
         {
-            WindowSystem.GetWindow("A Wonderful Configuration Window").IsOpen = true;
+            WindowSystem.GetWindow("SimonSays Settings").IsOpen = true;
         }
     }
 }

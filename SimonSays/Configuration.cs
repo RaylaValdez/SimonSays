@@ -13,23 +13,13 @@ namespace SimonSays
 
         public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
 
-        public string TriggerPhrase { get; set; } = "please do";
+        public bool IsListening { get; set; } = false;
 
-        public bool AllowSit { get; set; }
+        public string CatchPhrase { get; set; } = "Simon Says";
 
         public bool MotionOnly { get; set; } = true;
 
-        public bool AllowAllCommands { get; set; }
-
-        public bool UseRegex { get; set; }
-
-        public string CustomPhrase { get; set; } = string.Empty;
-
-        public string ReplaceMatch { get; set; } = string.Empty;
-
-        public string TestInput { get; set; } = string.Empty;
-
-        public List<ChatChannelGrab> EnabledChannels { get; set; } = new List<ChatChannelGrab>();
+        public Dictionary<int, bool> EnabledChannels { get; set; } = new Dictionary<int, bool>();  
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]

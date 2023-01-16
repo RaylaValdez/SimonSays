@@ -1,13 +1,15 @@
 {
-  "Author": "Rayla Valdez",
-  "Name": "SimonSays",
-  "Punchline": "Sync emotes like never before!",
-  "Description": "By simply sending a message including the emote command in chats of your choosing in the config, you and whoever else has this plugin enabled, will perfectly sync your emotes with one another!",
-  "InternalName": "SimonSays",
-  "ApplicableVersion": "any",
-  "Tags": [
-    "emote",
-    "sync",
-    "goats"
-  ]
+    "Author": "Rayla Valdez",
+    "Name": "SimonSays",
+    "Punchline": "Sync emotes like never before!",
+    "Description": "By simply sending a message including the emote command in chats of your choosing in the config, you and whoever else has this plugin enabled, will perfectly sync your emotes with one another!",
+    "RepoUrl": "https://github.com/RaylaValdez/SimonSays",
+    "IconUrl": "https://imgpile.com/images/dG9ogk.png",
+    "ImageUrls": [ "https://imgpile.com/images/dG9ogk.png" ],
+    "InternalName": "SimonSays",
+    "ApplicableVersion": "any",
+    "Tags": [
+        "emote",
+        "sync"
+    ]
 }
