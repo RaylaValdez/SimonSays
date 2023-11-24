@@ -20,6 +20,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using XivCommon;
+using Dalamud.Plugin.Services;
 
 namespace SimonSays
 {
@@ -65,9 +66,9 @@ namespace SimonSays
         public static HashSet<string> Emotes = new HashSet<string>();
         public static XivCommonBase commonBase;
 
-        [PluginService] public static DataManager DataManager { get; private set; }
-        [PluginService] public static ChatGui ChatGui { get; private set; }
-        [PluginService] public static CommandManager CommandManager { get; private set; }
+        [PluginService] public static IDataManager DataManager { get; private set; }
+        [PluginService] public static IChatGui ChatGui { get; private set; }
+        [PluginService] public static ICommandManager CommandManager { get; private set; }
     }
 
 

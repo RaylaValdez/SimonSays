@@ -46,7 +46,7 @@ namespace SimonSays
                 return;
             }
 
-            var Chat = new XivCommonBase().Functions.Chat;
+            var Chat = new XivCommonBase(SimonSays.Plugin.PluginInterfaceStatic).Functions.Chat;
 
             if (Plugin.Configuration.MotionOnly)
             {

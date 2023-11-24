@@ -7,6 +7,7 @@ using Dalamud.Interface.Windowing;
 using SimonSays.Windows;
 using Dalamud.Game.Gui;
 using XivCommon;
+using Dalamud.Plugin.Services;
 
 namespace SimonSays
 {
@@ -15,22 +16,30 @@ namespace SimonSays
         public string Name => "SimonSays";
         private const string CommandName = "/simonsays";
 
-        private DalamudPluginInterface PluginInterface { get; init; }
-        private CommandManager CommandManager { get; init; }
+
+        public static DalamudPluginInterface PluginInterfaceStatic { get; private set; }
+        public DalamudPluginInterface PluginInterface { get; init; }
+        private ICommandManager CommandManager { get; init; }
         public static Configuration Configuration { get; private set; }
         public WindowSystem WindowSystem = new("SimonSays");
 
+        private ConfigWindow ConfigWindow { get; init; }
+
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] CommandManager commandManager)
+            [RequiredVersion("1.0")] ICommandManager commandManager)
         {
             this.PluginInterface = pluginInterface;
             this.CommandManager = commandManager;
 
+            PluginInterfaceStatic = pluginInterface;
+
             Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             Configuration.Initialize(this.PluginInterface);
 
-            WindowSystem.AddWindow(new ConfigWindow(this));
+            ConfigWindow = new ConfigWindow(this);
+
+            WindowSystem.AddWindow(ConfigWindow);
 
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
@@ -50,13 +59,16 @@ namespace SimonSays
         public void Dispose()
         {
             this.WindowSystem.RemoveAllWindows();
+
+            ConfigWindow.Dispose();
+
             this.CommandManager.RemoveHandler(CommandName);
             Service.ChatGui.ChatMessage -= Meat.OnChatMessage;
         }
 
         private void OnCommand(string command, string args)
         {
-            WindowSystem.GetWindow("SimonSays Settings").IsOpen = true;
+            ConfigWindow.IsOpen = true;
         }
 
         private void DrawUI()
@@ -66,7 +78,7 @@ namespace SimonSays
 
         public void DrawConfigUI()
         {
-            WindowSystem.GetWindow("SimonSays Settings").IsOpen = true;
+            ConfigWindow.IsOpen = true;
         }
     }
 }
