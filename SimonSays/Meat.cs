@@ -11,6 +11,7 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Configuration;
 using XivCommon.Functions;
 using Dalamud.Game.Gui;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 
 namespace SimonSays
 {
@@ -53,7 +54,11 @@ namespace SimonSays
                 emote = emote + " motion";
             }
 
+
             Chat.SendMessage("/" + emote);
+
+
+
         }
 
         public static void OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
@@ -61,6 +66,13 @@ namespace SimonSays
             if (isHandled)
                 return;
             Command(type, message.ToString());
+        }
+
+        public void ScoochOnOver(TargetSystem target)
+        {
+            /*
+            Determine distance to target and close in on the target, but fucking HOW?
+            */
         }
     }
 }

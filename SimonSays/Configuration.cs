@@ -19,20 +19,22 @@ namespace SimonSays
 
         public bool MotionOnly { get; set; } = true;
 
+        public bool PosSync { get; set; } = false;  
+
         public Dictionary<int, bool> EnabledChannels { get; set; } = new Dictionary<int, bool>();  
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]
-        private DalamudPluginInterface? PluginInterface;
+        private DalamudPluginInterface? pluginInterface;
 
         public void Initialize(DalamudPluginInterface pluginInterface)
         {
-            this.PluginInterface = pluginInterface;
+            this.pluginInterface = pluginInterface;
         }
 
         public void Save()
         {
-            this.PluginInterface!.SavePluginConfig(this);
+            this.pluginInterface!.SavePluginConfig(this);
         }
     }
 }

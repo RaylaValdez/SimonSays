@@ -17,10 +17,10 @@ namespace SimonSays
         private const string CommandName = "/simonsays";
 
 
-        public static DalamudPluginInterface PluginInterfaceStatic { get; private set; }
+        public static DalamudPluginInterface? PluginInterfaceStatic { get; private set; }
         public DalamudPluginInterface PluginInterface { get; init; }
         private ICommandManager CommandManager { get; init; }
-        public static Configuration Configuration { get; private set; }
+        public static Configuration? Configuration { get; private set; }
         public WindowSystem WindowSystem = new("SimonSays");
 
         private ConfigWindow ConfigWindow { get; init; }

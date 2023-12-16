@@ -62,13 +62,13 @@ namespace SimonSays
                 }
             }
         }
-        public static ExcelSheet<Emote> emoteList;
+        public static ExcelSheet<Emote>? emoteList;
         public static HashSet<string> Emotes = new HashSet<string>();
-        public static XivCommonBase commonBase;
+        public static XivCommonBase? commonBase;
 
-        [PluginService] public static IDataManager DataManager { get; private set; }
-        [PluginService] public static IChatGui ChatGui { get; private set; }
-        [PluginService] public static ICommandManager CommandManager { get; private set; }
+        [PluginService] public static IDataManager? DataManager { get; private set; }
+        [PluginService] public static IChatGui? ChatGui { get; private set; }
+        [PluginService] public static ICommandManager? CommandManager { get; private set; }
     }
 
 

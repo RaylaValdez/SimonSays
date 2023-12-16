@@ -113,10 +113,25 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
+    private void DrawExperimentCheckboxes()
+    {
+        bool posSync = configuration.PosSync;
+        if (ImGui.Checkbox("Positional Sync", ref posSync))
+        {
+            configuration.PosSync = posSync;
+            this.configuration.Save();
+        }
+
+    }
+
     public override void Draw()
     {
         ImGui.Text("Enable the plugin");
         DrawEnabled();
+        ImGui.Separator();
+        ImGui.Text("Experimental Features");
+        DrawExperimentCheckboxes();
+        ImGui.TextColored(new Vector4(160, 160, 160, 0.8f), "Position Sync requires a target and will attempt to sync your positions.");
         ImGui.Separator();
         ImGui.Text("Choose which chat channels you wish SimonSays to listen to");
         DrawCheckboxes();
