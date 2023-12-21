@@ -19,8 +19,9 @@ namespace SimonSays
 
         public bool MotionOnly { get; set; } = true;
 
-        public bool PosSync { get; set; } = false;  
+        public bool PosSync { get; set; } = false;
 
+        public bool UseGamepad { get; set; } = false;
         public Dictionary<int, bool> EnabledChannels { get; set; } = new Dictionary<int, bool>();  
 
         // the below exist just to make saving less cumbersome

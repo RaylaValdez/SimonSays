@@ -14,7 +14,9 @@ namespace SimonSays
     public sealed class Plugin : IDalamudPlugin
     {
         public string Name => "SimonSays";
-        private const string CommandName = "/simonsays";
+        private const string CommandName = "/simonsaysconfig";
+        private const string Sync = "/sync";
+        private const string DoThis = "/simonsays";
 
 
         public static DalamudPluginInterface? PluginInterfaceStatic { get; private set; }
@@ -46,6 +48,16 @@ namespace SimonSays
                 HelpMessage = "Open SimonSays Settings"
             });
 
+            this.CommandManager.AddHandler(Sync, new CommandInfo(OnCommand)
+            {
+                HelpMessage = "Begin Positional syncing, if enabled in settings."
+            });
+
+            this.CommandManager.AddHandler(DoThis, new CommandInfo(OnCommand)
+            {
+                HelpMessage = "Usage : /simonsays hum | Targetting a player will tell the player to hum with you in sync!"
+            });
+
             this.PluginInterface.UiBuilder.Draw += DrawUI;
             this.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
 
@@ -54,6 +66,8 @@ namespace SimonSays
             Service.ChatGui.ChatMessage += Meat.OnChatMessage;
 
             Service.CreateEmoteList();
+
+            Meat.Setup();
         }
 
         public void Dispose()
@@ -61,14 +75,56 @@ namespace SimonSays
             this.WindowSystem.RemoveAllWindows();
 
             ConfigWindow.Dispose();
+            Meat.Dispose();
 
             this.CommandManager.RemoveHandler(CommandName);
+            this.CommandManager.RemoveHandler(Sync);
             Service.ChatGui.ChatMessage -= Meat.OnChatMessage;
         }
 
         private void OnCommand(string command, string args)
         {
-            ConfigWindow.IsOpen = true;
+            if (command == CommandName)
+            {
+                ConfigWindow.IsOpen = true;
+            }
+
+            if (command == Sync)
+            {
+                if (!Configuration.PosSync)
+                {
+                    return;
+                }
+                Meat.StartScooch();
+            }
+
+            string[] argSplit = args.Split(' ');
+
+            if (command == DoThis)
+            {
+                if (argSplit.Length >= 1)
+                {
+                    bool syncPos = false;
+                    if (argSplit.Length >= 2)
+                    {
+                        if (argSplit[1].ToLower() == "true")
+                        {
+                            syncPos = true;
+                        }
+                        if (!Configuration.PosSync)
+                        {
+                            syncPos = false;
+                            Service.ChatGui.Print("Enable Positional Syncing in settings for command based syncing.");
+                        }
+                    }
+                    Meat.SimonSays(argSplit[0], syncPos);
+                }
+                else
+                {
+                    // No arguments given
+                    Service.ChatGui.Print("No arguments given to simonsays");
+                }
+            }
         }
 
         private void DrawUI()

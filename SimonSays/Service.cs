@@ -65,10 +65,13 @@ namespace SimonSays
         public static ExcelSheet<Emote>? emoteList;
         public static HashSet<string> Emotes = new HashSet<string>();
         public static XivCommonBase? commonBase;
-
-        [PluginService] public static IDataManager? DataManager { get; private set; }
-        [PluginService] public static IChatGui? ChatGui { get; private set; }
-        [PluginService] public static ICommandManager? CommandManager { get; private set; }
+        [PluginService] public static IPluginLog Log { get; private set; } = null!;
+        [PluginService] public static IDataManager DataManager { get; private set; }
+        [PluginService] public static IChatGui ChatGui { get; private set; }
+        [PluginService] public static ICommandManager CommandManager { get; private set; }
+        [PluginService] public static IClientState ClientState { get; private set; }
+        [PluginService] public static ITargetManager TargetManager { get; private set; }
+        [PluginService] public static IGameInteropProvider Hook { get; private set; }
     }
 
 
