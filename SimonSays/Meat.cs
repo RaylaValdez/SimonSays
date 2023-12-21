@@ -168,7 +168,7 @@ namespace SimonSays
 
                 if (target != null)
                 {
-                    Chat.SendMessage("/tell <t> " + Emote);
+                    Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + Emote);
                 }
                 Chat.SendMessage("/" + Emote);
             }
@@ -176,7 +176,7 @@ namespace SimonSays
             {
                 if (target != null)
                 {
-                    Chat.SendMessage("/tell <t> " + Emote);
+                    Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + Emote);
                 }
                 Chat.SendMessage("/" + Emote);
             }
