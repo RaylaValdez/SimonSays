@@ -19,6 +19,7 @@ namespace SimonSays
         // Command constants
         private const string Config = "/simonsaysconfig";
         private const string Sync = "/sync";
+        private const string StopSync = "/stopsync";
         private const string DoThis = "/simonsays";
 
         // Static references for plugin-wide use
@@ -59,10 +60,15 @@ namespace SimonSays
             {
                 HelpMessage = "Begin Positional syncing, if enabled in settings."
             });
+            this.CommandManager.AddHandler(StopSync, new CommandInfo(OnCommand)
+            {
+                HelpMessage = "Stops Positional syncing."
+            });
             this.CommandManager.AddHandler(DoThis, new CommandInfo(OnCommand)
             {
                 HelpMessage = "Usage: /simonsays hum | Targetting a player will tell the player to hum with you in sync!"
             });
+            
 
             // Set up UI events and create necessary services
             this.PluginInterface.UiBuilder.Draw += DrawUI;
@@ -122,6 +128,11 @@ namespace SimonSays
 
                 // Start character movement for positional syncing
                 Meat.StartScooch();
+            }
+
+            if (Command == StopSync)
+            {
+                Meat.StopScooch();
             }
 
             // Split arguments for further processing

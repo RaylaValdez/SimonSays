@@ -177,13 +177,13 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.Text("Single Emote Example :");
                 ImGui.Text("");
                 string example =
-                    "/micon hum Emote\n" +                    "/tell <t> Simon Says: hum\n" +                    "/hum\n";
+                    "/micon hum Emote\n" +                    "/tell <t> Simon Says : hum\n" +                    "/hum\n";
                 ImGui.InputTextMultiline("##Example", ref example, 200, new(200, 75), ImGuiInputTextFlags.ReadOnly);
                 ImGui.Text("");
                 ImGui.Text("Multiple Emote Example :");
                 ImGui.Text("");
                 string multiexample =
-                    "/micon hum Emote\n" +                    "/tell <t> Simon Says: hum\n" +                    "/hum\n" +
+                    "/micon hum Emote\n" +                    "/tell <t> Simon Says : hum\n" +                    "/hum\n" +
                     "/wait 3\n" +
                     "/tell <t> Simon Says : dance\n" +
                     "/dance\n";
