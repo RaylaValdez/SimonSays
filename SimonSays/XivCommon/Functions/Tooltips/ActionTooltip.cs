@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling;
 
 namespace XivCommon.Functions.Tooltips; 
 
@@ -15,7 +15,7 @@ public unsafe class ActionTooltip : BaseTooltip {
     /// <param name="ats">the string to retrieve/update</param>
     public SeString this[ActionTooltipString ats] {
         get => this[(int) ats];
-        set => this[(int) ats] = Value;
+        set => this[(int) ats] = value;
     }
 
     /// <summary>
@@ -23,6 +23,6 @@ public unsafe class ActionTooltip : BaseTooltip {
     /// </summary>
     public ActionTooltipFields Fields {
         get => (ActionTooltipFields) (**(this.NumberArrayData + 4));
-        set => **(this.NumberArrayData + 4) = (int) Value;
+        set => **(this.NumberArrayData + 4) = (int) value;
     }
 }

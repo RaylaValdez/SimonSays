@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Dalamud.Game.Text.SeStringHandling;
 
 namespace XivCommon.Functions.Tooltips; 
@@ -40,7 +40,7 @@ public abstract unsafe class BaseTooltip {
             return Util.ReadSeString((IntPtr) (*ptr));
         }
         set {
-            var encoded = Value.Encode().Terminate();
+            var encoded = value.Encode().Terminate();
 
             fixed (byte* encodedPtr = encoded) {
                 this.SadSetString((IntPtr) this._stringArrayData, index, encodedPtr, 0, 1, 1);
