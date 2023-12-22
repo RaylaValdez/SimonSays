@@ -160,79 +160,111 @@ public unsafe class OverrideMovement : IDisposable
         // Call the original method
         _rmiFlyHook.Original(self, result);
 
+        // Return if soft disable is active
+        if (SoftDisable)
+            return;
+
+        bool hasMoved = false;
+        bool hasTurned = false;
+
+        DateTime currTime = DateTime.Now;
+
         // TODO: Introduce additional checks similar to PlayerMoveController::readInput
 
         // Fly towards destination if conditions are met
-        if ((IgnoreUserInput || result->Forward == 0 && result->Left == 0 && result->Up == 0) && DirectionToDestination(true) is var relDir && relDir != null)
+        if ((IgnoreUserInput || result->Forward == 0 && result->Left == 0 && result->Up == 0))
         {
-            // Set fly input based on the calculated direction
-            var dir = relDir.Value.h.ToDirection();
-            result->Forward = dir.Y;
-            result->Left = dir.X;
-            result->Up = relDir.Value.v.Rad;
+            if (DirectionToDestination(true) is var relDir && relDir != null)
+            {
+                // Set fly input based on the calculated direction
+                var dir = relDir.Value.h.ToDirection();
+                result->Forward = dir.Y;
+                result->Left = dir.X;
+                result->Up = relDir.Value.v.Rad;
+            }
+
+            // Check if enough time has passed since the last movement
+            if ((currTime - LastTimeMoved).TotalSeconds > 0.25f)
+            {
+                if (!hasMoved && RotationToDestination() is float relRot && relRot != 0)
+                {
+                    hasTurned = true;
+                    LastTimeTurned = currTime;
+                }
+
+                // Check if enough time has passed since the last rotation
+                if ((currTime - LastTimeTurned).TotalSeconds > 0.25f)
+                {
+                    // Disable once we are in range and are facing the right direction
+                    if (/*!hasTurned && !hasMoved &&*/ AutoDisable)
+                    {
+                        SoftDisable = true;
+                    }
+                }
+            }
         }
     }
 
 
-    /// <summary>
-    /// Calculates the horizontal and vertical angles from the local player to the desired position.
-    /// </summary>
-    /// <param name="allowVertical">Flag indicating whether vertical angle calculation is allowed.</param>
-    /// <returns>
-    /// A tuple containing horizontal and vertical angles, or null if the player is null or already at the destination.
-    /// </returns>
-    private (Angle h, Angle v)? DirectionToDestination(bool allowVertical)
-    {
-        // Get the local player
-        var player = Service.ClientState.LocalPlayer;
+        /// <summary>
+        /// Calculates the horizontal and vertical angles from the local player to the desired position.
+        /// </summary>
+        /// <param name="allowVertical">Flag indicating whether vertical angle calculation is allowed.</param>
+        /// <returns>
+        /// A tuple containing horizontal and vertical angles, or null if the player is null or already at the destination.
+        /// </returns>
+        private (Angle h, Angle v)? DirectionToDestination(bool allowVertical)
+        {
+            // Get the local player
+            var player = Service.ClientState.LocalPlayer;
 
-        // Return null if the player is null
-        if (player == null)
-            return null;
+            // Return null if the player is null
+            if (player == null)
+                return null;
 
-        // Calculate the vector from the player to the desired position
-        var dist = DesiredPosition - player.Position;
+            // Calculate the vector from the player to the desired position
+            var dist = DesiredPosition - player.Position;
 
-        // Return null if the player is already at the destination
-        if (dist.LengthSquared() <= Precision * Precision)
-            return null;
+            // Return null if the player is already at the destination
+            if (dist.LengthSquared() <= Precision * Precision)
+                return null;
 
-        // Calculate the horizontal and vertical angles
-        var dirH = Angle.FromDirection(dist.X, dist.Z);
-        var dirV = allowVertical ? Angle.FromDirection(dist.Y, new Vector2(dist.X, dist.Z).Length()) : default;
+            // Calculate the horizontal and vertical angles
+            var dirH = Angle.FromDirection(dist.X, dist.Z);
+            var dirV = allowVertical ? Angle.FromDirection(dist.Y, new Vector2(dist.X, dist.Z).Length()) : default;
 
-        // Get the active camera and calculate the camera direction
-        var camera = (CameraEx*)CameraManager.Instance()->GetActiveCamera();
-        var cameraDir = camera->DirH.Radians() + 180.Degrees();
+            // Get the active camera and calculate the camera direction
+            var camera = (CameraEx*)CameraManager.Instance()->GetActiveCamera();
+            var cameraDir = camera->DirH.Radians() + 180.Degrees();
 
-        // Return a tuple containing horizontal and vertical angles
-        return (dirH - cameraDir, dirV);
+            // Return a tuple containing horizontal and vertical angles
+            return (dirH - cameraDir, dirV);
+        }
+
+
+        /// <summary>
+        /// Calculates the rotation needed for the player to align with the desired rotation.
+        /// </summary>
+        /// <returns>The calculated rotation in radians.</returns>
+        private float RotationToDestination()
+        {
+            // Get the local player
+            var player = Service.ClientState.LocalPlayer;
+
+            // Return 0 if the player is null
+            if (player == null)
+                return 0;
+
+            // Calculate the angular distance between the desired rotation and the player's current rotation
+            var dist = new Angle(DesiredRotation) - new Angle(player.Rotation);
+            dist = dist.Normalized();
+
+            // Check if the angular distance is almost zero within the specified turn precision
+            if (dist.AlmostEqual(new Angle(0.0f), AngleConversions.ToRad(TurnPrecision)))
+                return 0;
+
+            // Return the calculated rotation in radians
+            return dist.Rad;
+        }
+
     }
-
-
-    /// <summary>
-    /// Calculates the rotation needed for the player to align with the desired rotation.
-    /// </summary>
-    /// <returns>The calculated rotation in radians.</returns>
-    private float RotationToDestination()
-    {
-        // Get the local player
-        var player = Service.ClientState.LocalPlayer;
-
-        // Return 0 if the player is null
-        if (player == null)
-            return 0;
-
-        // Calculate the angular distance between the desired rotation and the player's current rotation
-        var dist = new Angle(DesiredRotation) - new Angle(player.Rotation);
-        dist = dist.Normalized();
-
-        // Check if the angular distance is almost zero within the specified turn precision
-        if (dist.AlmostEqual(new Angle(0.0f), AngleConversions.ToRad(TurnPrecision)))
-            return 0;
-
-        // Return the calculated rotation in radians
-        return dist.Rad;
-    }
-
-}
