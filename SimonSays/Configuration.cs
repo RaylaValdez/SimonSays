@@ -28,14 +28,25 @@ namespace SimonSays
         [NonSerialized]
         private DalamudPluginInterface? PluginInterface;
 
+        /// <summary>
+        /// Initializes the plugin with the provided DalamudPluginInterface instance.
+        /// </summary>
+        /// <param name="PluginInterface">The DalamudPluginInterface instance to initialize the plugin with.</param>
         public void Initialize(DalamudPluginInterface PluginInterface)
         {
+            // Set the DalamudPluginInterface instance for the plugin
             this.PluginInterface = PluginInterface;
         }
 
+
+        /// <summary>
+        /// Saves the plugin configuration.
+        /// </summary>
         public void Save()
         {
+            // Save the plugin configuration
             this.PluginInterface!.SavePluginConfig(this);
         }
+
     }
 }

@@ -27,7 +27,7 @@ public unsafe class OverrideCamera : IDisposable
         get => _rmiCameraHook.IsEnabled;
         set
         {
-            if (Value)
+            if (value)
                 _rmiCameraHook.Enable();
             else
                 _rmiCameraHook.Disable();
@@ -44,29 +44,57 @@ public unsafe class OverrideCamera : IDisposable
     [Signature("40 53 48 83 EC 70 44 0F 29 44 24 ?? 48 8B D9")]
     private Hook<RMICameraDelegate> _rmiCameraHook = null!;
 
+    /// <summary>
+    /// Initializes the OverrideCamera instance, sets up hooks, and logs the address of the RMICamera hook.
+    /// </summary>
     public OverrideCamera()
     {
+        // Initialize hooks from attributes
         Service.Hook.InitializeFromAttributes(this);
+
+        // Log the address of the RMICamera hook
         Service.Log.Information($"RMICamera address: 0x{_rmiCameraHook.Address:X}");
     }
 
+
+    /// <summary>
+    /// Disposes of the hook related to the CameraEx function.
+    /// </summary>
     public void Dispose()
     {
+        // Dispose of the camera hook
         _rmiCameraHook.Dispose();
     }
 
+
+    /// <summary>
+    /// Detour for the CameraEx function to adjust camera input.
+    /// </summary>
+    /// <param name="self">Pointer to the CameraEx instance.</param>
+    /// <param name="inputMode">Input mode parameter.</param>
+    /// <param name="speedH">Horizontal speed parameter.</param>
+    /// <param name="speedV">Vertical speed parameter.</param>
     private void RMICameraDetour(CameraEx* self, int inputMode, float speedH, float speedV)
     {
+        // Call the original method
         _rmiCameraHook.Original(self, inputMode, speedH, speedV);
-        if (IgnoreUserInput || inputMode == 0) // let user override...
+
+        // Adjust camera input if conditions are met
+        if (IgnoreUserInput || inputMode == 0) // Let the user override...
         {
+            // Calculate delta values for horizontal and vertical directions
             var dt = Framework.Instance()->FrameDeltaTime;
             var deltaH = (DesiredAzimuth - self->DirH.Radians()).Normalized();
             var deltaV = (DesiredAltitude - self->DirV.Radians()).Normalized();
+
+            // Calculate maximum allowable changes based on speed and frame delta time
             var maxH = SpeedH.Rad * dt;
             var maxV = SpeedV.Rad * dt;
+
+            // Clamp delta values to stay within the allowable range
             self->InputDeltaH = Math.Clamp(deltaH.Rad, -maxH, maxH);
             self->InputDeltaV = Math.Clamp(deltaV.Rad, -maxV, maxV);
         }
     }
+
 }

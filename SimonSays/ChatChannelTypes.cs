@@ -8,6 +8,9 @@ namespace SimonSays
 {
     internal class ChatChannelTypes
     {
+        /// <summary>
+        /// Dictionary mapping numeric values to chat type strings.
+        /// </summary>
         public static Dictionary<int, string> ChatTypes = new Dictionary<int, string>
         {
             { 37, "CWLS1" },
