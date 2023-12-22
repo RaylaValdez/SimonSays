@@ -15,7 +15,7 @@ namespace SimonSays
 
         public bool IsListening { get; set; } = false;
 
-        public string CatchPhrase { get; set; } = "Simon Says";
+        public string CatchPhrase { get; set; } = "Simon Says :";
 
         public bool MotionOnly { get; set; } = true;
 
