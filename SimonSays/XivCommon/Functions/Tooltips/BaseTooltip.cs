@@ -40,7 +40,7 @@ public abstract unsafe class BaseTooltip {
             return Util.ReadSeString((IntPtr) (*ptr));
         }
         set {
-            var encoded = value.Encode().Terminate();
+            var encoded = Value.Encode().Terminate();
 
             fixed (byte* encodedPtr = encoded) {
                 this.SadSetString((IntPtr) this._stringArrayData, index, encodedPtr, 0, 1, 1);

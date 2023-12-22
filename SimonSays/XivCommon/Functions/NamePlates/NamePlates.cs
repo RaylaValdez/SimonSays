@@ -23,7 +23,7 @@ public class NamePlates : IDisposable {
     /// <summary>
     /// The delegate for name plate update events.
     /// </summary>
-    public delegate void NamePlateUpdateEvent(NamePlateUpdateEventArgs args);
+    public delegate void NamePlateUpdateEvent(NamePlateUpdateEventArgs Args);
 
     /// <summary>
     /// <para>
@@ -147,7 +147,7 @@ public class NamePlates : IDisposable {
             var letterRaw = strings->StringArray[EnemyLetterIndex + i];
             var letter = Util.ReadSeString((IntPtr) letterRaw);
 
-            var args = new NamePlateUpdateEventArgs(info.ObjectID.ObjectID) {
+            var Args = new NamePlateUpdateEventArgs(info.ObjectID.ObjectID) {
                 Name = new SeString(name.Payloads),
                 FreeCompany = new SeString(fc.Payloads),
                 Title = new SeString(title.Payloads),
@@ -162,7 +162,7 @@ public class NamePlates : IDisposable {
             };
 
             try {
-                this.OnUpdate?.Invoke(args);
+                this.OnUpdate?.Invoke(Args);
             } catch (Exception ex) {
                 Logger.Log.Error(ex, "Exception in name plate update event");
             }
@@ -184,44 +184,44 @@ public class NamePlates : IDisposable {
                 }
             }
 
-            if (name != args.Name) {
-                Replace(args.Name.Encode(), NameIndex + i);
+            if (name != Args.Name) {
+                Replace(Args.Name.Encode(), NameIndex + i);
             }
 
-            if (title != args.Title) {
-                Replace(args.Title.Encode(), TitleIndex + i);
+            if (title != Args.Title) {
+                Replace(Args.Title.Encode(), TitleIndex + i);
             }
 
-            if (fc != args.FreeCompany) {
-                Replace(args.FreeCompany.Encode(), FreeCompanyIndex + i);
+            if (fc != Args.FreeCompany) {
+                Replace(Args.FreeCompany.Encode(), FreeCompanyIndex + i);
             }
 
-            if (level != args.Level) {
-                Replace(args.Level.Encode(), LevelIndex + i);
+            if (level != Args.Level) {
+                Replace(Args.Level.Encode(), LevelIndex + i);
             }
 
-            if (letter != args.EnemyLetter) {
+            if (letter != Args.EnemyLetter) {
                 // FIXME: sometimes the pointer here in the game is garbage, so freeing is a heap corruption
                 //        figure out how to free this properly
-                Replace(args.EnemyLetter.Encode(), EnemyLetterIndex + i, false);
+                Replace(Args.EnemyLetter.Encode(), EnemyLetterIndex + i, false);
             }
 
-            if (icon != args.Icon) {
-                numbers->SetValue(numbersIndex + IconIndex, (int) args.Icon);
+            if (icon != Args.Icon) {
+                numbers->SetValue(numbersIndex + IconIndex, (int) Args.Icon);
             }
 
-            var colour = (ByteColor) args.Colour;
+            var colour = (ByteColor) Args.Colour;
             var colourInt = *(int*) &colour;
             if (colourInt != numbers->IntArray[numbersIndex + ColourIndex]) {
                 numbers->SetValue(numbersIndex + ColourIndex, colourInt);
             }
 
-            if (plateType != (int) args.Type) {
-                numbers->SetValue(numbersIndex + PlateTypeIndex, (int) args.Type);
+            if (plateType != (int) Args.Type) {
+                numbers->SetValue(numbersIndex + PlateTypeIndex, (int) Args.Type);
             }
 
-            if (flags != args.Flags) {
-                numbers->SetValue(numbersIndex + FlagsIndex, args.Flags);
+            if (flags != Args.Flags) {
+                numbers->SetValue(numbersIndex + FlagsIndex, Args.Flags);
             }
         }
     }

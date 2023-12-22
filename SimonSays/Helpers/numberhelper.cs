@@ -16,7 +16,7 @@ namespace SimonSays.Helpers
         public float Rad;
         public float Deg => Rad * RadToDeg;
 
-        public Angle(float radians = 0) { Rad = radians; }
+        public Angle(float Radians = 0) { Rad = Radians; }
 
         public static Angle FromDirection(Vector2 dir) => FromDirection(dir.X, dir.Y);
         public static Angle FromDirection(float x, float z) => new(MathF.Atan2(x, z));
@@ -60,8 +60,8 @@ namespace SimonSays.Helpers
 
     public static class AngleExtensions
     {
-        public static Angle Radians(this float radians) => new(radians);
-        public static Angle Degrees(this float degrees) => new(degrees * Angle.DegToRad);
-        public static Angle Degrees(this int degrees) => new(degrees * Angle.DegToRad);
+        public static Angle Radians(this float Radians) => new(Radians);
+        public static Angle Degrees(this float Degrees) => new(Degrees * Angle.DegToRad);
+        public static Angle Degrees(this int Degrees) => new(Degrees * Angle.DegToRad);
     }
 }

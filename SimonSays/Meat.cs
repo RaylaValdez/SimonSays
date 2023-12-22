@@ -44,41 +44,41 @@ namespace SimonSays
             camera?.Dispose();
         }
 
-        // returns true if the emote is valid
-        // the emote string becomes sanitized after calling
-        public static bool SanitizeEmote(ref string emote)
+        // returns true if the Emote is valid
+        // the Emote string becomes sanitized after calling
+        public static bool SanitizeEmote(ref string Emote)
         {
-            // Removes any of the characters from the end string
-            emote = emote.Replace("(", "").Replace(")", "").Replace("/", "").Replace("[", "").Replace("]", "").Replace("{", "").Replace("}", "");
+            // Removes any of the Characters from the end string
+            Emote = Emote.Replace("(", "").Replace(")", "").Replace("/", "").Replace("[", "").Replace("]", "").Replace("{", "").Replace("}", "");
 
-            return Service.Emotes.Contains("/" + emote.ToLower());
+            return Service.Emotes.Contains("/" + Emote.ToLower());
         }
 
-        public static void Command(XivChatType type, string message, bool forceForTesting = false)
+        public static void Command(XivChatType Type, string Message, bool ForceForTesting = false)
         {
             if (!Plugin.Configuration.IsListening)
             {
                 return;
             }
 
-            Plugin.Configuration.EnabledChannels.TryGetValue((int)type, out bool Enabled);
-            if (!Enabled && !forceForTesting)
+            Plugin.Configuration.EnabledChannels.TryGetValue((int)Type, out bool Enabled);
+            if (!Enabled && !ForceForTesting)
             {
                 return;
             }
 
-            string catchPhrase = Plugin.Configuration.CatchPhrase;
+            string CatchPhrase = Plugin.Configuration.CatchPhrase;
 
-            if (!message.StartsWith(catchPhrase))
+            if (!Message.StartsWith(CatchPhrase))
             {
                 return;
             }
 
-            string emote = message.Substring(catchPhrase.Length).TrimStart();
+            string Emote = Message.Substring(CatchPhrase.Length).TrimStart();
 
-            if (!SanitizeEmote(ref emote))
+            if (!SanitizeEmote(ref Emote))
             {
-                Service.ChatGui.Print("You haven't specified a correct emote.");
+                Service.ChatGui.Print("You haven't specified a correct Emote.");
                 return;
             }
 
@@ -86,40 +86,40 @@ namespace SimonSays
 
             if (Plugin.Configuration.MotionOnly)
             {
-                emote = emote + " motion";
+                Emote = Emote + " motion";
             }
 
-            Chat.SendMessage("/" + emote);
+            Chat.SendMessage("/" + Emote);
         }
 
-        public static void OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+        public static void OnChatMessage(XivChatType Type, uint SenderId, ref SeString Sender, ref SeString Message, ref bool IsHandled)
         {
-            if (isHandled)
+            if (IsHandled)
                 return;
-            Command(type, message.ToString());
+            Command(Type, Message.ToString());
         }
 
-        public static float ToRad(float degrees)
+        public static float ToRad(float Degrees)
         {
-            return degrees * (float.Pi / 180);
+            return Degrees * (float.Pi / 180);
         }
 
-        public static float ToDeg(float radians)
+        public static float ToDeg(float Radians)
         {
-            return radians * (180 / float.Pi);
+            return Radians * (180 / float.Pi);
         }
 
         public static void StartScooch()
         {
-            GameObject? target = Service.TargetManager.Target;
-            if (target != null)
+            GameObject? Target = Service.TargetManager.Target;
+            if (Target != null)
             {
-                ScoochOnOver(target);
+                ScoochOnOver(Target);
             }
             else
             {
                 movement.SoftDisable = true;
-                Service.ChatGui.Print("You haven't got a target numpty");
+                Service.ChatGui.Print("You haven't got a Target numpty");
             }
         }
 
@@ -128,26 +128,26 @@ namespace SimonSays
             movement.SoftDisable = true;
         }
 
-        public static void ScoochOnOver(GameObject target)
+        public static void ScoochOnOver(GameObject Target)
         {
-            var character = Service.ClientState.LocalPlayer;
+            var Character = Service.ClientState.LocalPlayer;
             /*
-            Determine distance to target and close in on the target, but fucking HOW?
+            Determine distance to Target and close in on the Target, but fucking HOW?
             point at cutie (/yes)
             go to cutie
             match cuties rotation
-            begin emote
+            begin Emote
             */
-            Vector3 tarPos = target.Position;
-            float tarRot = target.Rotation;
+            Vector3 TarPos = Target.Position;
+            float TarRot = Target.Rotation;
 
-            if (float.IsNaN(tarRot) || float.IsInfinity(tarRot))
+            if (float.IsNaN(TarRot) || float.IsInfinity(TarRot))
             {
-                tarRot = character.Rotation;
+                TarRot = Character.Rotation;
             }
 
-            movement.DesiredPosition = tarPos;
-            movement.DesiredRotation = tarRot;
+            movement.DesiredPosition = TarPos;
+            movement.DesiredRotation = TarRot;
             movement.SoftDisable = false;
         }
 
@@ -155,18 +155,18 @@ namespace SimonSays
         {
             if (!SanitizeEmote(ref Emote))
             {
-                Service.ChatGui.Print("You have not specified a valid emote");
+                Service.ChatGui.Print("You have not specified a valid Emote");
                 return;
             }
 
-            GameObject? target = Service.TargetManager.Target;
+            GameObject? Target = Service.TargetManager.Target;
             var Chat = new XivCommonBase(Plugin.PluginInterfaceStatic).Functions.Chat;
 
             if (ShouldSyncPosition)
             {
                 Chat.SendMessage("/sync");
 
-                if (target != null)
+                if (Target != null)
                 {
                     Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + Emote);
                 }
@@ -174,7 +174,7 @@ namespace SimonSays
             }
             else
             {
-                if (target != null)
+                if (Target != null)
                 {
                     Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + Emote);
                 }
@@ -184,9 +184,9 @@ namespace SimonSays
 
 
 
-        /*command entered 'Simon Says : hum'
-         *emote sent to target '/tell <t> Simon Says : hum'
-         *emote done on client '/hum'
+        /*Command entered 'Simon Says : hum'
+         *Emote sent to Target '/tell <t> Simon Says : hum'
+         *Emote done on client '/hum'
          * 
          * 
          */

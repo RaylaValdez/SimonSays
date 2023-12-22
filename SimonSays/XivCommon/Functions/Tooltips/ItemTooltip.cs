@@ -15,7 +15,7 @@ public unsafe class ItemTooltip : BaseTooltip {
     /// <param name="its">the string to retrieve/update</param>
     public SeString this[ItemTooltipString its] {
         get => this[(int) its];
-        set => this[(int) its] = value;
+        set => this[(int) its] = Value;
     }
 
     /// <summary>
@@ -23,6 +23,6 @@ public unsafe class ItemTooltip : BaseTooltip {
     /// </summary>
     public ItemTooltipFields Fields {
         get => (ItemTooltipFields) (*(*(this.NumberArrayData + 4) + 4));
-        set => *(*(this.NumberArrayData + 4) + 4) = (int) value;
+        set => *(*(this.NumberArrayData + 4) + 4) = (int) Value;
     }
 }

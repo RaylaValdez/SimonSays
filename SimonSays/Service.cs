@@ -28,43 +28,43 @@ namespace SimonSays
     {
         public static void CreateEmoteList()
         {
-            emoteList = DataManager.GetExcelSheet<Emote>();
-            if (emoteList == null)
+            EmoteList = DataManager.GetExcelSheet<Emote>();
+            if (EmoteList == null)
             {
-                ChatGui.Print("SimonSays failed to read the emotes from the game.");
+                ChatGui.Print("SimonSays failed to read the Emotes from the game.");
                 return;
             }
-            foreach (Emote emote in emoteList)
+            foreach (Emote Emote in EmoteList)
             {
-                TextCommand? value = emote.TextCommand.Value;
-                SeString? cmd = (value != null) ? value.Command : null;
-                if (cmd != null && cmd != "")
+                TextCommand? Value = Emote.TextCommand.Value;
+                SeString? Cmd = (Value != null) ? Value.Command : null;
+                if (Cmd != null && Cmd != "")
                 {
-                    Emotes.Add(cmd);
+                    Emotes.Add(Cmd);
                 }
-                TextCommand? value2 = emote.TextCommand.Value;
-                cmd = ((value2 != null) ? value2.ShortCommand : null);
-                if (cmd != null && cmd != "")
+                TextCommand? Value2 = Emote.TextCommand.Value;
+                Cmd = ((Value2 != null) ? Value2.ShortCommand : null);
+                if (Cmd != null && Cmd != "")
                 {
-                    Emotes.Add(cmd);
+                    Emotes.Add(Cmd);
                 }
-                TextCommand? value3 = emote.TextCommand.Value;
-                cmd = ((value3 != null) ? value3.Alias : null);
-                if (cmd != null && cmd != "")
+                TextCommand? Value3 = Emote.TextCommand.Value;
+                Cmd = ((Value3 != null) ? Value3.Alias : null);
+                if (Cmd != null && Cmd != "")
                 {
-                    Emotes.Add(cmd);
+                    Emotes.Add(Cmd);
                 }
-                TextCommand? value4 = emote.TextCommand.Value;
-                cmd = ((value4 != null) ? value4.ShortAlias : null);
-                if (cmd != null && cmd != "")
+                TextCommand? Value4 = Emote.TextCommand.Value;
+                Cmd = ((Value4 != null) ? Value4.ShortAlias : null);
+                if (Cmd != null && Cmd != "")
                 {
-                    Emotes.Add(cmd);
+                    Emotes.Add(Cmd);
                 }
             }
         }
-        public static ExcelSheet<Emote>? emoteList;
+        public static ExcelSheet<Emote>? EmoteList;
         public static HashSet<string> Emotes = new HashSet<string>();
-        public static XivCommonBase? commonBase;
+        public static XivCommonBase? CommonBase;
         [PluginService] public static IPluginLog Log { get; private set; } = null!;
         [PluginService] public static IDataManager DataManager { get; private set; }
         [PluginService] public static IChatGui ChatGui { get; private set; }

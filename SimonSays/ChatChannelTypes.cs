@@ -8,7 +8,7 @@ namespace SimonSays
 {
     internal class ChatChannelTypes
     {
-        public static Dictionary<int, string> chatTypes = new Dictionary<int, string>
+        public static Dictionary<int, string> ChatTypes = new Dictionary<int, string>
         {
             { 37, "CWLS1" },
             { 101, "CWLS2" },

@@ -14,7 +14,7 @@ namespace SimonSays
     public sealed class Plugin : IDalamudPlugin
     {
         public string Name => "SimonSays";
-        private const string CommandName = "/simonsaysconfig";
+        private const string Config = "/simonsaysconfig";
         private const string Sync = "/sync";
         private const string DoThis = "/simonsays";
 
@@ -28,13 +28,13 @@ namespace SimonSays
         private ConfigWindow ConfigWindow { get; init; }
 
         public Plugin(
-            [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] ICommandManager commandManager)
+            [RequiredVersion("1.0")] DalamudPluginInterface PluginInterface,
+            [RequiredVersion("1.0")] ICommandManager CommandManager)
         {
-            this.PluginInterface = pluginInterface;
-            this.CommandManager = commandManager;
+            this.PluginInterface = PluginInterface;
+            this.CommandManager = CommandManager;
 
-            PluginInterfaceStatic = pluginInterface;
+            PluginInterfaceStatic = PluginInterface;
 
             Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             Configuration.Initialize(this.PluginInterface);
@@ -43,7 +43,7 @@ namespace SimonSays
 
             WindowSystem.AddWindow(ConfigWindow);
 
-            this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
+            this.CommandManager.AddHandler(Config, new CommandInfo(OnCommand)
             {
                 HelpMessage = "Open SimonSays Settings"
             });
@@ -77,19 +77,19 @@ namespace SimonSays
             ConfigWindow.Dispose();
             Meat.Dispose();
 
-            this.CommandManager.RemoveHandler(CommandName);
+            this.CommandManager.RemoveHandler(Config);
             this.CommandManager.RemoveHandler(Sync);
             Service.ChatGui.ChatMessage -= Meat.OnChatMessage;
         }
 
-        private void OnCommand(string command, string args)
+        private void OnCommand(string Command, string Args)
         {
-            if (command == CommandName)
+            if (Command == Config)
             {
                 ConfigWindow.IsOpen = true;
             }
 
-            if (command == Sync)
+            if (Command == Sync)
             {
                 if (!Configuration.PosSync)
                 {
@@ -98,26 +98,26 @@ namespace SimonSays
                 Meat.StartScooch();
             }
 
-            string[] argSplit = args.Split(' ');
+            string[] ArgSplit = Args.Split(' ');
 
-            if (command == DoThis)
+            if (Command == DoThis)
             {
-                if (argSplit.Length >= 1)
+                if (ArgSplit.Length >= 1)
                 {
-                    bool syncPos = false;
-                    if (argSplit.Length >= 2)
+                    bool SyncPos = false;
+                    if (ArgSplit.Length >= 2)
                     {
-                        if (argSplit[1].ToLower() == "true")
+                        if (ArgSplit[1].ToLower() == "true")
                         {
-                            syncPos = true;
+                            SyncPos = true;
                         }
                         if (!Configuration.PosSync)
                         {
-                            syncPos = false;
-                            Service.ChatGui.Print("Enable Positional Syncing in settings for command based syncing.");
+                            SyncPos = false;
+                            Service.ChatGui.Print("Enable Positional Syncing in settings for Command based syncing.");
                         }
                     }
-                    Meat.SimonSays(argSplit[0], syncPos);
+                    Meat.SimonSays(ArgSplit[0], SyncPos);
                 }
                 else
                 {

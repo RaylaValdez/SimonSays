@@ -29,18 +29,18 @@ public class ConfigWindow : Window, IDisposable
 
     private void DrawCheckbox(int index)
     {
-        var key = ChatChannelTypes.chatTypes.Keys.ToList()[index];
-        var value = ChatChannelTypes.chatTypes[key];
+        var key = ChatChannelTypes.ChatTypes.Keys.ToList()[index];
+        var Value = ChatChannelTypes.ChatTypes[key];
         int channel = key;
 
-        // get previous config value
+        // get previous config Value
         bool prevVal = false;
         configuration.EnabledChannels.TryGetValue(channel, out prevVal);
 
-        // draw checkbox and update configuration if value changes
+        // draw checkbox and update configuration if Value changes
         bool newVal = prevVal;
         ImGui.TableNextColumn();
-        if (ImGui.Checkbox(value, ref newVal))
+        if (ImGui.Checkbox(Value, ref newVal))
         {
             configuration.EnabledChannels[channel] = newVal;
             this.configuration.Save();
@@ -66,19 +66,19 @@ public class ConfigWindow : Window, IDisposable
         ImGui.TableSetupColumn("");
         ImGui.TableHeadersRow();
 
-        var chatTypes = ChatChannelTypes.chatTypes;
+        var ChatTypes = ChatChannelTypes.ChatTypes;
 
         // fucking maff shit:
         // j * max + i
         // Draws the columns up-down, left-right rather than left-right, up-down
 
         // Max is the maximum of rows in the table
-        int max = (int)Math.Ceiling(chatTypes.Count / 3d);
-        for (int i = 0; i < Math.Ceiling(chatTypes.Count / 3d); i++) // row loop
+        int max = (int)Math.Ceiling(ChatTypes.Count / 3d);
+        for (int i = 0; i < Math.Ceiling(ChatTypes.Count / 3d); i++) // row loop
         {
             for (int j = 0; j < 3; j++) // column loop
             {
-                if ((j * max) + i > chatTypes.Count - 1) // if out of bounds, commence to next iteration
+                if ((j * max) + i > ChatTypes.Count - 1) // if out of bounds, commence to next iteration
                     continue;
 
                 int index = (j * max) + i;
@@ -110,7 +110,7 @@ public class ConfigWindow : Window, IDisposable
         ImGui.InputText("Test Input", ref testText, 500U);
         if (ImGui.Button("Send"))
         {
-            Meat.Command(XivChatType.None, testText, forceForTesting: true);
+            Meat.Command(XivChatType.None, testText, ForceForTesting: true);
         }
     }
 
@@ -123,7 +123,7 @@ public class ConfigWindow : Window, IDisposable
             this.configuration.Save();
 
         }
-        ImGui.TextColored(new Vector4(160, 160, 160, 0.8f), "Position Sync requires a target.");
+        ImGui.TextColored(new Vector4(160, 160, 160, 0.8f), "Position Sync requires a Target.");
         if (configuration.PosSync)
         {
             if (ImGui.Button("Sync Position"))
@@ -165,25 +165,25 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.Text("Commands :");
                 ImGui.Text("");
                 ImGui.Text("/simonsaysconfig - Will open this window.");
-                ImGui.Text("/sync - Will attempt to sync positions with your target, only works if Position Syncing is enabled in Experimental Features.");
-                ImGui.Text("/simonsays <emote> - Will sync the stated emote with your target, emote does not require slash '/'.");
+                ImGui.Text("/sync - Will attempt to sync positions with your Target, only works if Position Syncing is enabled in Experimental Features.");
+                ImGui.Text("/simonsays <Emote> - Will sync the stated Emote with your Target, Emote does not require slash '/'.");
                 ImGui.Text("");
                 ImGui.Separator();
                 ImGui.Text("");
                 ImGui.Text("Macros :");
                 ImGui.Text("");
-                ImGui.Text("Macros can be used to initiate a single emote or chain together multiple emotes.");
+                ImGui.Text("Macros can be used to initiate a single Emote or chain together multiple Emotes.");
                 ImGui.Text("");
                 ImGui.Text("Single Emote Example :");
                 ImGui.Text("");
                 string example =
-                    "/micon hum emote\n" +                    "/tell <t> Simon Says: hum\n" +                    "/hum\n";
+                    "/micon hum Emote\n" +                    "/tell <t> Simon Says: hum\n" +                    "/hum\n";
                 ImGui.InputTextMultiline("##Example", ref example, 200, new(200, 75), ImGuiInputTextFlags.ReadOnly);
                 ImGui.Text("");
                 ImGui.Text("Multiple Emote Example :");
                 ImGui.Text("");
                 string multiexample =
-                    "/micon hum emote\n" +                    "/tell <t> Simon Says: hum\n" +                    "/hum\n" +
+                    "/micon hum Emote\n" +                    "/tell <t> Simon Says: hum\n" +                    "/hum\n" +
                     "/wait 3\n" +
                     "/tell <t> Simon Says : dance\n" +
                     "/dance\n";
@@ -195,10 +195,10 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.Text("");
                 ImGui.Text("Positional Syncing : ");
                 ImGui.Text("");
-                ImGui.Text("Positional Syncing is a way to align perfectly with your target.");
+                ImGui.Text("Positional Syncing is a way to align perfectly with your Target.");
                 ImGui.Text("Enable it in the Settings Tab.");
-                ImGui.Text("Simply target the person you wish to sync positions with and use the /sync command.");
-                ImGui.Text("Should you fail to sync and end up running around your target, use the stop sync button in the Settings tab.");
+                ImGui.Text("Simply Target the person you wish to sync positions with and use the /sync Command.");
+                ImGui.Text("Should you fail to sync and end up running around your Target, use the stop sync button in the Settings tab.");
                 ImGui.EndTabItem();
             }
         ImGui.EndTabBar();

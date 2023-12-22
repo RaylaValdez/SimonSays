@@ -19,7 +19,7 @@ public class PartyFinder : IDisposable {
 
     private delegate byte RequestPartyFinderListingsDelegate(IntPtr agent, byte categoryIdx);
 
-    private delegate IntPtr JoinPfDelegate(IntPtr manager, IntPtr a2, int type, IntPtr packetData, uint a5);
+    private delegate IntPtr JoinPfDelegate(IntPtr manager, IntPtr a2, int Type, IntPtr packetData, uint a5);
 
     private RequestPartyFinderListingsDelegate? RequestPartyFinderListings { get; }
     private Hook<RequestPartyFinderListingsDelegate>? RequestPfListingsHook { get; }
@@ -92,12 +92,12 @@ public class PartyFinder : IDisposable {
         this.RequestPfListingsHook?.Dispose();
     }
 
-    private void ReceiveListing(PartyFinderListing listing, PartyFinderListingEventArgs args) {
-        if (args.BatchNumber != this.LastBatch) {
+    private void ReceiveListing(PartyFinderListing listing, PartyFinderListingEventArgs Args) {
+        if (Args.BatchNumber != this.LastBatch) {
             this.Listings.Clear();
         }
 
-        this.LastBatch = args.BatchNumber;
+        this.LastBatch = Args.BatchNumber;
 
         this.Listings[listing.Id] = listing;
     }
@@ -107,13 +107,13 @@ public class PartyFinder : IDisposable {
         return this.RequestPfListingsHook!.Original(agent, categoryIdx);
     }
 
-    private IntPtr JoinPfDetour(IntPtr manager, IntPtr a2, int type, IntPtr packetData, uint a5) {
+    private IntPtr JoinPfDetour(IntPtr manager, IntPtr a2, int Type, IntPtr packetData, uint a5) {
         // Updated: 5.5
         const int idOffset = -0x20;
 
-        var ret = this.JoinPfHook!.Original(manager, a2, type, packetData, a5);
+        var ret = this.JoinPfHook!.Original(manager, a2, Type, packetData, a5);
 
-        if (this.JoinParty == null || (JoinType) type != JoinType.PartyFinder || packetData == IntPtr.Zero) {
+        if (this.JoinParty == null || (JoinType) Type != JoinType.PartyFinder || packetData == IntPtr.Zero) {
             return ret;
         }
 

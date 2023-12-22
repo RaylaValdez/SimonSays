@@ -18,7 +18,7 @@ public class Chat {
         internal const string SanitiseString = "E8 ?? ?? ?? ?? EB 0A 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8D 8D";
     }
 
-    private delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
+    private delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr Message, IntPtr unused, byte a4);
 
     private ProcessChatBoxDelegate? ProcessChatBox { get; }
 
@@ -38,7 +38,7 @@ public class Chat {
 
     /// <summary>
     /// <para>
-    /// Send a given message to the chat box. <b>This can send chat to the server.</b>
+    /// Send a given Message to the chat box. <b>This can send chat to the server.</b>
     /// </para>
     /// <para>
     /// <b>This method is unsafe.</b> This method does no checking on your input and
@@ -47,16 +47,16 @@ public class Chat {
     /// this.
     /// </para>
     /// </summary>
-    /// <param name="message">Message to send</param>
+    /// <param name="Message">Message to send</param>
     /// <exception cref="InvalidOperationException">If the signature for this function could not be found</exception>
-    public unsafe void SendMessageUnsafe(byte[] message) {
+    public unsafe void SendMessageUnsafe(byte[] Message) {
         if (this.ProcessChatBox == null) {
             throw new InvalidOperationException("Could not find signature for chat sending");
         }
 
         var uiModule = (IntPtr) Framework.Instance()->GetUiModule();
 
-        using var payload = new ChatPayload(message);
+        using var payload = new ChatPayload(Message);
         var mem1 = Marshal.AllocHGlobal(400);
         Marshal.StructureToPtr(payload, mem1, false);
 
@@ -67,7 +67,7 @@ public class Chat {
 
     /// <summary>
     /// <para>
-    /// Send a given message to the chat box. <b>This can send chat to the server.</b>
+    /// Send a given Message to the chat box. <b>This can send chat to the server.</b>
     /// </para>
     /// <para>
     /// This method is slightly less unsafe than <see cref="SendMessageUnsafe"/>. It
@@ -75,21 +75,21 @@ public class Chat {
     /// but it is still possible to make mistakes. Use with caution.
     /// </para>
     /// </summary>
-    /// <param name="message">message to send</param>
-    /// <exception cref="ArgumentException">If <paramref name="message"/> is empty, longer than 500 bytes in UTF-8, or contains invalid characters.</exception>
+    /// <param name="Message">Message to send</param>
+    /// <exception cref="ArgumentException">If <paramref name="Message"/> is empty, longer than 500 bytes in UTF-8, or contains invalid Characters.</exception>
     /// <exception cref="InvalidOperationException">If the signature for this function could not be found</exception>
-    public void SendMessage(string message) {
-        var bytes = Encoding.UTF8.GetBytes(message);
+    public void SendMessage(string Message) {
+        var bytes = Encoding.UTF8.GetBytes(Message);
         if (bytes.Length == 0) {
-            throw new ArgumentException("message is empty", nameof(message));
+            throw new ArgumentException("Message is empty", nameof(Message));
         }
 
         if (bytes.Length > 500) {
-            throw new ArgumentException("message is longer than 500 bytes", nameof(message));
+            throw new ArgumentException("Message is longer than 500 bytes", nameof(Message));
         }
 
-        if (message.Length != this.SanitiseText(message).Length) {
-            throw new ArgumentException("message contained invalid characters", nameof(message));
+        if (Message.Length != this.SanitiseText(Message).Length) {
+            throw new ArgumentException("Message contained invalid Characters", nameof(Message));
         }
 
         this.SendMessageUnsafe(bytes);

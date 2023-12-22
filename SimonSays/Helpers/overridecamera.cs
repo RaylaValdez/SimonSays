@@ -27,7 +27,7 @@ public unsafe class OverrideCamera : IDisposable
         get => _rmiCameraHook.IsEnabled;
         set
         {
-            if (value)
+            if (Value)
                 _rmiCameraHook.Enable();
             else
                 _rmiCameraHook.Disable();

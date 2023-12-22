@@ -45,7 +45,7 @@ public class Talk : IDisposable {
     public event TalkEventDelegate? OnTalk;
 
     internal Talk(ISigScanner scanner, IGameInteropProvider interop, bool hooksEnabled) {
-        if (scanner.TryScanText(Signatures.SetAtkValue, out var setAtkPtr, "Talk - set atk value")) {
+        if (scanner.TryScanText(Signatures.SetAtkValue, out var setAtkPtr, "Talk - set atk Value")) {
             this.SetAtkValueString = Marshal.GetDelegateForFunctionPointer<SetAtkValueStringDelegate>(setAtkPtr);
         } else {
             return;
@@ -124,7 +124,7 @@ public enum TalkStyle : byte {
     Lights = 2,
 
     /// <summary>
-    /// A style used for when characters are shouting.
+    /// A style used for when Characters are shouting.
     /// </summary>
     Shout = 3,
 
@@ -144,17 +144,17 @@ public enum TalkStyle : byte {
     Allagan = 6,
 
     /// <summary>
-    /// The style used for system messages.
+    /// The style used for system Messages.
     /// </summary>
     System = 7,
 
     /// <summary>
-    /// A mixture of the system message style and the dragon style.
+    /// A mixture of the system Message style and the dragon style.
     /// </summary>
     DragonSystem = 8,
 
     /// <summary>
-    /// The system message style with a purple background.
+    /// The system Message style with a purple background.
     /// </summary>
     PurpleSystem = 9,
 }

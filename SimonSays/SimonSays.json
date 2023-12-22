@@ -1,15 +1,24 @@
 {
     "Author": "Rayla Valdez",
     "Name": "SimonSays",
-    "Punchline": "Sync emotes like never before!",
-    "Description": "Syncs emotes by using the chat itself, read Usage tab!",
-    "RepoUrl": "https://github.com/RaylaValdez/SimonSays",
-    "IconUrl": "https://imgpile.com/images/dG9ogk.png",
-    "ImageUrls": [ "https://imgpile.com/images/dG9ogk.png" ],
     "InternalName": "SimonSays",
+    "AssemblyVersion": "1.0.0.4",
+    "Description": "Syncs emotes by using the chat itself, read Usage tab!",
     "ApplicableVersion": "any",
+    "RepoUrl": "https://github.com/RaylaValdez/SimonSays",
     "Tags": [
         "emote",
         "sync"
-    ]
+    ],
+    "DalamudApiLevel": 9,
+    "LoadRequiredState": 0,
+    "LoadSync": false,
+    "CanUnloadAsync": false,
+    "LoadPriority": 0,
+    "ImageUrls": [
+        "https://imgpile.com/images/dG9ogk.png"
+    ],
+    "IconUrl": "https://imgpile.com/images/dG9ogk.png",
+    "Punchline": "Sync emotes like never before!",
+    "AcceptsFeedback": true
 }

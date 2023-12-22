@@ -28,7 +28,7 @@ public unsafe class OverrideMovement : IDisposable
         get => _rmiWalkHook.IsEnabled;
         set
         {
-            if (value)
+            if (Value)
             {
                 _rmiWalkHook.Enable();
                 _rmiFlyHook.Enable();
@@ -44,8 +44,8 @@ public unsafe class OverrideMovement : IDisposable
     public bool IgnoreUserInput; // if true - override even if user tries to change camera orientation, otherwise override only if user does nothing
     public Vector3 DesiredPosition; // Position to move towards
     public float DesiredRotation; // Rotation to rotate towards
-    public float Precision = 0.075f; // Distance from target to stop at
-    public float TurnPrecision = 5.0f; // Angle in degrees to stop rotating at
+    public float Precision = 0.075f; // Distance from Target to stop at
+    public float TurnPrecision = 5.0f; // Angle in Degrees to stop rotating at
     public bool ShouldTurn = true; // Should rotate to face DesiredRotation?
     public bool AutoDisable = true; // Automatically disable if not moved and not rotated
     public bool SoftDisable = true; // Like Enabled but softer

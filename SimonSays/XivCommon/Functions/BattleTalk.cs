@@ -16,7 +16,7 @@ public class BattleTalk : IDisposable {
     /// <summary>
     /// The delegate for BattleTalk events.
     /// </summary>
-    public delegate void BattleTalkEventDelegate(ref SeString sender, ref SeString message, ref BattleTalkOptions options, ref bool isHandled);
+    public delegate void BattleTalkEventDelegate(ref SeString Sender, ref SeString Message, ref BattleTalkOptions options, ref bool IsHandled);
 
     /// <summary>
     /// <para>
@@ -28,7 +28,7 @@ public class BattleTalk : IDisposable {
     /// </summary>
     public event BattleTalkEventDelegate? OnBattleTalk;
 
-    private delegate byte AddBattleTalkDelegate(IntPtr uiModule, IntPtr sender, IntPtr message, float duration, byte style);
+    private delegate byte AddBattleTalkDelegate(IntPtr uiModule, IntPtr Sender, IntPtr Message, float duration, byte style);
 
     private AddBattleTalkDelegate? AddBattleTalk { get; }
     private Hook<AddBattleTalkDelegate>? AddBattleTalkHook { get; }
@@ -52,27 +52,27 @@ public class BattleTalk : IDisposable {
         this.AddBattleTalkHook?.Dispose();
     }
 
-    private byte AddBattleTalkDetour(IntPtr uiModule, IntPtr senderPtr, IntPtr messagePtr, float duration, byte style) {
+    private byte AddBattleTalkDetour(IntPtr uiModule, IntPtr SenderPtr, IntPtr MessagePtr, float duration, byte style) {
         if (this.OnBattleTalk == null) {
             goto Return;
         }
 
         try {
-            return this.AddBattleTalkDetourInner(uiModule, senderPtr, messagePtr, duration, style);
+            return this.AddBattleTalkDetourInner(uiModule, SenderPtr, MessagePtr, duration, style);
         } catch (Exception ex) {
             Logger.Log.Error(ex, "Exception in BattleTalk detour");
         }
 
         Return:
-        return this.AddBattleTalkHook!.Original(uiModule, senderPtr, messagePtr, duration, style);
+        return this.AddBattleTalkHook!.Original(uiModule, SenderPtr, MessagePtr, duration, style);
     }
 
-    private unsafe byte AddBattleTalkDetourInner(IntPtr uiModule, IntPtr senderPtr, IntPtr messagePtr, float duration, byte style) {
-        var rawSender = Util.ReadTerminated(senderPtr);
-        var rawMessage = Util.ReadTerminated(messagePtr);
+    private unsafe byte AddBattleTalkDetourInner(IntPtr uiModule, IntPtr SenderPtr, IntPtr MessagePtr, float duration, byte style) {
+        var rawSender = Util.ReadTerminated(SenderPtr);
+        var rawMessage = Util.ReadTerminated(MessagePtr);
 
-        var sender = SeString.Parse(rawSender);
-        var message = SeString.Parse(rawMessage);
+        var Sender = SeString.Parse(rawSender);
+        var Message = SeString.Parse(rawMessage);
 
         var options = new BattleTalkOptions {
             Duration = duration,
@@ -81,7 +81,7 @@ public class BattleTalk : IDisposable {
 
         var handled = false;
         try {
-            this.OnBattleTalk?.Invoke(ref sender, ref message, ref options, ref handled);
+            this.OnBattleTalk?.Invoke(ref Sender, ref Message, ref options, ref handled);
         } catch (Exception ex) {
             Logger.Log.Error(ex, "Exception in BattleTalk event");
         }
@@ -90,8 +90,8 @@ public class BattleTalk : IDisposable {
             return 0;
         }
 
-        var finalSender = sender.Encode().Terminate();
-        var finalMessage = message.Encode().Terminate();
+        var finalSender = Sender.Encode().Terminate();
+        var finalMessage = Message.Encode().Terminate();
 
         fixed (byte* fSenderPtr = finalSender, fMessagePtr = finalMessage) {
             return this.AddBattleTalkHook!.Original(uiModule, (IntPtr) fSenderPtr, (IntPtr) fMessagePtr, options.Duration, (byte) options.Style);
@@ -101,22 +101,22 @@ public class BattleTalk : IDisposable {
     /// <summary>
     /// Show a BattleTalk window with the given options.
     /// </summary>
-    /// <param name="sender">The name to attribute to the message</param>
-    /// <param name="message">The message to show in the window</param>
+    /// <param name="Sender">The name to attribute to the Message</param>
+    /// <param name="Message">The Message to show in the window</param>
     /// <param name="options">Optional options for the window</param>
-    /// <exception cref="ArgumentException">If sender or message are empty</exception>
+    /// <exception cref="ArgumentException">If Sender or Message are empty</exception>
     /// <exception cref="InvalidOperationException">If the signature for this function could not be found</exception>
-    public void Show(SeString sender, SeString message, BattleTalkOptions? options = null) {
-        this.Show(sender.Encode(), message.Encode(), options);
+    public void Show(SeString Sender, SeString Message, BattleTalkOptions? options = null) {
+        this.Show(Sender.Encode(), Message.Encode(), options);
     }
 
-    private unsafe void Show(byte[] sender, byte[] message, BattleTalkOptions? options) {
-        if (sender.Length == 0) {
-            throw new ArgumentException("sender cannot be empty", nameof(sender));
+    private unsafe void Show(byte[] Sender, byte[] Message, BattleTalkOptions? options) {
+        if (Sender.Length == 0) {
+            throw new ArgumentException("Sender cannot be empty", nameof(Sender));
         }
 
-        if (message.Length == 0) {
-            throw new ArgumentException("message cannot be empty", nameof(message));
+        if (Message.Length == 0) {
+            throw new ArgumentException("Message cannot be empty", nameof(Message));
         }
 
         if (this.AddBattleTalk == null) {
@@ -127,11 +127,11 @@ public class BattleTalk : IDisposable {
 
         var uiModule = (IntPtr) Framework.Instance()->GetUiModule();
 
-        fixed (byte* senderPtr = sender.Terminate(), messagePtr = message.Terminate()) {
+        fixed (byte* SenderPtr = Sender.Terminate(), MessagePtr = Message.Terminate()) {
             if (this.HookEnabled) {
-                this.AddBattleTalkDetour(uiModule, (IntPtr) senderPtr, (IntPtr) messagePtr, options.Duration, (byte) options.Style);
+                this.AddBattleTalkDetour(uiModule, (IntPtr) SenderPtr, (IntPtr) MessagePtr, options.Duration, (byte) options.Style);
             } else {
-                this.AddBattleTalk(uiModule, (IntPtr) senderPtr, (IntPtr) messagePtr, options.Duration, (byte) options.Style);
+                this.AddBattleTalk(uiModule, (IntPtr) SenderPtr, (IntPtr) MessagePtr, options.Duration, (byte) options.Style);
             }
         }
     }
@@ -167,7 +167,7 @@ public enum BattleTalkStyle : byte {
     Aetherial = 6,
 
     /// <summary>
-    /// A battle talk window styled similarly to a system text message (black background).
+    /// A battle talk window styled similarly to a system text Message (black background).
     /// </summary>
     System = 7,
 
