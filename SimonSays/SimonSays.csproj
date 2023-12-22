@@ -73,4 +73,10 @@
         </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="SimonSays.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
