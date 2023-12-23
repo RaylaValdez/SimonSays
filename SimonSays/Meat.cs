@@ -52,7 +52,9 @@ namespace SimonSays
         {
             // Dispose of movement and camera resources if they exist
             movement?.Dispose();
+            movement = null;
             camera?.Dispose();
+            camera = null;
         }
 
 
@@ -145,14 +147,16 @@ namespace SimonSays
         }
 
 
-        
+
 
         /// <summary>
         /// Initiates character movement towards the current target or prints a message if no target is selected.
         /// </summary>
-        public static void StartScooch()
+        public static void StartScooch(OverrideMovement.OnCompleteDelegate? callback = null)
         {
             GameObject? Target = Service.TargetManager.Target;
+
+            movement.ClearCallback();
 
             // Check if a target is selected
             if (Target != null)
@@ -165,6 +169,11 @@ namespace SimonSays
                 // Disable character movement and notify the user of the absence of a target
                 movement.SoftDisable = true;
                 Service.ChatGui.Print("You haven't got a Target, numpty");
+            }
+
+            if (callback != null)
+            {
+                movement.SetCallback(callback);
             }
         }
 
@@ -211,12 +220,17 @@ namespace SimonSays
         /// </summary>
         /// <param name="Emote">The emote to execute.</param>
         /// <param name="ShouldSyncPosition">Flag indicating whether to synchronize positions.</param>
-        public static void SimonSays(string Emote, bool ShouldSyncPosition)
+        public static void SimonSays(string Emote, string OtherEmote, bool ShouldSyncPosition)
         {
             // Validate and sanitize the provided emote
             if (!SanitizeEmote(ref Emote))
             {
-                Service.ChatGui.Print("You have not specified a valid Emote");
+                Service.ChatGui.Print("You have not specified a valid emote");
+                return;
+            }
+            if (!SanitizeEmote(ref OtherEmote))
+            {
+                Service.ChatGui.Print("You have not specified a valid other emote");
                 return;
             }
 
@@ -226,23 +240,27 @@ namespace SimonSays
             // Synchronize positions if requested
             if (ShouldSyncPosition)
             {
-                Chat.SendMessage("/sync");
-
-                // Send emote to the target if it exists
-                if (Target != null)
+                // Start scooching with the callback that executes the emote once we have arrived at our destination
+                StartScooch(() =>
                 {
-                    Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + Emote);
-                }
+                    // Send emote to the target if it exists
+                    if (Target != null)
+                    {
+                        Service.Log.Information("Telling target to do emote " + OtherEmote);
+                        Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + OtherEmote);
+                    }
 
-                // Execute the emote globally
-                Chat.SendMessage("/" + Emote);
+                    // Execute the emote globally
+                    Chat.SendMessage("/" + Emote);
+                });
             }
             else
             {
                 // Send emote to the target if it exists
                 if (Target != null)
                 {
-                    Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + Emote);
+                    Service.Log.Information("Telling target to do emote " + OtherEmote);
+                    Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + OtherEmote);
                 }
 
                 // Execute the emote globally

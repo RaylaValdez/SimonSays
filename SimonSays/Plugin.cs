@@ -1,16 +1,16 @@
+using System.IO;
+using System.Reflection;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using System.IO;
-using System.Reflection;
 using Dalamud.Interface.Windowing;
-using SimonSays.Windows;
 using Dalamud.Game.Gui;
-using XivCommon;
 using Dalamud.Plugin.Services;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using SimonSays.Windows;
+using XivCommon;
 
 namespace SimonSays
 {
@@ -24,6 +24,11 @@ namespace SimonSays
         private const string Sync = "/sync";
         private const string StopSync = "/stopsync";
         private const string DoThis = "/simonsays";
+
+        public const string DiscordURL = "https://dsc.gg/triquetrastudios";
+        public const string BuyMeACoffee = "https://www.buymeacoffee.com/raylaa";
+        public const string Repo = "https://github.com/RaylaValdez/MyDalamudPlugins";
+        public const string Source = "https://github.com/RaylaValdez/SimonSays";
 
         // Static references for plugin-wide use
         public static DalamudPluginInterface? PluginInterfaceStatic { get; private set; }
@@ -73,16 +78,16 @@ namespace SimonSays
                 HelpMessage = "Usage: /simonsays hum | Targetting a player will tell the player to hum with you in sync!"
             });
 
-            // Set up DTRBar 
-            DtrEntry ??= Service.DtrBar.Get("SimonSays");
-
-            // Set up Framework Update
-            Service.Framework.Update += FrameworkUpdate;
-
             // Set up UI events and create necessary services
             this.PluginInterface.UiBuilder.Draw += DrawUI;
             this.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
             PluginInterface.Create<Service>();
+
+            // Set up Framework Update
+            Service.Framework.Update += FrameworkUpdate;
+
+            // Set up DTRBar 
+            DtrEntry ??= Service.DtrBar.Get("SimonSays");
 
             // Set up chat message event handler and create emote list
             Service.ChatGui.ChatMessage += Meat.OnChatMessage;
@@ -115,6 +120,8 @@ namespace SimonSays
             // Remove command handlers and chat message event handler
             this.CommandManager.RemoveHandler(Config);
             this.CommandManager.RemoveHandler(Sync);
+            this.CommandManager.RemoveHandler(StopSync);
+            this.CommandManager.RemoveHandler(DoThis);
             Service.ChatGui.ChatMessage -= Meat.OnChatMessage;
         }
 
@@ -125,6 +132,58 @@ namespace SimonSays
                 DtrEntry.Text = new SeString(new TextPayload($"{Name}: {(Configuration.IsListening ? "On" : "Off")}"));
                 DtrEntry.OnClick = () => Configuration.IsListening ^= true;
             }
+        }
+
+        // /simonsays emote handling
+        private void DoThisCommandHandlingMeat(string[] ArgSplit)
+        {
+            // Default to false, only set to true if explicitly specified in arguments
+            bool SyncPos = false;
+
+            // /simonsays emote
+            // Applying emote to other and yourself
+            string emote = ArgSplit[0];
+            string otherEmote = emote;
+
+            // Check if positional syncing is explicitly specified in arguments OR other emote specified
+            if (ArgSplit.Length == 2)
+            {
+                // /simonsays emote true
+                // Emote is still
+                if (ArgSplit[1].ToLower() == "true" || ArgSplit[1] == "1")
+                {
+                    SyncPos = true;
+                }
+                // /simonsays otheremote emote
+                // emote becomes second argument
+                else
+                {
+                    emote = ArgSplit[1];
+                    otherEmote = ArgSplit[0];
+                }
+            }
+            // /simonsays otheremote emote true
+            // Emote becomes second argument with position syncing as third
+            else if (ArgSplit.Length >= 3)
+            {
+                emote = ArgSplit[1];
+                otherEmote = ArgSplit[0];
+
+                if (ArgSplit[2].ToLower() == "true" || ArgSplit[2] == "1")
+                {
+                    SyncPos = true;
+                }
+            }
+
+            // Check if positional syncing is disabled and print a message
+            if (!Configuration.PosSync)
+            {
+                SyncPos = false;
+                Service.ChatGui.Print("Enable Positional Syncing in settings for Command-based syncing.");
+            }
+
+            // Initiate the SimonSays command with the specified arguments
+            Meat.SimonSays(emote, otherEmote, SyncPos);
         }
 
         /// <summary>
@@ -166,27 +225,7 @@ namespace SimonSays
             {
                 if (ArgSplit.Length >= 1)
                 {
-                    // Default to false, only set to true if explicitly specified in arguments
-                    bool SyncPos = false;
-
-                    // Check if positional syncing is explicitly specified in arguments
-                    if (ArgSplit.Length >= 2)
-                    {
-                        if (ArgSplit[1].ToLower() == "true")
-                        {
-                            SyncPos = true;
-                        }
-
-                        // Check if positional syncing is disabled and print a message
-                        if (!Configuration.PosSync)
-                        {
-                            SyncPos = false;
-                            Service.ChatGui.Print("Enable Positional Syncing in settings for Command-based syncing.");
-                        }
-                    }
-
-                    // Initiate the SimonSays command with the specified arguments
-                    Meat.SimonSays(ArgSplit[0], SyncPos);
+                    DoThisCommandHandlingMeat(ArgSplit);
                 }
                 else
                 {

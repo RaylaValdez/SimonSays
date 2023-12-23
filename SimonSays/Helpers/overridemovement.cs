@@ -47,11 +47,20 @@ public unsafe class OverrideMovement : IDisposable
     public float Precision = 0.075f; // Distance from Target to stop at
     public float TurnPrecision = 5.0f; // Angle in Degrees to stop rotating at
     public bool ShouldTurn = true; // Should rotate to face DesiredRotation?
-    public bool AutoDisable = true; // Automatically disable if not moved and not rotated
     public bool SoftDisable = true; // Like Enabled but softer
 
-    private DateTime LastTimeMoved;
-    private DateTime LastTimeTurned;
+    public float DistanceSquared = 0.0f;
+    public float RotationDistance = 0.0f;
+
+    public float LastForward = 0.0f;
+    public float LastLeft = 0.0f;
+    public float LastTurnLeft = 0.0f;
+
+    public DateTime LastTimeMoved = DateTime.Now;
+    public DateTime LastTimeTurned = DateTime.Now;
+
+    public delegate void OnCompleteDelegate();
+    public event OnCompleteDelegate OnComplete;
 
     private delegate void RMIWalkDelegate(void* self, float* sumLeft, float* sumForward, float* sumTurnLeft, byte* haveBackwardOrStrafe, byte* a6, byte bAdditiveUnk);
     [Signature("E8 ?? ?? ?? ?? 80 7B 3E 00 48 8D 3D")]
@@ -74,17 +83,34 @@ public unsafe class OverrideMovement : IDisposable
         Service.Log.Information($"RMIFly address: 0x{_rmiFlyHook.Address:X}");
     }
 
+    // Destructor (called when object goes out of scope/no longer exists)
+    ~OverrideMovement()
+    {
+        Service.Log.Information("OverrideMovement is being destroyed");
+    }
+
 
     /// <summary>
     /// Disposes of the hooks related to the walk and fly functions.
     /// </summary>
     public void Dispose()
     {
+        Service.Log.Information("Disposing of OverrideMovement");
         // Dispose of the walk and fly hooks
+        SoftDisable = true;
+        Enabled = false;
         _rmiWalkHook.Dispose();
         _rmiFlyHook.Dispose();
     }
 
+    public void SetCallback(OnCompleteDelegate callback)
+    {
+        OnComplete = callback;
+    }
+    public void ClearCallback()
+    {
+        OnComplete = null!;
+    }
 
     /// <summary>
     /// Detour for the PlayerMoveControllerWalkInput function to adjust walk input.
@@ -103,7 +129,22 @@ public unsafe class OverrideMovement : IDisposable
 
         // Return if soft disable is active
         if (SoftDisable)
+        {
+            // If any of the pointers are nullptr then set the debug information to some magic values (1,2,3)
+            if (sumLeft == (float*)0 || sumForward == (float*)0 || sumTurnLeft == (float*)0)
+            {
+                LastForward = 1;
+                LastLeft = 2;
+                LastTurnLeft = 3;
+
+                return;
+            }
+            LastForward = *sumForward;
+            LastLeft = *sumLeft;
+            LastTurnLeft = *sumTurnLeft;
+
             return;
+        }
 
         bool hasMoved = false;
         bool hasTurned = false;
@@ -112,41 +153,52 @@ public unsafe class OverrideMovement : IDisposable
 
         // TODO: Introduce additional checks similar to PlayerMoveController::readInput
 
-        // Check conditions for adjusting walk input
-        if (bAdditiveUnk == 0 && (IgnoreUserInput || *sumLeft == 0 && *sumForward == 0))
+        try
         {
-            // Move towards destination
-            if (DirectionToDestination(false) is var relDir && relDir != null)
+            // Check conditions for adjusting walk input
+            if (bAdditiveUnk == 0 && (IgnoreUserInput || *sumLeft == 0 && *sumForward == 0))
             {
-                var dir = relDir.Value.h.ToDirection();
-                *sumLeft = dir.X;
-                *sumForward = dir.Y;
-                hasMoved = true;
-                LastTimeMoved = currTime;
-            }
-
-            // Check if enough time has passed since the last movement
-            if ((currTime - LastTimeMoved).TotalSeconds > 0.25f)
-            {
-                // If we haven't moved and we are told to turn (ShouldTurn) then rotate towards destination
-                if (!hasMoved && ShouldTurn && RotationToDestination() is float relRot && relRot != 0)
+                // Move towards destination
+                if (DirectionToDestination(false) is var relDir && relDir != null)
                 {
-                    *sumTurnLeft = relRot;
-                    hasTurned = true;
-                    LastTimeTurned = currTime;
+                    var dir = relDir.Value.h.ToDirection();
+                    *sumLeft = dir.X;
+                    *sumForward = dir.Y;
+
+                    hasMoved = true;
+                    LastTimeMoved = currTime;
                 }
 
-                // Check if enough time has passed since the last rotation
-                if ((currTime - LastTimeTurned).TotalSeconds > 0.25f)
+                // Check if enough time has passed since the last movement
+                if ((currTime - LastTimeMoved).TotalSeconds > 0.25f)
                 {
-                    // Disable once we are in range and are facing the right direction
-                    if (/*!hasTurned && !hasMoved &&*/ AutoDisable)
+                    // If we haven't moved and we are told to turn (ShouldTurn) then rotate towards destination
+                    if (!hasMoved && ShouldTurn && RotationToDestination() is float relRot && relRot != 0)
                     {
+                        *sumTurnLeft = relRot;
+                        hasTurned = true;
+                        LastTimeTurned = currTime;
+                    }
+
+                    // Check if enough time has passed since the last rotation
+                    if ((currTime - LastTimeTurned).TotalSeconds > 0.25f)
+                    {
+                        // Disable once we are in range and are facing the right direction
                         SoftDisable = true;
+                        OnComplete?.Invoke();
                     }
                 }
             }
         }
+        catch (Exception e)
+        {
+            Service.Log.Error(e, "RMIWalkDetour");
+            SoftDisable = true;
+        }
+
+        LastLeft = *sumLeft;
+        LastForward = *sumForward;
+        LastTurnLeft = *sumTurnLeft;
     }
 
 
@@ -171,34 +223,40 @@ public unsafe class OverrideMovement : IDisposable
 
         // TODO: Introduce additional checks similar to PlayerMoveController::readInput
 
-        // Fly towards destination if conditions are met
-        if ((IgnoreUserInput || result->Forward == 0 && result->Left == 0 && result->Up == 0))
+        try
         {
-            if (DirectionToDestination(true) is var relDir && relDir != null)
+            // Fly towards destination if conditions are met
+            if ((IgnoreUserInput || result->Forward == 0 && result->Left == 0 && result->Up == 0))
             {
-                // Set fly input based on the calculated direction
-                var dir = relDir.Value.h.ToDirection();
-                result->Forward = dir.Y;
-                result->Left = dir.X;
-                result->Up = relDir.Value.v.Rad;
-                LastTimeMoved = currTime;
-            }
-
-            // Check if enough time has passed since the last movement
-            if ((currTime - LastTimeMoved).TotalSeconds > 0.25f)
-            {
-                if (!hasMoved)
+                if (DirectionToDestination(true) is var relDir && relDir != null)
                 {
-                    hasTurned = true;
-                    LastTimeTurned = currTime;
+                    // Set fly input based on the calculated direction
+                    var dir = relDir.Value.h.ToDirection();
+                    result->Forward = dir.Y;
+                    result->Left = dir.X;
+                    result->Up = relDir.Value.v.Rad;
+                    LastTimeMoved = currTime;
                 }
 
-                // Disable once we are in range and are facing the right direction
-                if (/*!hasTurned && !hasMoved &&*/ AutoDisable)
+                // Check if enough time has passed since the last movement
+                if ((currTime - LastTimeMoved).TotalSeconds > 0.25f)
                 {
+                    if (!hasMoved)
+                    {
+                        hasTurned = true;
+                        LastTimeTurned = currTime;
+                    }
+
+                    // Disable once we are in range and are facing the right direction
                     SoftDisable = true;
+                    OnComplete?.Invoke();
                 }
             }
+        }
+        catch (Exception e)
+        {
+            Service.Log.Error(e, "RMIFlyDetour");
+            SoftDisable = true;
         }
     }
 
@@ -222,9 +280,17 @@ public unsafe class OverrideMovement : IDisposable
         // Calculate the vector from the player to the desired position
         var dist = DesiredPosition - player.Position;
 
+        if (!allowVertical)
+        {
+            // Ignore vertical distance
+            dist.Y = 0;
+        }
+
         // Return null if the player is already at the destination
         if (dist.LengthSquared() <= Precision * Precision)
             return null;
+
+        DistanceSquared = dist.LengthSquared();
 
         // Calculate the horizontal and vertical angles
         var dirH = Angle.FromDirection(dist.X, dist.Z);
@@ -233,6 +299,18 @@ public unsafe class OverrideMovement : IDisposable
         // Get the active camera and calculate the camera direction
         var camera = (CameraEx*)CameraManager.Instance()->GetActiveCamera();
         var cameraDir = camera->DirH.Radians() + 180.Degrees();
+
+        if (float.IsNaN(dirH.Rad) || float.IsInfinity(dirH.Rad) || float.IsNaN(dirV.Rad) || float.IsInfinity(dirV.Rad))
+        {
+            throw new Exception("Direction was NaN or infinity");
+            return null;
+        }
+
+        if (float.IsNaN(cameraDir.Rad) || float.IsInfinity(cameraDir.Rad))
+        {
+            throw new Exception("Camera direction was NaN or infinity");
+            return null;
+        }
 
         // Return a tuple containing horizontal and vertical angles
         return (dirH - cameraDir, dirV);
@@ -255,6 +333,8 @@ public unsafe class OverrideMovement : IDisposable
         // Calculate the angular distance between the desired rotation and the player's current rotation
         var dist = new Angle(DesiredRotation) - new Angle(player.Rotation);
         dist = dist.Normalized();
+
+        RotationDistance = dist.Deg;
 
         // Check if the angular distance is almost zero within the specified turn precision
         if (dist.AlmostEqual(new Angle(0.0f), AngleConversions.ToRad(TurnPrecision)))
