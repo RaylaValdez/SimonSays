@@ -8,6 +8,9 @@ using SimonSays.Windows;
 using Dalamud.Game.Gui;
 using XivCommon;
 using Dalamud.Plugin.Services;
+using Dalamud.Game.Gui.Dtr;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 
 namespace SimonSays
 {
@@ -32,6 +35,7 @@ namespace SimonSays
         private ICommandManager CommandManager { get; init; }
         private WindowSystem WindowSystem = new("SimonSays");
         private ConfigWindow ConfigWindow { get; init; }
+        private readonly DtrBarEntry DtrEntry;
 
         // Constructor
         public Plugin(
@@ -68,7 +72,12 @@ namespace SimonSays
             {
                 HelpMessage = "Usage: /simonsays hum | Targetting a player will tell the player to hum with you in sync!"
             });
-            
+
+            // Set up DTRBar 
+            DtrEntry ??= Service.DtrBar.Get("SimonSays");
+
+            // Set up Framework Update
+            Service.Framework.Update += FrameworkUpdate;
 
             // Set up UI events and create necessary services
             this.PluginInterface.UiBuilder.Draw += DrawUI;
@@ -93,6 +102,12 @@ namespace SimonSays
             // Remove all windows from the WindowSystem
             this.WindowSystem.RemoveAllWindows();
 
+            // Remove DTR Entry
+            DtrEntry.Remove();
+
+            // Remove Framework
+            Service.Framework.Update -= FrameworkUpdate;
+
             // Dispose of the configuration window and character movement resources
             ConfigWindow.Dispose();
             Meat.Dispose();
@@ -103,6 +118,14 @@ namespace SimonSays
             Service.ChatGui.ChatMessage -= Meat.OnChatMessage;
         }
 
+        private void FrameworkUpdate(object framework)
+        {
+            if (DtrEntry.Shown)
+            {
+                DtrEntry.Text = new SeString(new TextPayload($"{Name}: {(Configuration.IsListening ? "On" : "Off")}"));
+                DtrEntry.OnClick = () => Configuration.IsListening ^= true;
+            }
+        }
 
         /// <summary>
         /// Handles incoming commands and executes corresponding actions.

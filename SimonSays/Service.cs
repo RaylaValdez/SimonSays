@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using XivCommon;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
 namespace SimonSays
 {
@@ -81,6 +82,8 @@ namespace SimonSays
         public static ExcelSheet<Emote>? EmoteList;
         public static HashSet<string> Emotes = new HashSet<string>();
         public static XivCommonBase? CommonBase;
+
+        [PluginService] public static IDtrBar DtrBar { get; private set; } = null!;
         [PluginService] public static IPluginLog Log { get; private set; } = null!;
         [PluginService] public static IDataManager DataManager { get; private set; } = null!;
         [PluginService] public static IChatGui ChatGui { get; private set; } = null!;
@@ -88,6 +91,7 @@ namespace SimonSays
         [PluginService] public static IClientState ClientState { get; private set; } = null!;
         [PluginService] public static ITargetManager TargetManager { get; private set; } = null!;
         [PluginService] public static IGameInteropProvider Hook { get; private set; } = null!;
+        [PluginService] public static IFramework Framework { get; private set; } = null!;
     }
 
 
