@@ -68,7 +68,7 @@ namespace SimonSays
         public static bool SanitizeEmote(ref string Emote)
         {
             // Remove specified characters from the beginning and end of the emote string
-            Emote = Emote.Replace("(", "").Replace(")", "").Replace("/", "").Replace("[", "").Replace("]", "").Replace("{", "").Replace("}", "");
+            Emote = Emote.Replace("(", "").Replace(")", "").Replace("/", "").Replace("[", "").Replace("]", "").Replace("{", "").Replace("}", "").ToLower();
 
             // Check if the sanitized emote is in the list of valid emotes
             return Service.Emotes.Contains("/" + Emote.ToLower());
@@ -152,7 +152,7 @@ namespace SimonSays
         /// <summary>
         /// Initiates character movement towards the current target or prints a message if no target is selected.
         /// </summary>
-        public static void StartScooch(OverrideMovement.OnCompleteDelegate? callback = null)
+        public static void StartScooch(Vector3? Offset = null, OverrideMovement.OnCompleteDelegate? callback = null)
         {
             GameObject? Target = Service.TargetManager.Target;
 
@@ -162,7 +162,7 @@ namespace SimonSays
             if (Target != null)
             {
                 // Initiate character movement towards the target
-                ScoochOnOver(Target);
+                ScoochOnOver(Offset, Target);
             }
             else
             {
@@ -192,9 +192,14 @@ namespace SimonSays
         /// Moves the local player's character towards the specified target GameObject.
         /// </summary>
         /// <param name="Target">The target GameObject to move towards.</param>
-        public static void ScoochOnOver(GameObject Target)
+        public static void ScoochOnOver(Vector3? Offset, GameObject Target)
         {
             var Character = Service.ClientState.LocalPlayer;
+
+            if (Offset == null)
+            {
+                Offset = Vector3.Zero;
+            }
 
             // Get target position and rotation
             Vector3 TarPos = Target.Position;
@@ -205,6 +210,15 @@ namespace SimonSays
             {
                 TarRot = Character.Rotation;
             }
+
+            // Relative to target
+            float offsetX = Offset.Value.X * MathF.Sin(TarRot);
+            float offsetZ = Offset.Value.Z * MathF.Sin(TarRot);
+
+            TarPos.X += offsetX;
+            TarPos.Z += offsetZ;
+
+            TarRot += Offset.Value.Y.Degrees().Rad; // offset rotation
 
             // Set desired position and rotation for character movement
             movement.DesiredPosition = TarPos;
@@ -240,8 +254,9 @@ namespace SimonSays
             // Synchronize positions if requested
             if (ShouldSyncPosition)
             {
+                Vector3 TempOffset = EmoteHasOffset(Emote);
                 // Start scooching with the callback that executes the emote once we have arrived at our destination
-                StartScooch(() =>
+                StartScooch(TempOffset, () =>
                 {
                     // Send emote to the target if it exists
                     if (Target != null)
@@ -266,6 +281,32 @@ namespace SimonSays
                 // Execute the emote globally
                 Chat.SendMessage("/" + Emote);
             }
+        }
+
+        /* Returns vector with 
+            X Forward
+            Y Rotation
+            Z Left
+        */
+        public static Vector3 EmoteHasOffset(string Emote)
+        {
+            Vector3 Offset = new Vector3();
+            if (string.IsNullOrEmpty(Emote))
+            {
+                return Offset;
+            }
+
+            // if emote does have an offset and is enabled, return the offset values. Else FirstOrDefault (from Linq) returns null
+            EmoteOffsets? emoteOffset = Plugin.Configuration.EmoteOffsets.FirstOrDefault((offset) => offset.Enabled && offset.Emote == Emote);
+            if (emoteOffset != null)
+            {
+                Service.Log.Information($"Using emote offset {emoteOffset.Label} for emote {Emote}");
+                Offset.X = emoteOffset.X;
+                Offset.Y = emoteOffset.R;
+                Offset.Z = emoteOffset.Z;
+            }
+
+            return Offset;
         }
 
     }

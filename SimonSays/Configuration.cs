@@ -22,7 +22,9 @@ namespace SimonSays
         public bool PosSync { get; set; } = false;
 
         public bool UseGamepad { get; set; } = false;
-        public Dictionary<int, bool> EnabledChannels { get; set; } = new Dictionary<int, bool>();  
+        public Dictionary<int, bool> EnabledChannels { get; set; } = new Dictionary<int, bool>();
+
+        public List<EmoteOffsets> EmoteOffsets { get; set; } = new();
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]
@@ -47,6 +49,19 @@ namespace SimonSays
             // Save the plugin configuration
             this.PluginInterface!.SavePluginConfig(this);
         }
+
+    }
+
+    [Serializable]
+    public class EmoteOffsets
+    {
+        public string Emote = string.Empty;
+        public string Label = string.Empty;
+
+        public bool Enabled;
+        public float X;
+        public float Z;
+        public float R;
 
     }
 }

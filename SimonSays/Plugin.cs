@@ -21,6 +21,7 @@ namespace SimonSays
     {
         // Command constants
         private const string Config = "/simonsaysconfig";
+        private const string EzConfig = "/sscfg";
         private const string Sync = "/sync";
         private const string StopSync = "/stopsync";
         private const string DoThis = "/simonsays";
@@ -65,6 +66,10 @@ namespace SimonSays
             {
                 HelpMessage = "Open SimonSays Settings"
             });
+            this.CommandManager.AddHandler(EzConfig, new CommandInfo(OnCommand)
+            {
+                HelpMessage = "Open SimonSays Settings"
+            });
             this.CommandManager.AddHandler(Sync, new CommandInfo(OnCommand)
             {
                 HelpMessage = "Begin Positional syncing, if enabled in settings."
@@ -95,6 +100,8 @@ namespace SimonSays
 
             // Initialize character movement
             Meat.Setup();
+
+            Service.Log.Information($"Configuration EmoteOffsets count: {Configuration.EmoteOffsets.Count}");
         }
 
 
@@ -194,10 +201,14 @@ namespace SimonSays
         private void OnCommand(string Command, string Args)
         {
             // Open configuration window command
-            if (Command == Config)
+            if (Command == Config || Command == EzConfig)
             {
                 ConfigWindow.IsOpen = true;
             }
+
+
+            // Split arguments for further processing
+            string[] ArgSplit = Args.Split(' ');
 
             // Synchronize positions command
             if (Command == Sync)
@@ -208,17 +219,30 @@ namespace SimonSays
                     return;
                 }
 
-                // Start character movement for positional syncing
-                Meat.StartScooch();
+                string Emote = "";
+
+                // /sync emote
+                if (ArgSplit.Length >= 1)
+                {
+                    Emote = ArgSplit[0];
+
+                    // Get offset from emote passed as first argument
+                    var offset = Meat.EmoteHasOffset(Emote.ToLower());
+
+                    Meat.StartScooch(offset);
+                }
+                // just /sync
+                else
+                {
+                    // Start character movement for positional syncing
+                    Meat.StartScooch();
+                }
             }
 
             if (Command == StopSync)
             {
                 Meat.StopScooch();
             }
-
-            // Split arguments for further processing
-            string[] ArgSplit = Args.Split(' ');
 
             // SimonSays command
             if (Command == DoThis)

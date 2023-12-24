@@ -12,13 +12,15 @@ using System.Reflection;
 using PunishLib.ImGuiMethods;
 using Dalamud.Interface.Internal;
 using FFXIVClientStructs.FFXIV.Common.Math;
+using Dalamud.Interface;
+using Dalamud.Interface.Components;
 
 namespace SimonSays.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration configuration;
-    private string testText = "Test Me";
+    private string testText = "Simon Says : hum";
     private IDalamudTextureWrap? aboutImage;
 
     private static readonly bool EnableDebug = false;
@@ -180,29 +182,192 @@ public class ConfigWindow : Window, IDisposable
         ImGui.Text($"Last Turn Left: {Meat.movement.LastTurnLeft}");
     }
 
+    public string SearchedEmoteFilter = string.Empty;
+
     public override void Draw()
     {
+        ImGui.Text("Enable or Disable listening to channels.");
+        DrawEnabled();
         if (ImGui.BeginTabBar("Tabs"))
         {
             if (ImGui.BeginTabItem("Settings"))
             {
-                ImGui.Text("Enable the plugin");
-                DrawEnabled();
-                ImGui.Separator();
-                ImGui.Text("Experimental Features");
-                DrawExperimentCheckboxes();
-                ImGui.Separator();
-                ImGui.Text("Choose which chat channels you wish SimonSays to listen to");
-                DrawCheckboxes();
-                ImGui.Text("Choose your catchphrase, by default 'Simon Says :'");
+                ImGui.Text("");
+                ImGui.Text("Catchphrase - This is what SimonSays listens to.");
                 DrawCatchPhBox();
+                ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Your Catchprase IS your security, change this to control who can command you.");
+                ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Only share this to people you want to be able to command you.");
+                ImGui.Text("");
+                ImGui.Text("Channels - These are the channels SimonSays will listen to, waiting for your catchphrase.");
+                DrawCheckboxes();
+                ImGui.Text("");
                 ImGui.Separator();
+                ImGui.Text("");
                 ImGui.Text("Misc Options");
                 DrawMiscOptions();
+                ImGui.Text("");
+                ImGui.Separator();
+                ImGui.Text("");
+                ImGui.Text("Experimental Features");
+                DrawExperimentCheckboxes();
                 ImGui.EndTabItem();
+            }
+            if (configuration.PosSync && ImGui.BeginTabItem("Offsets"))
+            {
+                ImGui.Text("");
+                ImGui.SetNextItemOpen(true);
+                if (ImGui.TreeNode("Info"))
+                {
+                    ImGui.Text("");
+                    ImGui.Text("Set offsets for particular emotes.");
+                    ImGui.Text("");
+                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "X - Foward / Back.");
+                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Z - Left / Right.");
+                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "R - Rotation.");
+                    ImGui.EndTabItem();
+                    ImGui.Text("");
+                    ImGui.Text("Usage :");
+                    ImGui.Text("");
+                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Click Add Emote Offset to get started.");
+                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Label this offset however you wish, you may have multiple offsets for a single emote.");
+                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Choose the emote you wish to offset your positon with.");
+                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Increase / decrease each offset field to your desired position.");
+                    ImGui.Text("");
+                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Now, when you use /simonsays with an emote you've specified an offset for, you'll move the offset you've provided.");
+                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "If you wish to test your offset without emoting, do /sync emote!");
+                    ImGui.Text("");
+                    ImGui.Separator();
+
+                    ImGui.TreePop();
+                }
+                
+                ImGui.Text("");
+                if (ImGui.BeginTable("OffsetsTable", 5))
+                {
+                    ImGui.TableSetupColumn("Enable", ImGuiTableColumnFlags.WidthStretch, 40.0f);
+                    ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 100.0f);
+                    ImGui.TableSetupColumn("Emote", ImGuiTableColumnFlags.WidthStretch, 100.0f);
+                    ImGui.TableSetupColumn("Offsets : Fwd/Back | Left/Right | Rotation", ImGuiTableColumnFlags.WidthStretch, 90.0f);
+                    ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthStretch, 10.0f);
+                    ImGui.TableHeadersRow();
+
+                    int i = 0;
+                    foreach (EmoteOffsets offset in configuration.EmoteOffsets)
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.PushID(i++);
+
+                        // Enable
+                        ImGui.TableNextColumn();
+
+                        if (ImGuiComponents.IconButton(FontAwesomeIcon.Trash))
+                        {
+                            configuration.EmoteOffsets.Remove(offset);
+                            configuration.Save();
+                            break;
+                        }
+                        ImGui.SameLine();
+                        if (ImGui.Checkbox("##Enabled", ref offset.Enabled))
+                        {
+                            configuration.Save();
+                        }
+
+                        // Label
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(-1);
+                        if (ImGui.InputTextWithHint("##Label", "Label", ref offset.Label, 64))
+                        {
+                            configuration.Save();
+                        }
+
+                        // Emote
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(-1);
+
+                        if (ImGui.BeginCombo("##Emote", offset.Emote, ImGuiComboFlags.HeightLargest))
+                        {
+                            // Filter through the emotes by the searched
+
+                            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                            ImGui.InputTextWithHint("##EmoteFilter", "Search...", ref SearchedEmoteFilter, 128);
+
+                            var size = new System.Numerics.Vector2(ImGui.GetItemRectSize().X,240);
+
+                            // Add a scroll panel inside the combobox
+                            if (ImGui.BeginChild("##EmoteScroll", size))
+                            {
+                                IEnumerable<string> emoteList = Service.Emotes.Where((s) => s.Contains(SearchedEmoteFilter));
+
+                                if(ImGui.Selectable("[None]"))
+                                {
+                                    offset.Emote = string.Empty;
+                                }
+
+                                foreach (string emote in emoteList)
+                                {
+                                    string e = emote;
+                                    Meat.SanitizeEmote(ref e);
+                                    if (ImGui.Selectable(e))
+                                    {
+                                        offset.Emote = e;
+                                    }
+                                }
+
+                                ImGui.EndChild();
+                            }
+                            ImGui.EndCombo();
+                        }
+
+                        // Offset
+                        ImGui.TableNextColumn();
+                        float offsetColumnSize = (ImGui.GetColumnWidth() / 3.0f) - 6.0f;
+                        ImGui.SetNextItemWidth(offsetColumnSize);
+                        if (ImGui.DragFloat("##OffsetX", ref offset.X, 0.05f, -10.0f, 10.0f))
+                        {
+                            configuration.Save();
+                        }
+                        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                        {
+                            ImGui.SetTooltip("Offset X");
+                        }
+
+                        ImGui.SameLine();
+                        ImGui.SetNextItemWidth(offsetColumnSize);
+
+                        if (ImGui.DragFloat("##OffsetZ", ref offset.Z, 0.05f, -10.0f, 10.0f))
+                        {
+                            configuration.Save();
+                        }
+                        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                        {
+                            ImGui.SetTooltip("Offset Z");
+                        }
+
+                        ImGui.SameLine();
+                        ImGui.SetNextItemWidth(offsetColumnSize);
+                        if (ImGui.DragFloat("##OffsetR", ref offset.R, 0.05f, -180.0f, 180f))
+                        {
+                            configuration.Save();
+                        }
+                        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                        {
+                            ImGui.SetTooltip("Offset Rotation");
+                        }
+
+                        ImGui.PopID();
+                    }
+
+                    ImGui.EndTable();
+                }
+                if (ImGui.Button("Add Emote Offset"))
+                {
+                    configuration.EmoteOffsets.Add(new EmoteOffsets());
+                    configuration.Save();
+                }
             }
             if (ImGui.BeginTabItem("Usage"))
             {
+                ImGui.Text("");
                 ImGui.Text("Commands :");
                 ImGui.Text("");
                 ImGui.Text("/simonsaysconfig - Will open this window.");
@@ -257,6 +422,7 @@ public class ConfigWindow : Window, IDisposable
 
             if (ImGui.BeginTabItem("About"))
             {
+                ImGui.Text("");
                 ImGuiEx.ImGuiLineCentered("AboutVersion", () =>
                 {
                     ImGui.Text("SimonSays - " + typeof(Plugin).Assembly.GetName().Version?.ToString());
