@@ -101,6 +101,7 @@ namespace SimonSays
             // Initialize character movement
             Meat.Setup();
 
+            // This line logs the count of EmoteOffsets in the Configuration object as an information message.
             Service.Log.Information($"Configuration EmoteOffsets count: {Configuration.EmoteOffsets.Count}");
         }
 
@@ -132,16 +133,28 @@ namespace SimonSays
             Service.ChatGui.ChatMessage -= Meat.OnChatMessage;
         }
 
+        /// <summary>
+        /// Updates the framework with the specified object.
+        /// </summary>
+        /// <param name="framework">The object representing the framework.</param>
         private void FrameworkUpdate(object framework)
         {
+            // Check if DtrEntry is shown
             if (DtrEntry.Shown)
             {
+                // Set the text of DtrEntry to display the name and the current listening status
                 DtrEntry.Text = new SeString(new TextPayload($"{Name}: {(Configuration.IsListening ? "On" : "Off")}"));
+
+                // Set the OnClick event of DtrEntry to toggle the listening status when clicked
                 DtrEntry.OnClick = () => Configuration.IsListening ^= true;
             }
         }
 
-        // /simonsays emote handling
+
+        /// <summary>
+        /// Handles the execution of a command related to meat processing.
+        /// </summary>
+        /// <param name="ArgSplit">An array containing the arguments for the command.</param>
         private void DoThisCommandHandlingMeat(string[] ArgSplit)
         {
             // Default to false, only set to true if explicitly specified in arguments

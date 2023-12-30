@@ -30,16 +30,20 @@ namespace SimonSays
         /// </summary>
         public static void Setup()
         {
-            // Initialize and enable character movement if not already set up
+            // Check if character movement is already set up
             if (movement == null)
             {
+                // If not, create a new instance of OverrideMovement
                 movement = new OverrideMovement();
+
+                // Enable character movement
                 movement.Enabled = true;
             }
 
-            // Initialize camera if not already set up
+            // Check if camera is already set up
             if (camera == null)
             {
+                // If not, create a new instance of OverrideCamera
                 camera = new OverrideCamera();
             }
         }
@@ -154,14 +158,16 @@ namespace SimonSays
         /// </summary>
         public static void StartScooch(Vector3? Offset = null, OverrideMovement.OnCompleteDelegate? callback = null)
         {
+            // Get the target object from the TargetManager service
             GameObject? Target = Service.TargetManager.Target;
 
+            // Clear any existing movement callbacks
             movement.ClearCallback();
 
             // Check if a target is selected
             if (Target != null)
             {
-                // Initiate character movement towards the target
+                // Initiate character movement towards the target with an offset
                 ScoochOnOver(Offset, Target);
             }
             else
@@ -171,8 +177,10 @@ namespace SimonSays
                 Service.ChatGui.Print("You haven't got a Target, numpty");
             }
 
+            // Check if a callback function is provided
             if (callback != null)
             {
+                // Set the provided callback function for movement
                 movement.SetCallback(callback);
             }
         }
@@ -194,33 +202,39 @@ namespace SimonSays
         /// <param name="Target">The target GameObject to move towards.</param>
         public static void ScoochOnOver(Vector3? Offset, GameObject Target)
         {
+            // Get the local player character
             var Character = Service.ClientState.LocalPlayer;
 
+            // Check if the offset is null
             if (Offset == null)
             {
+                // Set the offset to zero vector
                 Offset = Vector3.Zero;
             }
 
-            // Get target position and rotation
+            // Get the target position and rotation
             Vector3 TarPos = Target.Position;
             float TarRot = Target.Rotation;
 
             // Handle invalid rotation values by using the character's rotation
             if (float.IsNaN(TarRot) || float.IsInfinity(TarRot))
             {
+                // Use the character's rotation as the target rotation
                 TarRot = Character.Rotation;
             }
 
-            // Relative to target
+            // Calculate the offset relative to the target
             float offsetX = Offset.Value.X * MathF.Sin(TarRot);
             float offsetZ = Offset.Value.Z * MathF.Sin(TarRot);
 
+            // Apply the offset to the target position
             TarPos.X += offsetX;
             TarPos.Z += offsetZ;
 
-            TarRot += Offset.Value.Y.Degrees().Rad; // offset rotation
+            // Apply the offset rotation to the target rotation
+            TarRot += Offset.Value.Y.Degrees().Rad;
 
-            // Set desired position and rotation for character movement
+            // Set the desired position and rotation for character movement
             movement.DesiredPosition = TarPos;
             movement.DesiredRotation = TarRot;
 
@@ -283,29 +297,39 @@ namespace SimonSays
             }
         }
 
-        /* Returns vector with 
-            X Forward
-            Y Rotation
-            Z Left
-        */
+        /// <summary>
+        /// Checks if an emote has an offset and returns the offset as a Vector3 object.
+        /// </summary>
+        /// <param name="Emote">The emote string to check for an offset.</param>
+        /// <returns>The offset as a Vector3 object. If the emote is null or empty, returns a Vector3 with all values set to 0.</returns>
         public static Vector3 EmoteHasOffset(string Emote)
         {
+            // Create a new Vector3 object called Offset
             Vector3 Offset = new Vector3();
+
+            // Check if the Emote string is null or empty
             if (string.IsNullOrEmpty(Emote))
             {
+                // If it is, return the Offset as it is
                 return Offset;
             }
 
-            // if emote does have an offset and is enabled, return the offset values. Else FirstOrDefault (from Linq) returns null
+            // Search for the first EmoteOffset in the EmoteOffsets list that is enabled and matches the Emote string
             EmoteOffsets? emoteOffset = Plugin.Configuration.EmoteOffsets.FirstOrDefault((offset) => offset.Enabled && offset.Emote == Emote);
+
+            // Check if an EmoteOffset was found
             if (emoteOffset != null)
             {
+                // If an EmoteOffset was found, log the information about the offset being used
                 Service.Log.Information($"Using emote offset {emoteOffset.Label} for emote {Emote}");
+
+                // Set the X, Y, and Z values of the Offset to the values from the EmoteOffset
                 Offset.X = emoteOffset.X;
                 Offset.Y = emoteOffset.R;
                 Offset.Z = emoteOffset.Z;
             }
 
+            // Return the Offset
             return Offset;
         }
 

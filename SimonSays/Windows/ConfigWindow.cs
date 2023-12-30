@@ -17,6 +17,12 @@ using Dalamud.Interface.Components;
 
 namespace SimonSays.Windows;
 
+/// <summary>
+/// Represents a window for configuring settings.
+/// </summary>
+/// <remarks>
+/// This class inherits from the Window class and implements the IDisposable interface.
+/// </remarks>
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration configuration;
@@ -24,6 +30,7 @@ public class ConfigWindow : Window, IDisposable
     private IDalamudTextureWrap? aboutImage;
 
     private static readonly bool EnableDebug = false;
+
 
     public ConfigWindow(Plugin plugin) : base(
         "SimonSays Settings",
@@ -40,17 +47,22 @@ public class ConfigWindow : Window, IDisposable
 
     public void Dispose() { }
 
+    /// <summary>
+    /// Draws a checkbox for a chat channel at the specified index.
+    /// </summary>
+    /// <param name="index">The index of the chat channel.</param>
     private void DrawCheckbox(int index)
     {
+        // Get the key and value of the chat channel at the specified index
         var key = ChatChannelTypes.ChatTypes.Keys.ToList()[index];
         var Value = ChatChannelTypes.ChatTypes[key];
         int channel = key;
 
-        // get previous config Value
+        // Get the previous configuration value for the channel
         bool prevVal = false;
         configuration.EnabledChannels.TryGetValue(channel, out prevVal);
 
-        // draw checkbox and update configuration if Value changes
+        // Draw the checkbox and update the configuration if the value changes
         bool newVal = prevVal;
         ImGui.TableNextColumn();
         if (ImGui.Checkbox(Value, ref newVal))
@@ -60,123 +72,202 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
+    // Method to draw the "Enabled" checkbox
+    /// <summary>
+    /// Draws the "Enabled" checkbox and updates the IsListening property in the configuration based on the user's selection.
+    /// </summary>
     private void DrawEnabled()
     {
+        // Get the current value of the IsListening property from the configuration
         bool isListening = configuration.IsListening;
+
+        // Draw the "Enabled" checkbox and update the isListening variable with the new value
         if (ImGui.Checkbox("Enabled", ref isListening))
         {
+            // Update the IsListening property in the configuration with the new value
             configuration.IsListening = isListening;
+
+            // Save the updated configuration
             this.configuration.Save();
         }
-
     }
 
+    /// <summary>
+    /// Draws checkboxes for each channel in a table format.
+    /// </summary>
     private void DrawCheckboxes()
     {
+        // Begin the table with a unique identifier and specify the number of columns and table flags
         ImGui.BeginTable("simonsaystable", 3, ImGuiTableFlags.Borders);
+
+        // Set up the column headers
         ImGui.TableSetupColumn("Channels");
         ImGui.TableSetupColumn("");
         ImGui.TableSetupColumn("");
         ImGui.TableHeadersRow();
 
+        // Get the list of chat types
         var ChatTypes = ChatChannelTypes.ChatTypes;
 
-        // fucking maff shit:
-        // j * max + i
-        // Draws the columns up-down, left-right rather than left-right, up-down
-
-        // Max is the maximum of rows in the table
+        // Calculate the maximum number of rows in the table
         int max = (int)Math.Ceiling(ChatTypes.Count / 3d);
+
+        // Loop through each row in the table
         for (int i = 0; i < Math.Ceiling(ChatTypes.Count / 3d); i++) // row loop
         {
+            // Loop through each column in the table
             for (int j = 0; j < 3; j++) // column loop
             {
-                if ((j * max) + i > ChatTypes.Count - 1) // if out of bounds, commence to next iteration
-                    continue;
+                // Check if the current index is out of bounds
+                if ((j * max) + i > ChatTypes.Count - 1)
+                    continue; // Move to the next iteration
 
+                // Calculate the index of the current checkbox
                 int index = (j * max) + i;
 
-                // get channel by key, indexing the key list rather than the dictionary
+                // Draw the checkbox for the current channel
                 DrawCheckbox(index);
             }
         }
+
+        // End the table
         ImGui.EndTable();
     }
 
+    /// <summary>
+    /// Draws a text box for the catch phrase and allows the user to modify it. 
+    /// The catch phrase is retrieved from the configuration and updated if modified.
+    /// The updated configuration is then saved.
+    /// </summary>
     private void DrawCatchPhBox()
     {
+        // Get the current catch phrase from the configuration
         string inputText = configuration.CatchPhrase;
+
+        // Draw the input text box and check if the text has been modified
         if (ImGui.InputText("", ref inputText, 500U))
         {
+            // Trim the input text and update the catch phrase in the configuration
             configuration.CatchPhrase = inputText.Trim();
+
+            // Save the updated configuration
             this.configuration.Save();
         }
     }
+
+    /// <summary>
+    /// Draws miscellaneous options in the ImGui window, including a checkbox for motion only, an input text field, and a send button.
+    /// </summary>
     private void DrawMiscOptions()
     {
+        // Get the value of the MotionOnly property from the configuration object
         bool motionOnly = configuration.MotionOnly;
+
+        // Display a checkbox in the ImGui window with the label "Motion Only" and bind it to the motionOnly variable
+        // If the checkbox value is changed, the motionOnly variable will be updated
         if (ImGui.Checkbox("Motion Only", ref motionOnly))
         {
+            // Update the MotionOnly property in the configuration object with the new value
             configuration.MotionOnly = motionOnly;
+
+            // Save the updated configuration
             this.configuration.Save();
         }
+
+        // Display an input text field in the ImGui window with the label "Test Input" and bind it to the testText variable
         ImGui.InputText("Test Input", ref testText, 500U);
+
+        // Display a button in the ImGui window with the label "Send"
+        // If the button is clicked, execute the following code
         if (ImGui.Button("Send"))
         {
+            // Call the Meat.Command method with the XivChatType.None parameter, the value of the testText variable, and ForceForTesting set to true
             Meat.Command(XivChatType.None, testText, ForceForTesting: true);
         }
     }
 
+    /// <summary>
+    /// Draws checkboxes for the experiment.
+    /// </summary>
     private void DrawExperimentCheckboxes()
     {
+        // Get the value of the PosSync property from the configuration object
         bool posSync = configuration.PosSync;
+
+        // Display a checkbox labeled "Positional Sync" and bind its value to the posSync variable
         if (ImGui.Checkbox("Positional Sync", ref posSync))
         {
+            // If the checkbox value is changed, update the PosSync property in the configuration object
             configuration.PosSync = posSync;
+            // Save the updated configuration
             this.configuration.Save();
-
         }
+
+        // Display a colored text indicating that Position Sync requires a Target
         ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Position Sync requires a Target.");
+
+        // If PosSync is true, display buttons for syncing position and stopping sync
         if (configuration.PosSync)
         {
             if (ImGui.Button("Sync Position"))
             {
+                // Call the StartScooch method to sync the position
                 Meat.StartScooch();
             }
             if (ImGui.Button("Stop Sync"))
             {
+                // Call the StopScooch method to stop syncing the position
                 Meat.StopScooch();
             }
         }
-
-
     }
 
+    /// <summary>
+    /// Draws debug positional information on the screen.
+    /// </summary>
     private void DrawDebugPositionalInformation()
     {
+        // Check if the movement object is null
         if (Meat.movement == null)
             return;
 
+        // Display whether SoftDisable is true or false
         ImGui.Text($"SoftDisable: {(Meat.movement.SoftDisable ? "True" : "False")}");
+
+        // Display the distance to the target
         ImGui.Text($"Distance to target: {MathF.Sqrt(Meat.movement.DistanceSquared)}");
+
+        // Display the rotation distance in degrees
         ImGui.Text($"Rotation distance (deg): {Meat.movement.RotationDistance}");
 
+        // Get the current time
         DateTime currTime = DateTime.Now;
+
+        // Display the time since the last movement
         ImGui.Text($"Time since last moved: {(currTime - Meat.movement.LastTimeMoved).TotalSeconds}");
+
+        // Display the time since the last turn
         ImGui.Text($"Time since last turned: {(currTime - Meat.movement.LastTimeTurned).TotalSeconds}");
 
+        // Add spacing between sections
         ImGui.Spacing();
 
+        // Get the target position and rotation
         var tarPos = Meat.movement.DesiredPosition;
         float tarRot = Meat.movement.DesiredRotation;
+
+        // Convert the rotation to degrees
         tarRot = Helpers.AngleConversions.ToDeg(tarRot);
 
+        // Display the target destination
         ImGui.Text("Target Destination:");
         ImGui.Text($"X: {tarPos.X} Y: {tarPos.Y} Z: {tarPos.Z}");
         ImGui.Text($"Angle: {tarRot}");
 
+        // Add spacing between sections
         ImGui.Spacing();
 
+        // Display the last forward, left, and turn left values
         ImGui.Text($"Last Forward: {Meat.movement.LastForward}");
         ImGui.Text($"Last Left: {Meat.movement.LastLeft}");
         ImGui.Text($"Last Turn Left: {Meat.movement.LastTurnLeft}");
@@ -184,6 +275,9 @@ public class ConfigWindow : Window, IDisposable
 
     public string SearchedEmoteFilter = string.Empty;
 
+    /// <summary>
+    /// Overrides the Draw method from the base class to define custom drawing behavior.
+    /// </summary>
     public override void Draw()
     {
         ImGui.Text("Enable or Disable listening to channels.");
@@ -240,7 +334,7 @@ public class ConfigWindow : Window, IDisposable
 
                     ImGui.TreePop();
                 }
-                
+
                 ImGui.Text("");
                 if (ImGui.BeginTable("OffsetsTable", 5))
                 {
@@ -291,14 +385,14 @@ public class ConfigWindow : Window, IDisposable
                             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                             ImGui.InputTextWithHint("##EmoteFilter", "Search...", ref SearchedEmoteFilter, 128);
 
-                            var size = new System.Numerics.Vector2(ImGui.GetItemRectSize().X,240);
+                            var size = new System.Numerics.Vector2(ImGui.GetItemRectSize().X, 240);
 
                             // Add a scroll panel inside the combobox
                             if (ImGui.BeginChild("##EmoteScroll", size))
                             {
                                 IEnumerable<string> emoteList = Service.Emotes.Where((s) => s.Contains(SearchedEmoteFilter));
 
-                                if(ImGui.Selectable("[None]"))
+                                if (ImGui.Selectable("[None]"))
                                 {
                                     offset.Emote = string.Empty;
                                 }
