@@ -550,14 +550,24 @@ public class ConfigWindow : Window, IDisposable
                             UseShellExecute = true
                         });
                     }
+                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                    {
+                        ImGui.SetTooltip("Join our Discord!");
+                    }
                     ImGui.SameLine();
                     if (ImGui.Button("Repo"))
                     {
-                        Process.Start(new ProcessStartInfo()
-                        {
-                            FileName = Plugin.Repo,
-                            UseShellExecute = true
-                        });
+                        ImGui.SetClipboardText(Plugin.Repo);
+
+                        //Process.Start(new ProcessStartInfo()
+                        //{
+                        //    FileName = Plugin.Repo,
+                        //    UseShellExecute = true
+                        //});
+                    }
+                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                    {
+                        ImGui.SetTooltip("Copy repo to Clipboard.");
                     }
                     ImGui.SameLine();
                     if (ImGui.Button("Source"))
@@ -568,6 +578,10 @@ public class ConfigWindow : Window, IDisposable
                             UseShellExecute = true
                         });
                     }
+                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                    {
+                        ImGui.SetTooltip("Take a peak under the hood.");
+                    }
                     ImGui.SameLine();
                     if (ImGui.Button("Buy me a coffee!"))
                     {
@@ -576,6 +590,10 @@ public class ConfigWindow : Window, IDisposable
                             FileName = Plugin.BuyMeACoffee,
                             UseShellExecute = true
                         });
+                    }
+                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                    {
+                        ImGui.SetTooltip("Only if you want to!");
                     }
                 });
 

@@ -28,7 +28,7 @@ namespace SimonSays
 
         public const string DiscordURL = "https://dsc.gg/triquetrastudios";
         public const string BuyMeACoffee = "https://www.buymeacoffee.com/raylaa";
-        public const string Repo = "https://github.com/RaylaValdez/MyDalamudPlugins";
+        public const string Repo = "https://raw.githubusercontent.com/RaylaValdez/MyDalamudPlugins/main/pluginmaster.json";
         public const string Source = "https://github.com/RaylaValdez/SimonSays";
 
         // Static references for plugin-wide use
