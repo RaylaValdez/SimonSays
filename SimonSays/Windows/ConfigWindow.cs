@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Linq;
@@ -14,6 +15,10 @@ using Dalamud.Interface.Internal;
 using FFXIVClientStructs.FFXIV.Common.Math;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
+using FFVector2 = FFXIVClientStructs.FFXIV.Common.Math.Vector2;
+using Vector2 = System.Numerics.Vector2;
+using Dalamud.Interface.Utility.Raii;
+using Dalamud.Utility;
 
 namespace SimonSays.Windows;
 
@@ -30,6 +35,12 @@ public class ConfigWindow : Window, IDisposable
     private IDalamudTextureWrap? aboutImage;
 
     private static readonly bool EnableDebug = false;
+
+    public static string SelectedLayout = String.Empty;
+    public static bool NamingWindowOpen = false;
+
+    const int BufferSize = 1024;
+    private static byte[] nameBuffer = new byte[BufferSize];
 
 
     public ConfigWindow(Plugin plugin) : base(
@@ -280,6 +291,7 @@ public class ConfigWindow : Window, IDisposable
     /// </summary>
     public override void Draw()
     {
+        OpenNamingWindow();
         ImGui.Text("Enable or Disable listening to channels.");
         DrawEnabled();
         if (ImGui.BeginTabBar("Tabs"))
@@ -308,7 +320,337 @@ public class ConfigWindow : Window, IDisposable
             }
             if (configuration.PosSync && ImGui.BeginTabItem("Offsets"))
             {
+                OffsetsTab();
+                ImGui.EndTabItem();
+            }
+            
+            if (ImGui.BeginTabItem("Usage"))
+            {
                 ImGui.Text("");
+                ImGui.Text("Commands :");
+                ImGui.Text("");
+                ImGui.Text("/simonsaysconfig - Will open this window.");
+                ImGui.Text("");
+                ImGui.Text("/sync - Will attempt to sync positions with your Target, only works if Position Syncing is enabled in Experimental Features.");
+                ImGui.Text("");
+                ImGui.Text("/simonsays <TheirEmote> <YourEmote> <ShouldSync> - There are multiple ways to use this command.");
+                ImGui.Text("Example 1 - '/simonsays hum' - This will make you and the person you're targetting hum.");
+                ImGui.Text("Example 2 - '/simonsays hum dance' - This will make the person you're targetting hum and make yourself dance.");
+                ImGui.Text("Example 3 - '/simonsays hum dance true' - This will attempt to sync your positions prior to making your target hum and yourself dance.");
+                ImGui.Text("ShouldSync being 'true' in this case can be used on all previous examples.");
+                ImGui.Text("");
+                ImGui.Separator();
+                ImGui.Text("");
+                ImGui.Text("Macros :");
+                ImGui.Text("");
+                ImGui.Text("Macros can be used to initiate a single Emote or chain together multiple Emotes.");
+                ImGui.Text("");
+                ImGui.Text("Single Emote Example :");
+                ImGui.Text("");
+                string example =
+                    "/micon hum Emote\n" +                    "/tell <t> Simon Says : hum\n" +                    "/hum\n";
+                ImGui.InputTextMultiline("##Example", ref example, 200, new(200, 75), ImGuiInputTextFlags.ReadOnly);
+                ImGui.Text("");
+                ImGui.Text("Multiple Emote Example :");
+                ImGui.Text("");
+                string multiexample =
+                    "/micon hum Emote\n" +                    "/tell <t> Simon Says : hum\n" +                    "/hum\n" +
+                    "/wait 3\n" +
+                    "/tell <t> Simon Says : dance\n" +
+                    "/dance\n";
+                ImGui.InputTextMultiline("##MultiExample", ref multiexample, 200, new(200, 125), ImGuiInputTextFlags.ReadOnly);
+                ImGui.Text("");
+                ImGui.Separator();
+                ImGui.Text("");
+                ImGui.Text("Experimental Features :");
+                ImGui.Text("");
+                ImGui.Text("Positional Syncing : ");
+                ImGui.Text("");
+                ImGui.Text("Positional Syncing is a way to align perfectly with your Target.");
+                ImGui.Text("Enable it in the Settings Tab.");
+                ImGui.Text("Simply Target the person you wish to sync positions with and use the /sync Command.");
+                ImGui.Text("Should you fail to sync and end up running around your Target, use the stop sync button in the Settings tab.");
+                ImGui.EndTabItem();
+            }
+
+            if (EnableDebug && ImGui.BeginTabItem("Debug"))
+            {
+                DrawDebugPositionalInformation();
+                ImGui.EndTabItem();
+            }
+
+            if (ImGui.BeginTabItem("About"))
+            {
+                ImGui.Text("");
+                ImGuiEx.ImGuiLineCentered("AboutVersion", () =>
+                {
+                    ImGui.Text("SimonSays - " + typeof(Plugin).Assembly.GetName().Version?.ToString());
+                });
+                ImGui.Text("");
+                ImGuiEx.ImGuiLineCentered("AboutCreators", () =>
+                {
+                    ImGui.Text("Created by Rayla & Frdhog @ Triquetra Studios");
+                });
+                ImGui.Text("");
+                if (aboutImage != null)
+                {
+                    ImGuiEx.ImGuiLineCentered("AboutImage", () =>
+                    {
+                        ImGui.Image(aboutImage.ImGuiHandle, new System.Numerics.Vector2(300, 300));
+                    });
+                }
+                ImGui.Text("");
+                ImGuiEx.ImGuiLineCentered("AboutDiscord", () =>
+                {
+                    ImGui.Text("Join our Discord to stay up to date with releases, updates & more!");
+                });
+                ImGui.Text("");
+                ImGuiEx.ImGuiLineCentered("AboutButtons", () =>
+                {
+                    if (ImGui.Button("Discord"))
+                    {
+                        Process.Start(new ProcessStartInfo()
+                        {
+                            FileName = Plugin.DiscordURL,
+                            UseShellExecute = true
+                        });
+                    }
+                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                    {
+                        ImGui.SetTooltip("Join our Discord!");
+                    }
+                    ImGui.SameLine();
+                    if (ImGui.Button("Repo"))
+                    {
+                        ImGui.SetClipboardText(Plugin.Repo);
+
+                        //Process.Start(new ProcessStartInfo()
+                        //{
+                        //    FileName = Plugin.Repo,
+                        //    UseShellExecute = true
+                        //});
+                    }
+                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                    {
+                        ImGui.SetTooltip("Copy repo to Clipboard.");
+                    }
+                    ImGui.SameLine();
+                    if (ImGui.Button("Source"))
+                    {
+                        Process.Start(new ProcessStartInfo()
+                        {
+                            FileName = Plugin.Source,
+                            UseShellExecute = true
+                        });
+                    }
+                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                    {
+                        ImGui.SetTooltip("Take a peak under the hood.");
+                    }
+                    ImGui.SameLine();
+                    if (ImGui.Button("Buy me a coffee!"))
+                    {
+                        Process.Start(new ProcessStartInfo()
+                        {
+                            FileName = Plugin.BuyMeACoffee,
+                            UseShellExecute = true
+                        });
+                    }
+                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                    {
+                        ImGui.SetTooltip("Only if you want to!");
+                    }
+                });
+
+
+                ImGui.EndTabItem();
+            }
+            ImGui.EndTabBar();
+        }
+    }
+
+    public static bool IconButtonWithText(FontAwesomeIcon icon, string text, string tooltip)
+    {
+        ImGui.PushID(text);
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0.0f));
+        bool selected = ImGuiComponents.IconButton(icon); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Imgui icon button here
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(tooltip);
+        }
+        
+        if (!text.IsNullOrEmpty())
+        {
+            ImGui.SameLine();
+            selected |= ImGui.Button(text);
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(tooltip);
+            }
+        }
+        ImGui.PopStyleVar();
+        ImGui.PopID();
+        
+        return selected;
+    }
+
+    public static void OffsetsTab()
+    {
+        float WindowWidth = ImGui.GetWindowWidth();
+        float WindowHeight = ImGui.GetWindowHeight();
+
+        Vector2 LeftSize = new Vector2(WindowWidth / 4.3f, WindowHeight / 1.5f);
+        Vector2 LayoutsChildSize = new Vector2(-1, LeftSize.Y / 2.5f);
+        Vector2 LayoutsSize = new Vector2(-1, -1);
+        Vector2 MembersSize = new Vector2(-1, -1);
+        Vector2 MiddleSize = new Vector2(WindowWidth / 2, WindowHeight / 1.5f);
+        Vector2 RightSize = new Vector2(WindowWidth / 4.3f, WindowHeight / 1.5f);
+
+        ImGui.NewLine();
+        if (ImGui.BeginChild("left", LeftSize, true, ImGuiWindowFlags.NoCollapse))
+        {
+            if (ImGui.BeginChild("layouts", LayoutsChildSize, true, ImGuiWindowFlags.NoCollapse))
+            {
+                if (ImGui.BeginChild("buttons", new Vector2(-1, ImGui.GetTextLineHeight() * 2.3f), false, ImGuiWindowFlags.NoCollapse))
+                {
+                    ImGui.Text("Presets");
+                    ImGui.SameLine();
+                    ImGuiEx.ImGuiLineRightAlign("LayoutButtons", () =>
+                    {
+                        if (IconButtonWithText(FontAwesomeIcon.Plus, "", "Create new Preset"))
+                        {
+                            ImGui.SetNextWindowPos(new Vector2(10.0f, 100.0f));
+                            ImGui.SetNextWindowSize(new Vector2(200.0f, 60.0f));
+                            NamingWindowOpen = true;
+                        }
+                        
+                        ImGui.SameLine();
+                        ImGui.Dummy(new Vector2(1, 0));
+                        ImGui.SameLine();
+                        if (IconButtonWithText(FontAwesomeIcon.Minus, "", "Delete selected Preset"))
+                        {
+
+                        }
+                        ImGui.SameLine();
+                        ImGui.Dummy(new Vector2(1, 0));
+                        ImGui.SameLine();
+                        if (IconButtonWithText(FontAwesomeIcon.Clipboard, "", "Copy Preset to Clipboard"))
+                        {
+
+                        }
+                    });
+                }
+                ImGui.EndChild();
+
+                //ImGui.Dummy(new Vector2(0, 0));
+                
+                using (var Layouts = ImRaii.ListBox("##", LayoutsSize))
+                {
+                    if (Layouts.Success) 
+                    {
+                        if (ImGui.Selectable("Default"))
+                        {
+                            SelectedLayout = "Default";
+                        }
+                        
+
+                    }
+                    
+                } 
+            }
+            ImGui.EndChild();
+            if (ImGui.BeginChild("members", MembersSize, true, ImGuiWindowFlags.NoCollapse))
+            {
+                if (!SelectedLayout.IsNullOrEmpty())
+                {
+                    if (ImGui.BeginChild("memberbuttons", new Vector2(-1, ImGui.GetTextLineHeight() * 2.3f), false, ImGuiWindowFlags.NoCollapse))
+                    {
+                        ImGui.Text("Members");
+                        ImGui.SameLine();
+                        ImGuiEx.ImGuiLineRightAlign("MembersButtons", () =>
+                        {
+                            if (IconButtonWithText(FontAwesomeIcon.Plus, "", "Add a Member"))
+                            {
+
+                            }
+                            ImGui.SameLine();
+                            ImGui.Dummy(new Vector2(1, 0));
+                            ImGui.SameLine();
+                            if (IconButtonWithText(FontAwesomeIcon.Minus, "", "Remove Selected Member"))
+                            {
+
+                            }
+                        });
+                    }
+                    ImGui.EndChild();
+
+                    using (var Members = ImRaii.ListBox("##", MembersSize))
+                    {
+                        if (Members.Success)
+                        {
+                            if (ImGui.Selectable("Default"))
+                            {
+
+                            }
+
+
+                        }
+
+                    }
+                }
+            }
+            ImGui.EndChild();
+        }
+        ImGui.EndChild();
+        ImGui.SameLine();
+        if (ImGui.BeginChild("middle", MiddleSize, true, ImGuiWindowFlags.NoCollapse))
+        {
+
+        }
+        ImGui.EndChild();
+        ImGui.SameLine();
+        if (ImGui.BeginChild("right", RightSize, true, ImGuiWindowFlags.NoCollapse))
+        {
+
+        }
+        ImGui.EndChild();
+        ImGui.NewLine();
+        ImGui.Separator();
+        
+
+    }
+
+    public static void OpenNamingWindow()
+    {
+        if (NamingWindowOpen)
+        {
+            
+            if (ImGui.Begin("Preset Name",ref NamingWindowOpen))
+            {
+                if(ImGui.BeginChild("##",new Vector2(-1,-1), true))
+                {
+                    ImGui.Text("Name");
+                    ImGui.SameLine();
+                    ImGui.InputText("##", nameBuffer, (uint)BufferSize);
+                    ImGui.SameLine();
+                    if (IconButtonWithText(FontAwesomeIcon.Save,"","Save"))
+                    {
+
+                    }
+                }
+                ImGui.EndChild();
+            }
+            ImGui.End();
+        }
+    }
+}
+
+
+
+
+
+/* OLD OFFSETS
+ImGui.Text("");
                 ImGui.SetNextItemOpen(true);
                 if (ImGui.TreeNode("Info"))
                 {
@@ -458,149 +800,4 @@ public class ConfigWindow : Window, IDisposable
                     configuration.EmoteOffsets.Add(new EmoteOffsets());
                     configuration.Save();
                 }
-            }
-            if (ImGui.BeginTabItem("Usage"))
-            {
-                ImGui.Text("");
-                ImGui.Text("Commands :");
-                ImGui.Text("");
-                ImGui.Text("/simonsaysconfig - Will open this window.");
-                ImGui.Text("");
-                ImGui.Text("/sync - Will attempt to sync positions with your Target, only works if Position Syncing is enabled in Experimental Features.");
-                ImGui.Text("");
-                ImGui.Text("/simonsays <TheirEmote> <YourEmote> <ShouldSync> - There are multiple ways to use this command.");
-                ImGui.Text("Example 1 - '/simonsays hum' - This will make you and the person you're targetting hum.");
-                ImGui.Text("Example 2 - '/simonsays hum dance' - This will make the person you're targetting hum and make yourself dance.");
-                ImGui.Text("Example 3 - '/simonsays hum dance true' - This will attempt to sync your positions prior to making your target hum and yourself dance.");
-                ImGui.Text("ShouldSync being 'true' in this case can be used on all previous examples.");
-                ImGui.Text("");
-                ImGui.Separator();
-                ImGui.Text("");
-                ImGui.Text("Macros :");
-                ImGui.Text("");
-                ImGui.Text("Macros can be used to initiate a single Emote or chain together multiple Emotes.");
-                ImGui.Text("");
-                ImGui.Text("Single Emote Example :");
-                ImGui.Text("");
-                string example =
-                    "/micon hum Emote\n" +                    "/tell <t> Simon Says : hum\n" +                    "/hum\n";
-                ImGui.InputTextMultiline("##Example", ref example, 200, new(200, 75), ImGuiInputTextFlags.ReadOnly);
-                ImGui.Text("");
-                ImGui.Text("Multiple Emote Example :");
-                ImGui.Text("");
-                string multiexample =
-                    "/micon hum Emote\n" +                    "/tell <t> Simon Says : hum\n" +                    "/hum\n" +
-                    "/wait 3\n" +
-                    "/tell <t> Simon Says : dance\n" +
-                    "/dance\n";
-                ImGui.InputTextMultiline("##MultiExample", ref multiexample, 200, new(200, 125), ImGuiInputTextFlags.ReadOnly);
-                ImGui.Text("");
-                ImGui.Separator();
-                ImGui.Text("");
-                ImGui.Text("Experimental Features :");
-                ImGui.Text("");
-                ImGui.Text("Positional Syncing : ");
-                ImGui.Text("");
-                ImGui.Text("Positional Syncing is a way to align perfectly with your Target.");
-                ImGui.Text("Enable it in the Settings Tab.");
-                ImGui.Text("Simply Target the person you wish to sync positions with and use the /sync Command.");
-                ImGui.Text("Should you fail to sync and end up running around your Target, use the stop sync button in the Settings tab.");
-                ImGui.EndTabItem();
-            }
-
-            if (EnableDebug && ImGui.BeginTabItem("Debug"))
-            {
-                DrawDebugPositionalInformation();
-                ImGui.EndTabItem();
-            }
-
-            if (ImGui.BeginTabItem("About"))
-            {
-                ImGui.Text("");
-                ImGuiEx.ImGuiLineCentered("AboutVersion", () =>
-                {
-                    ImGui.Text("SimonSays - " + typeof(Plugin).Assembly.GetName().Version?.ToString());
-                });
-                ImGui.Text("");
-                ImGuiEx.ImGuiLineCentered("AboutCreators", () =>
-                {
-                    ImGui.Text("Created by Rayla & Frdhog @ Triquetra Studios");
-                });
-                ImGui.Text("");
-                if (aboutImage != null)
-                {
-                    ImGuiEx.ImGuiLineCentered("AboutImage", () =>
-                    {
-                        ImGui.Image(aboutImage.ImGuiHandle, new System.Numerics.Vector2(300, 300));
-                    });
-                }
-                ImGui.Text("");
-                ImGuiEx.ImGuiLineCentered("AboutDiscord", () =>
-                {
-                    ImGui.Text("Join our Discord to stay up to date with releases, updates & more!");
-                });
-                ImGui.Text("");
-                ImGuiEx.ImGuiLineCentered("AboutButtons", () =>
-                {
-                    if (ImGui.Button("Discord"))
-                    {
-                        Process.Start(new ProcessStartInfo()
-                        {
-                            FileName = Plugin.DiscordURL,
-                            UseShellExecute = true
-                        });
-                    }
-                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                    {
-                        ImGui.SetTooltip("Join our Discord!");
-                    }
-                    ImGui.SameLine();
-                    if (ImGui.Button("Repo"))
-                    {
-                        ImGui.SetClipboardText(Plugin.Repo);
-
-                        //Process.Start(new ProcessStartInfo()
-                        //{
-                        //    FileName = Plugin.Repo,
-                        //    UseShellExecute = true
-                        //});
-                    }
-                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                    {
-                        ImGui.SetTooltip("Copy repo to Clipboard.");
-                    }
-                    ImGui.SameLine();
-                    if (ImGui.Button("Source"))
-                    {
-                        Process.Start(new ProcessStartInfo()
-                        {
-                            FileName = Plugin.Source,
-                            UseShellExecute = true
-                        });
-                    }
-                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                    {
-                        ImGui.SetTooltip("Take a peak under the hood.");
-                    }
-                    ImGui.SameLine();
-                    if (ImGui.Button("Buy me a coffee!"))
-                    {
-                        Process.Start(new ProcessStartInfo()
-                        {
-                            FileName = Plugin.BuyMeACoffee,
-                            UseShellExecute = true
-                        });
-                    }
-                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                    {
-                        ImGui.SetTooltip("Only if you want to!");
-                    }
-                });
-
-
-                ImGui.EndTabItem();
-            }
-            ImGui.EndTabBar();
-        }
-    }
-}
+*/
