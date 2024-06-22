@@ -41,6 +41,9 @@ namespace SimonSays
         private ICommandManager CommandManager { get; init; }
         private WindowSystem WindowSystem = new("SimonSays");
         private ConfigWindow ConfigWindow { get; init; }
+        public static string ConfigDirectory { get; set; }
+        public static string ConfigFile { get; set; }
+        public static string PresetDirectory { get; set; }
         private readonly DtrBarEntry DtrEntry;
 
         // Constructor
@@ -60,6 +63,16 @@ namespace SimonSays
             // Initialize and add configuration window
             ConfigWindow = new ConfigWindow(this);
             WindowSystem.AddWindow(ConfigWindow);
+
+            // Create Directory
+
+            ConfigDirectory = PluginInterface.ConfigDirectory.FullName;
+            ConfigFile = PluginInterface.ConfigFile.FullName;
+            PresetDirectory = Path.Combine(ConfigDirectory, "presets");
+            if (!Directory.Exists(PresetDirectory))
+            {
+                Directory.CreateDirectory(PresetDirectory);
+            }
 
             // Add command handlers
             this.CommandManager.AddHandler(Config, new CommandInfo(OnCommand)

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Linq;
@@ -12,6 +13,7 @@ using Lumina.Excel.GeneratedSheets2;
 using System.Reflection;
 using PunishLib.ImGuiMethods;
 using Dalamud.Interface.Internal;
+using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Common.Math;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
@@ -19,6 +21,12 @@ using FFVector2 = FFXIVClientStructs.FFXIV.Common.Math.Vector2;
 using Vector2 = System.Numerics.Vector2;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using Vector4 = System.Numerics.Vector4;
+using SimonSays.Helpers;
+using FFXIVClientStructs.FFXIV.Client.System.Input;
+using Dalamud.IoC;
+using Dalamud.Interface.ImGuiNotification;
+using ImPlotNET;
 
 namespace SimonSays.Windows;
 
@@ -34,19 +42,64 @@ public class ConfigWindow : Window, IDisposable
     private string testText = "Simon Says : hum";
     private IDalamudTextureWrap? aboutImage;
 
-    private static readonly bool EnableDebug = false;
+    private static readonly bool enableDebug = false;
 
-    public static string SelectedLayout = String.Empty;
-    public static bool NamingWindowOpen = false;
+    private Vector2 contextMenuPosition;
+    private Vector2 contextMenuSize = new Vector2(135, 34);
+    private bool isFirstFrame = true;
 
-    const int BufferSize = 1024;
-    private static byte[] nameBuffer = new byte[BufferSize];
+    public static string selectedLayout = String.Empty;
+    public static string selectedMember = String.Empty;
+    public static bool namingWindowOpen = false;
+    public static bool renamingWindowOpen = false;
+    public static bool newMemberWindowOpen = false;
+    public static bool contextPopupOpen = false;
+
+    const int bufferSize = 1024;
+    public static string nameBuffer = "Change Me";
+    public static string renameBuffer = String.Empty;
+
+    public static Vector4 oldTitleColorActive = Vector4.Zero;
+
+    public static Preset activePreset = null;
+
+    public static List<Vector4> memberColors = new List<Vector4>
+    {
+        new Vector4(0.722f, 0.325f, 0.623f, 1.0f),
+        new Vector4(0.7051666666666666f, 0.335625f, 0.605875f, 1.0f),
+        new Vector4(0.6883333333333332f, 0.34625f, 0.5887499999999999f, 1.0f),
+        new Vector4(0.6715f, 0.356875f, 0.5716249999999999f, 1.0f),
+        new Vector4(0.6546666666666667f, 0.36750000000000005f, 0.5545f, 1.0f),
+        new Vector4(0.6378333333333334f, 0.37812500000000004f, 0.537375f, 1.0f),
+        new Vector4(0.621f, 0.38875f, 0.52025f, 1.0f),
+        new Vector4(0.6041666666666666f, 0.399375f, 0.503125f, 1.0f),
+        new Vector4(0.5873333333333334f, 0.41000000000000003f, 0.48600000000000004f, 1.0f),
+        new Vector4(0.5705f, 0.42062499999999997f, 0.46887500000000004f, 1.0f),
+        new Vector4(0.5536666666666665f, 0.43125f, 0.45174999999999993f, 1.0f),
+        new Vector4(0.5368333333333333f, 0.44187499999999996f, 0.434625f, 1.0f),
+        new Vector4(0.52f, 0.4525f, 0.4175f, 1.0f),
+        new Vector4(0.5031666666666667f, 0.463125f, 0.40037500000000004f, 1.0f),
+        new Vector4(0.4863333333333334f, 0.47374999999999995f, 0.38325000000000004f, 1.0f),
+        new Vector4(0.46950000000000003f, 0.484375f, 0.36612500000000003f, 1.0f),
+        new Vector4(0.4526666666666668f, 0.49499999999999994f, 0.3490000000000001f, 1.0f),
+        new Vector4(0.4358333333333334f, 0.505625f, 0.33187500000000003f, 1.0f),
+        new Vector4(0.4190000000000001f, 0.5162499999999999f, 0.3147500000000001f, 1.0f),
+        new Vector4(0.4021666666666668f, 0.526875f, 0.29762500000000014f, 1.0f),
+        new Vector4(0.3853333333333334f, 0.5374999999999999f, 0.28050000000000014f, 1.0f),
+        new Vector4(0.3685000000000001f, 0.5481249999999999f, 0.26337500000000014f, 1.0f),
+        new Vector4(0.3516666666666668f, 0.5587499999999999f, 0.24625000000000014f, 1.0f),
+        new Vector4(0.3348333333333335f, 0.5693749999999999f, 0.22912500000000016f, 1.0f)
+
+    };
+
+
 
 
     public ConfigWindow(Plugin plugin) : base(
         "SimonSays Settings",
         ImGuiWindowFlags.NoScrollbar)
     {
+
         this.Size = new System.Numerics.Vector2(500, 900);
         this.SizeCondition = ImGuiCond.FirstUseEver;
 
@@ -286,12 +339,66 @@ public class ConfigWindow : Window, IDisposable
 
     public string SearchedEmoteFilter = string.Empty;
 
+    public override void PreDraw()
+    {
+        ImGuiStylePtr StylePtr = ImGui.GetStyle();
+        oldTitleColorActive = StylePtr.Colors[(int)ImGuiCol.TitleBgActive];
+
+        StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = (new Vector4(081, 054, 148, 211) / 255f);
+
+        base.PreDraw();
+    }
+
     /// <summary>
     /// Overrides the Draw method from the base class to define custom drawing behavior.
     /// </summary>
     public override void Draw()
     {
+        // Custom Style
+        // Variables
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(10, 10));
+        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(4, 4));
+        ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(4, 4));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(4, 4));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 4));
+        ImGui.PushStyleVar(ImGuiStyleVar.IndentSpacing, 21f);
+        ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarSize, 21f);
+        ImGui.PushStyleVar(ImGuiStyleVar.GrabMinSize, 21f);
+        // Borders
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
+        ImGui.PushStyleVar(ImGuiStyleVar.ChildBorderSize, 1f);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 0f);
+        ImGui.PushStyleVar(ImGuiStyleVar.FrameBorderSize, 0f);
+        // Rounding
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 6f);
+        ImGui.PushStyleVar(ImGuiStyleVar.ChildRounding, 0f);
+        ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 4f);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupRounding, 0f);
+        ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarRounding, 9f);
+        ImGui.PushStyleVar(ImGuiStyleVar.GrabRounding, 3f);
+        ImGui.PushStyleVar(ImGuiStyleVar.TabRounding, 4f);
+        // Alignment
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowTitleAlign, new Vector2(0.0f, 0.50f));
+        ImGui.PushStyleVar(ImGuiStyleVar.ButtonTextAlign, new Vector2(0.5f, 0.5f));
+        ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0, 0));
+        // Colors
+        ImGui.PushStyleColor(ImGuiCol.TitleBgActive, (new Vector4(081, 054, 148, 211)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, (new Vector4(130, 068, 153, 241)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, (new Vector4(184, 083, 159, 241)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.Separator, (new Vector4(130, 068, 153, 241)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.SeparatorHovered, (new Vector4(130, 068, 153, 200)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.SeparatorActive, (new Vector4(184, 083, 159, 241)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.ResizeGripActive, (new Vector4(184, 083, 159, 241)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.TabHovered, (new Vector4(130, 068, 153, 200)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.TabActive, (new Vector4(184, 083, 159, 241)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.Border, (new Vector4(0.35f, 0.35f, 0.35f, 0.75f)));
+        ImGui.PushStyleColor(ImGuiCol.FrameBg, (new Vector4(50, 46, 51, 122) / 255f));
+
+
+
+        OpenReNamingWindow();
         OpenNamingWindow();
+        ContextPopup();
         ImGui.Text("Enable or Disable listening to channels.");
         DrawEnabled();
         if (ImGui.BeginTabBar("Tabs"))
@@ -318,12 +425,12 @@ public class ConfigWindow : Window, IDisposable
                 DrawExperimentCheckboxes();
                 ImGui.EndTabItem();
             }
-            if (configuration.PosSync && ImGui.BeginTabItem("Offsets"))
+            if (configuration.PosSync && ImGui.BeginTabItem("Positional Presets"))
             {
                 OffsetsTab();
                 ImGui.EndTabItem();
             }
-            
+
             if (ImGui.BeginTabItem("Usage"))
             {
                 ImGui.Text("");
@@ -373,7 +480,7 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.EndTabItem();
             }
 
-            if (EnableDebug && ImGui.BeginTabItem("Debug"))
+            if (enableDebug && ImGui.BeginTabItem("Debug"))
             {
                 DrawDebugPositionalInformation();
                 ImGui.EndTabItem();
@@ -467,6 +574,19 @@ public class ConfigWindow : Window, IDisposable
             }
             ImGui.EndTabBar();
         }
+
+        ImGui.PopStyleVar(22);
+        ImGui.PopStyleColor(9);
+    }
+
+    public override void PostDraw()
+    {
+        ImGuiStylePtr StylePtr = ImGui.GetStyle();
+
+        StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = oldTitleColorActive;
+
+
+        base.PostDraw();
     }
 
     public static bool IconButtonWithText(FontAwesomeIcon icon, string text, string tooltip)
@@ -478,7 +598,7 @@ public class ConfigWindow : Window, IDisposable
         {
             ImGui.SetTooltip(tooltip);
         }
-        
+
         if (!text.IsNullOrEmpty())
         {
             ImGui.SameLine();
@@ -490,7 +610,7 @@ public class ConfigWindow : Window, IDisposable
         }
         ImGui.PopStyleVar();
         ImGui.PopID();
-        
+
         return selected;
     }
 
@@ -521,47 +641,152 @@ public class ConfigWindow : Window, IDisposable
                         {
                             ImGui.SetNextWindowPos(new Vector2(10.0f, 100.0f));
                             ImGui.SetNextWindowSize(new Vector2(200.0f, 60.0f));
-                            NamingWindowOpen = true;
+                            namingWindowOpen = true;
                         }
-                        
+
                         ImGui.SameLine();
                         ImGui.Dummy(new Vector2(1, 0));
                         ImGui.SameLine();
                         if (IconButtonWithText(FontAwesomeIcon.Minus, "", "Delete selected Preset"))
                         {
-
+                            File.Delete(Plugin.PresetDirectory + "/" + selectedLayout + ".json");
+                            selectedLayout = String.Empty;
+                            activePreset = null;
                         }
                         ImGui.SameLine();
                         ImGui.Dummy(new Vector2(1, 0));
                         ImGui.SameLine();
                         if (IconButtonWithText(FontAwesomeIcon.Clipboard, "", "Copy Preset to Clipboard"))
                         {
+                            if (!string.IsNullOrEmpty(selectedLayout))
+                            {
+                                var presetContent = File.ReadAllLines(Plugin.PresetDirectory + "/" + selectedLayout + ".json");
+                                string contentToCopy = string.Join(Environment.NewLine, presetContent);
 
+                                // Copy to clipboard
+                                ImGui.SetClipboardText(contentToCopy);
+
+                                Notification clipboardsuccess = new Notification();
+                                clipboardsuccess.Content = "Preset copied to Clipboard.";
+
+                                Service.NotificationManager.AddNotification(clipboardsuccess);
+                            }
+                            else
+                            {
+                                Notification clipboardfailure = new Notification();
+                                clipboardfailure.Content = "Select a preset to copy to Clipboard.";
+
+                                Service.NotificationManager.AddNotification(clipboardfailure);
+                            }
                         }
+                        ImGui.SameLine();
+                        ImGui.Dummy(new Vector2(1, 0));
+                        ImGui.SameLine();
+                        bool importInProgress = false; // Flag to track import progress
+
+                        if (IconButtonWithText(FontAwesomeIcon.FileImport, "", "Import Preset from Clipboard"))
+                        {
+                            // Check if import is not already in progress and the button is pressed
+                            if (!importInProgress)
+                            {
+                                importInProgress = true; // Set flag to indicate import is in progress
+
+                                try
+                                {
+                                    // Retrieve clipboard text
+                                    var presetContent = ImGui.GetClipboardText();
+
+                                    // Clear clipboard text immediately to avoid re-imports
+                                    ImGui.SetClipboardText("");
+
+                                    // Deserialize preset content
+                                    activePreset = JsonSerializer.Deserialize<Preset>(presetContent) ?? new Preset();
+                                    selectedLayout = activePreset.PresetName;
+
+                                    // Initialize Members if null
+                                    if (activePreset.Members == null)
+                                    {
+                                        activePreset.Members = new();
+                                    }
+
+                                    // Check if PresetName is valid
+                                    if (!string.IsNullOrEmpty(activePreset.PresetName))
+                                    {
+                                        // Serialize and write to file
+                                        string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
+                                        File.WriteAllText(Plugin.PresetDirectory + "/" + activePreset.PresetName + ".json", jsonString);
+                                        
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("PresetName is null or empty");
+                                    }
+                                }
+                                catch (Exception)
+                                {
+                                    Notification importFailure = new Notification();
+                                    importFailure.Content = "You can only import valid Presets";
+                                    Service.NotificationManager.AddNotification(importFailure);
+                                }
+                                finally
+                                {
+                                    importInProgress = false; // Reset flag whether import succeeded or failed
+                                }
+                            }
+                        }
+
                     });
                 }
                 ImGui.EndChild();
 
                 //ImGui.Dummy(new Vector2(0, 0));
-                
+
                 using (var Layouts = ImRaii.ListBox("##", LayoutsSize))
                 {
-                    if (Layouts.Success) 
+                    if (Layouts.Success)
                     {
-                        if (ImGui.Selectable("Default"))
+                        foreach (var file in Directory.EnumerateFiles(Plugin.PresetDirectory))
                         {
-                            SelectedLayout = "Default";
+                            var fileName = Path.GetFileNameWithoutExtension(file);
+                            if (ImGui.Selectable(fileName, selectedLayout == fileName))
+                            {
+                                selectedLayout = fileName;
+
+                                var presetContent = File.ReadAllLines(Plugin.PresetDirectory + "/" + selectedLayout + ".json");
+                                string jsonString = string.Join(Environment.NewLine, presetContent);
+
+
+
+                                activePreset = JsonSerializer.Deserialize<Preset>(jsonString) ?? new Preset();
+                                if (activePreset.Members == null)
+                                {
+                                    activePreset.Members = new();
+                                }
+
+                            }
+
+                            if (selectedLayout == fileName)
+                            {
+                                if (ImGui.IsItemHovered())
+                                {
+                                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                                    {
+                                        Service.Log.Debug("Opening context popup");
+
+                                        contextPopupOpen = true;
+                                    }
+                                }
+                            }
                         }
-                        
 
                     }
-                    
-                } 
+
+                }
             }
             ImGui.EndChild();
             if (ImGui.BeginChild("members", MembersSize, true, ImGuiWindowFlags.NoCollapse))
             {
-                if (!SelectedLayout.IsNullOrEmpty())
+                if (!selectedLayout.IsNullOrEmpty())
                 {
                     if (ImGui.BeginChild("memberbuttons", new Vector2(-1, ImGui.GetTextLineHeight() * 2.3f), false, ImGuiWindowFlags.NoCollapse))
                     {
@@ -569,16 +794,27 @@ public class ConfigWindow : Window, IDisposable
                         ImGui.SameLine();
                         ImGuiEx.ImGuiLineRightAlign("MembersButtons", () =>
                         {
-                            if (IconButtonWithText(FontAwesomeIcon.Plus, "", "Add a Member"))
+                            if (IconButtonWithText(FontAwesomeIcon.StreetView, "", "Add targetted Character."))
                             {
+                                GameObject? target = Service.TargetManager.Target;
+                                if (target != null)
+                                {
+                                    activePreset.Members!.Add(new PresetMember(target.Name.ToString()));
+                                    string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
+                                    File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                                }
 
                             }
                             ImGui.SameLine();
                             ImGui.Dummy(new Vector2(1, 0));
                             ImGui.SameLine();
+
                             if (IconButtonWithText(FontAwesomeIcon.Minus, "", "Remove Selected Member"))
                             {
-
+                                // activePreset.Members.Remove(selectedMember);
+                                activePreset.Members = activePreset.Members.Where((member) => member.CharacterName != selectedMember).ToList(); // select every member that doesn't have the same character name
+                                string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
+                                File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
                             }
                         });
                     }
@@ -588,14 +824,20 @@ public class ConfigWindow : Window, IDisposable
                     {
                         if (Members.Success)
                         {
-                            if (ImGui.Selectable("Default"))
+                            if (activePreset != null)
                             {
-
+                                if (activePreset.Members != null)
+                                {
+                                    foreach (var member in activePreset.Members.ToList())
+                                    {
+                                        if (ImGui.Selectable(member.CharacterName, selectedMember == member.CharacterName))
+                                        {
+                                            selectedMember = member.CharacterName;
+                                        }
+                                    }
+                                }
                             }
-
-
                         }
-
                     }
                 }
             }
@@ -605,36 +847,286 @@ public class ConfigWindow : Window, IDisposable
         ImGui.SameLine();
         if (ImGui.BeginChild("middle", MiddleSize, true, ImGuiWindowFlags.NoCollapse))
         {
+            if (selectedLayout != null)
+            {
+                double minX = -10;
+                double maxX = 10;
+                double minY = -10;
+                double maxY = 10;
+                ImPlot.SetNextAxesLimits(minX, maxX, minY, maxY, ImPlotCond.Always);
+                if (ImPlot.BeginPlot(selectedLayout, new Vector2(-1, -1), ImPlotFlags.None))
+                {
+                    if (activePreset != null)
+                    {
+                        if (activePreset.Members != null)
+                        {
+                            int colorIndex = 0;
+                            foreach (var member in activePreset.Members.ToList())
+                            {
+                                double X = member.X;
+                                double Y = member.Y;
 
+                                // Ensure colorIndex does not exceed the bounds of memberColors
+                                if (colorIndex >= memberColors.Count)
+                                {
+                                    colorIndex = 0; // Reset colorIndex if it exceeds the list size
+                                }
+
+                                if (ImPlot.DragPoint((int)ImGui.GetID(member.CharacterName), ref X, ref Y, memberColors[colorIndex], 15f))
+                                {
+                                    selectedMember = member.CharacterName;
+                                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                                    {
+                                        selectedMember = member.CharacterName;
+                                    }
+                                }
+                                string initials = string.Join("", member.CharacterName.Split(" ").SelectMany(s => s.FirstOrDefault().ToString()));
+
+                                ImPlot.PlotText(initials, X, Y);
+
+
+                                member.X = X;
+                                member.Y = Y;
+
+                                string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
+                                File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+
+                                colorIndex++; // Increment colorIndex for the next iteration
+                            }
+                        }
+                    }
+                }
+                ImPlot.EndPlot();
+            }
         }
         ImGui.EndChild();
         ImGui.SameLine();
         if (ImGui.BeginChild("right", RightSize, true, ImGuiWindowFlags.NoCollapse))
         {
+            if (ImGui.BeginChild("Properties", new Vector2(-1,ImGui.GetWindowHeight()-RightSize.Y / 2.29f), true, ImGuiWindowFlags.NoCollapse))
+            {
+                if (!selectedMember.IsNullOrEmpty())
+                {
+                    PresetMember member = activePreset?.Members?.FirstOrDefault(((m) => m.CharacterName == selectedMember)) ?? new PresetMember();
+                    float x = (float)member.X;
+                    float y = (float)member.Y;
+                    float rot = member.ROT;
+                    bool isAnchor = member.isAnchor;
+                    bool xchanged = false;
+                    bool ychanged = false;
+                    bool rotchanged = false;
+                    bool anchorchanged = false;
+                    ImGui.Text(selectedMember.ToString());
+                    ImGui.Dummy(new Vector2(0, 10));
+                    ImGui.Dummy(new Vector2(0, 5));
+                    ImGui.Text("Offset X");
+                    ImGui.SameLine();
+                    ImGuiEx.ImGuiLineRightAlign("Offsetx", () =>
+                    {
+                        xchanged = ImGui.DragFloat("##x", ref x, 0.05f);
+                        ImGui.SameLine();
+                        ImGui.Text("  ");
+                    });
+                    ImGui.Dummy(new Vector2(0, 10));
+                    ImGui.Text("Offset Y");
+                    ImGui.SameLine();
+                    ImGuiEx.ImGuiLineRightAlign("Offsety", () =>
+                    {
+                        ychanged = ImGui.DragFloat("##y", ref y, 0.05f);
+                        ImGui.SameLine();
+                        ImGui.Text("  ");
+                    });
+                    ImGui.Dummy(new Vector2(0, 10));
+                    ImGui.Text("Rotation");
+                    ImGui.SameLine();
+                    ImGuiEx.ImGuiLineRightAlign("Offsetrot", () =>
+                    {
+                        rotchanged = ImGui.DragFloat("##rot", ref rot, 0.05f);
+                        ImGui.SameLine();
+                        ImGui.Text("  ");
+                    });
+                    ImGui.Dummy(new Vector2(0, 10));
+                    ImGui.Text("Anchor Member");
+                    ImGui.SameLine();
+                    ImGuiEx.ImGuiLineRightAlign("Offsetanchor", () =>
+                    {
+                        anchorchanged = ImGui.Checkbox("##anchor", ref isAnchor);
+                        if (ImGui.IsItemHovered())
+                        {
+                            ImGui.BeginTooltip();
+                            ImGui.Text("An Anchor Member is the member that the rest");
+                            ImGui.Text("of the members base their positions off of.");
+                            ImGui.EndTooltip();
+                        }
+                        ImGui.SameLine();
+                        ImGui.Text("  ");
+                    });
+                    
 
+
+                    member.X = x;
+                    member.Y = y;
+                    member.ROT = rot;
+                    member.isAnchor = isAnchor;
+
+                    if (xchanged || ychanged || rotchanged || anchorchanged)
+                    {
+                        string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
+                        File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                    }
+
+                }
+                else
+                {
+                    ImGui.TextWrapped("Select a Preset Member to begin editing their properties.");
+                }
+            }
+            ImGui.EndChild();
+            if (ImGui.BeginChild("Actions", LayoutsChildSize, true, ImGuiWindowFlags.NoCollapse))
+            {
+
+            }
+            ImGui.EndChild();
         }
         ImGui.EndChild();
         ImGui.NewLine();
         ImGui.Separator();
-        
+
 
     }
 
-    public static void OpenNamingWindow()
+    public void ContextPopup()
     {
-        if (NamingWindowOpen)
+        if (contextPopupOpen)
         {
-            
-            if (ImGui.Begin("Preset Name",ref NamingWindowOpen))
+            // Set window size on the first frame
+            if (isFirstFrame)
             {
-                if(ImGui.BeginChild("##",new Vector2(-1,-1), true))
+                contextMenuPosition = ImGui.GetMousePos();
+                isFirstFrame = false;
+            }
+
+            ImGui.SetNextWindowSize(contextMenuSize);
+            ImGui.SetNextWindowPos(contextMenuPosition);
+
+            if (ImGui.Begin("Contextual Menu", ref contextPopupOpen, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar))
+            {
+                Service.Log.Debug("You should be seeing a context menu right about now");
+
+                if (ImGui.Selectable("Rename Preset"))
+                {
+                    ImGui.SetNextWindowPos(new Vector2(10.0f, 100.0f));
+                    ImGui.SetNextWindowSize(new Vector2(200.0f, 60.0f));
+                    renamingWindowOpen = true;
+                    contextPopupOpen = false;
+                    renameBuffer = activePreset?.PresetName ?? "";
+                }
+            }
+            ImGui.End();
+            if (!ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+            {
+                contextPopupOpen = false;
+            }
+
+            // Reset isFirstFrame if contextPopupOpen is false
+            if (!contextPopupOpen)
+            {
+                isFirstFrame = true;
+            }
+
+
+        }
+    }
+
+    public void OpenNamingWindow()
+    {
+        if (namingWindowOpen)
+        {
+
+            if (ImGui.Begin("Preset Name", ref namingWindowOpen))
+            {
+                if (ImGui.BeginChild("##", new Vector2(-1, -1), true))
                 {
                     ImGui.Text("Name");
                     ImGui.SameLine();
-                    ImGui.InputText("##", nameBuffer, (uint)BufferSize);
+                    ImGui.InputText("##", ref nameBuffer, (uint)bufferSize);
                     ImGui.SameLine();
-                    if (IconButtonWithText(FontAwesomeIcon.Save,"","Save"))
+                    if (IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
                     {
+                        var preset = new Preset
+                        {
+                            PresetName = nameBuffer,
+                        };
+
+                        string jsonString = JsonSerializer.Serialize(preset, new JsonSerializerOptions { WriteIndented = true });
+                        File.WriteAllText(Plugin.PresetDirectory + "/" + nameBuffer + ".json", jsonString);
+
+                        namingWindowOpen = false;
+
+                    }
+                }
+                ImGui.EndChild();
+            }
+            ImGui.End();
+        }
+    }
+
+    public void OpenReNamingWindow()
+    {
+        if (renamingWindowOpen)
+        {
+
+            if (ImGui.Begin("Rename a preset", ref renamingWindowOpen))
+            {
+                if (ImGui.BeginChild("##", new Vector2(-1, -1), true))
+                {
+                    ImGui.Text("Name");
+                    ImGui.SameLine();
+                    ImGui.InputText("##", ref renameBuffer, (uint)bufferSize);
+                    ImGui.SameLine();
+                    if (IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
+                    {
+                        var prevName = activePreset.PresetName;
+                        activePreset.PresetName = renameBuffer;
+
+                        string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
+                        File.WriteAllText(Plugin.PresetDirectory + "/" + renameBuffer + ".json", jsonString);
+                        File.Delete(Plugin.PresetDirectory + "/" + prevName + ".json");
+
+                        renamingWindowOpen = false;
+
+                    }
+                }
+                ImGui.EndChild();
+            }
+            ImGui.End();
+        }
+    }
+
+    public void OpenNewMemberWindow()
+    {
+        if (newMemberWindowOpen)
+        {
+
+            if (ImGui.Begin("Member's Character Name", ref newMemberWindowOpen))
+            {
+                if (ImGui.BeginChild("##", new Vector2(-1, -1), true))
+                {
+                    ImGui.Text("Character Name");
+                    ImGui.SameLine();
+                    ImGui.InputText("##", ref nameBuffer, (uint)bufferSize);
+                    ImGui.SameLine();
+                    if (IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
+                    {
+                        var preset = new Preset
+                        {
+                            PresetName = nameBuffer,
+                        };
+
+                        string jsonString = JsonSerializer.Serialize(preset);
+                        File.WriteAllText(Plugin.PresetDirectory + "/" + nameBuffer + ".json", jsonString);
+
+                        newMemberWindowOpen = false;
 
                     }
                 }
@@ -644,160 +1136,3 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 }
-
-
-
-
-
-/* OLD OFFSETS
-ImGui.Text("");
-                ImGui.SetNextItemOpen(true);
-                if (ImGui.TreeNode("Info"))
-                {
-                    ImGui.Text("");
-                    ImGui.Text("Set offsets for particular emotes.");
-                    ImGui.Text("");
-                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "X - Foward / Back.");
-                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Z - Left / Right.");
-                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "R - Rotation.");
-                    ImGui.EndTabItem();
-                    ImGui.Text("");
-                    ImGui.Text("Usage :");
-                    ImGui.Text("");
-                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Click Add Emote Offset to get started.");
-                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Label this offset however you wish, you may have multiple offsets for a single emote.");
-                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Choose the emote you wish to offset your positon with.");
-                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Increase / decrease each offset field to your desired position.");
-                    ImGui.Text("");
-                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Now, when you use /simonsays with an emote you've specified an offset for, you'll move the offset you've provided.");
-                    ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "If you wish to test your offset without emoting, do /sync emote!");
-                    ImGui.Text("");
-                    ImGui.Separator();
-
-                    ImGui.TreePop();
-                }
-
-                ImGui.Text("");
-                if (ImGui.BeginTable("OffsetsTable", 5))
-                {
-                    ImGui.TableSetupColumn("Enable", ImGuiTableColumnFlags.WidthStretch, 40.0f);
-                    ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 100.0f);
-                    ImGui.TableSetupColumn("Emote", ImGuiTableColumnFlags.WidthStretch, 100.0f);
-                    ImGui.TableSetupColumn("Offsets : Fwd/Back | Left/Right | Rotation", ImGuiTableColumnFlags.WidthStretch, 90.0f);
-                    ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthStretch, 10.0f);
-                    ImGui.TableHeadersRow();
-
-                    int i = 0;
-                    foreach (EmoteOffsets offset in configuration.EmoteOffsets)
-                    {
-                        ImGui.TableNextRow();
-                        ImGui.PushID(i++);
-
-                        // Enable
-                        ImGui.TableNextColumn();
-
-                        if (ImGuiComponents.IconButton(FontAwesomeIcon.Trash))
-                        {
-                            configuration.EmoteOffsets.Remove(offset);
-                            configuration.Save();
-                            break;
-                        }
-                        ImGui.SameLine();
-                        if (ImGui.Checkbox("##Enabled", ref offset.Enabled))
-                        {
-                            configuration.Save();
-                        }
-
-                        // Label
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(-1);
-                        if (ImGui.InputTextWithHint("##Label", "Label", ref offset.Label, 64))
-                        {
-                            configuration.Save();
-                        }
-
-                        // Emote
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(-1);
-
-                        if (ImGui.BeginCombo("##Emote", offset.Emote, ImGuiComboFlags.HeightLargest))
-                        {
-                            // Filter through the emotes by the searched
-
-                            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                            ImGui.InputTextWithHint("##EmoteFilter", "Search...", ref SearchedEmoteFilter, 128);
-
-                            var size = new System.Numerics.Vector2(ImGui.GetItemRectSize().X, 240);
-
-                            // Add a scroll panel inside the combobox
-                            if (ImGui.BeginChild("##EmoteScroll", size))
-                            {
-                                IEnumerable<string> emoteList = Service.Emotes.Where((s) => s.Contains(SearchedEmoteFilter));
-
-                                if (ImGui.Selectable("[None]"))
-                                {
-                                    offset.Emote = string.Empty;
-                                }
-
-                                foreach (string emote in emoteList)
-                                {
-                                    string e = emote;
-                                    Meat.SanitizeEmote(ref e);
-                                    if (ImGui.Selectable(e))
-                                    {
-                                        offset.Emote = e;
-                                    }
-                                }
-
-                                ImGui.EndChild();
-                            }
-                            ImGui.EndCombo();
-                        }
-
-                        // Offset
-                        ImGui.TableNextColumn();
-                        float offsetColumnSize = (ImGui.GetColumnWidth() / 3.0f) - 6.0f;
-                        ImGui.SetNextItemWidth(offsetColumnSize);
-                        if (ImGui.DragFloat("##OffsetX", ref offset.X, 0.05f, -10.0f, 10.0f))
-                        {
-                            configuration.Save();
-                        }
-                        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                        {
-                            ImGui.SetTooltip("Offset X");
-                        }
-
-                        ImGui.SameLine();
-                        ImGui.SetNextItemWidth(offsetColumnSize);
-
-                        if (ImGui.DragFloat("##OffsetZ", ref offset.Z, 0.05f, -10.0f, 10.0f))
-                        {
-                            configuration.Save();
-                        }
-                        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                        {
-                            ImGui.SetTooltip("Offset Z");
-                        }
-
-                        ImGui.SameLine();
-                        ImGui.SetNextItemWidth(offsetColumnSize);
-                        if (ImGui.DragFloat("##OffsetR", ref offset.R, 0.05f, -180.0f, 180f))
-                        {
-                            configuration.Save();
-                        }
-                        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                        {
-                            ImGui.SetTooltip("Offset Rotation");
-                        }
-
-                        ImGui.PopID();
-                    }
-
-                    ImGui.EndTable();
-                }
-                if (ImGui.Button("Add Emote Offset"))
-                {
-                    configuration.EmoteOffsets.Add(new EmoteOffsets());
-                    configuration.Save();
-                }
-*/

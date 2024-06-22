@@ -92,6 +92,7 @@ namespace SimonSays
         [PluginService] public static ITargetManager TargetManager { get; private set; } = null!;
         [PluginService] public static IGameInteropProvider Hook { get; private set; } = null!;
         [PluginService] public static IFramework Framework { get; private set; } = null!;
+        [PluginService] public static INotificationManager NotificationManager { get; private set; } = null!;
     }
 
 
