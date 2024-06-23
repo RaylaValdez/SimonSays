@@ -30,5 +30,6 @@ namespace SimonSays.Helpers
         public double Y { get; set; }
         public float ROT { get; set; }
         public bool isAnchor { get; set; } = false;
+        public string emote { get; set; } = string.Empty;
     }
 }

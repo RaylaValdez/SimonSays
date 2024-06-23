@@ -27,6 +27,7 @@ using FFXIVClientStructs.FFXIV.Client.System.Input;
 using Dalamud.IoC;
 using Dalamud.Interface.ImGuiNotification;
 using ImPlotNET;
+using Lumina.Excel.GeneratedSheets;
 
 namespace SimonSays.Windows;
 
@@ -57,6 +58,7 @@ public class ConfigWindow : Window, IDisposable
 
     const int bufferSize = 1024;
     public static string nameBuffer = "Change Me";
+    public static string filterText = String.Empty;
     public static string renameBuffer = String.Empty;
 
     public static Vector4 oldTitleColorActive = Vector4.Zero;
@@ -854,17 +856,21 @@ public class ConfigWindow : Window, IDisposable
                 double minY = -10;
                 double maxY = 10;
                 ImPlot.SetNextAxesLimits(minX, maxX, minY, maxY, ImPlotCond.Always);
-                if (ImPlot.BeginPlot(selectedLayout, new Vector2(-1, -1), ImPlotFlags.None))
+                if (ImPlot.BeginPlot(selectedLayout, new Vector2(-1, -1), ImPlotFlags.None | ImPlotFlags.NoLegend))
                 {
                     if (activePreset != null)
                     {
                         if (activePreset.Members != null)
                         {
+                            ImPlotPoint mousePos = ImPlot.GetPlotMousePos();
+
+
                             int colorIndex = 0;
                             foreach (var member in activePreset.Members.ToList())
                             {
                                 double X = member.X;
                                 double Y = member.Y;
+                                float rot = member.ROT;
 
                                 // Ensure colorIndex does not exceed the bounds of memberColors
                                 if (colorIndex >= memberColors.Count)
@@ -875,15 +881,58 @@ public class ConfigWindow : Window, IDisposable
                                 if (ImPlot.DragPoint((int)ImGui.GetID(member.CharacterName), ref X, ref Y, memberColors[colorIndex], 15f))
                                 {
                                     selectedMember = member.CharacterName;
-                                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                                }
+                                if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                                {
+                                    // where a is [x,y] and b is [mouseX, mouseY] : (a squared) + (y squared) = vector magnitude aka distance
+                                    double distance = ((X - mousePos.x) * (X - mousePos.x)) + ((Y - mousePos.y) * (Y - mousePos.y));
+
+                                    if (distance < 0.15f)
                                     {
                                         selectedMember = member.CharacterName;
+                                        SendNotification("Selected : " + selectedMember);
                                     }
                                 }
                                 string initials = string.Join("", member.CharacterName.Split(" ").SelectMany(s => s.FirstOrDefault().ToString()));
 
                                 ImPlot.PlotText(initials, X, Y);
 
+                                // Calculate the end point of the arrow based on the rotation angle
+                                float arrowLength = 1f; // Length of the arrow
+                                float rotOffset = -rot + MathF.PI / 2;
+                                float endX = (float)(X + arrowLength * Math.Cos(rotOffset));
+                                float endY = (float)(Y + arrowLength * Math.Sin(rotOffset));
+
+                                // Prepare the points for PlotLine
+                                float[] xs = new float[] { (float)X, endX };
+                                float[] ys = new float[] { (float)Y, endY };
+
+                                ImPlot.SetupLegend(ImPlotLocation.NorthWest, ImPlotLegendFlags.NoMenus);
+                                // Plot the arrow to show the rotation
+                                ImPlot.SetNextLineStyle(memberColors[colorIndex]);
+                                ImPlot.PlotLine(member.CharacterName, ref xs[0], ref ys[0], 2);
+
+                                // Calculate the points for the arrowhead
+                                float arrowheadLength = 0.25f; // Length of the arrowhead lines
+                                float angleOffset = (125f).Degrees().Rad;
+
+                                float leftX = (float)(endX + arrowheadLength * Math.Cos(rotOffset + angleOffset));
+                                float leftY = (float)(endY + arrowheadLength * Math.Sin(rotOffset + angleOffset));
+
+                                float rightX = (float)(endX + arrowheadLength * Math.Cos(rotOffset - angleOffset));
+                                float rightY = (float)(endY + arrowheadLength * Math.Sin(rotOffset - angleOffset));
+
+                                float[] leftArrowXs = new float[] { endX, leftX };
+                                float[] leftArrowYs = new float[] { endY, leftY };
+
+                                float[] rightArrowXs = new float[] { endX, rightX };
+                                float[] rightArrowYs = new float[] { endY, rightY };
+
+                                // Plot the arrowhead
+                                ImPlot.SetNextLineStyle(memberColors[colorIndex]);
+                                ImPlot.PlotLine(member.CharacterName + "_leftArrowhead", ref leftArrowXs[0], ref leftArrowYs[0], 2);
+                                ImPlot.SetNextLineStyle(memberColors[colorIndex]);
+                                ImPlot.PlotLine(member.CharacterName + "_rightArrowhead", ref rightArrowXs[0], ref rightArrowYs[0], 2);
 
                                 member.X = X;
                                 member.Y = Y;
@@ -893,6 +942,9 @@ public class ConfigWindow : Window, IDisposable
 
                                 colorIndex++; // Increment colorIndex for the next iteration
                             }
+
+
+
                         }
                     }
                 }
@@ -908,17 +960,39 @@ public class ConfigWindow : Window, IDisposable
                 if (!selectedMember.IsNullOrEmpty())
                 {
                     PresetMember member = activePreset?.Members?.FirstOrDefault(((m) => m.CharacterName == selectedMember)) ?? new PresetMember();
+
+                    int comboCurItemIndex = 0;
+
                     float x = (float)member.X;
                     float y = (float)member.Y;
-                    float rot = member.ROT;
+                    float rot = member.ROT.Radians().Deg;
                     bool isAnchor = member.isAnchor;
+                    string emote = member.emote;
+
                     bool xchanged = false;
                     bool ychanged = false;
                     bool rotchanged = false;
                     bool anchorchanged = false;
-                    ImGui.Text(selectedMember.ToString());
+                    bool emotechanged = false;
+
+                    ImGui.Text(selectedMember.ToString() + " Properties");
                     ImGui.Dummy(new Vector2(0, 10));
-                    ImGui.Dummy(new Vector2(0, 5));
+                    ImGui.Text("Anchor Member");
+                    ImGui.SameLine();
+                    ImGuiEx.ImGuiLineRightAlign("Offsetanchor", () =>
+                    {
+                        anchorchanged = ImGui.Checkbox("##anchor", ref isAnchor);
+                        if (ImGui.IsItemHovered())
+                        {
+                            ImGui.BeginTooltip();
+                            ImGui.Text("An Anchor Member is the member that the rest");
+                            ImGui.Text("of the members base their positions off of.");
+                            ImGui.EndTooltip();
+                        }
+                        ImGui.SameLine();
+                        ImGui.Text("  ");
+                    });
+                    ImGui.Dummy(new Vector2(0, 10));
                     ImGui.Text("Offset X");
                     ImGui.SameLine();
                     ImGuiEx.ImGuiLineRightAlign("Offsetx", () =>
@@ -945,31 +1019,49 @@ public class ConfigWindow : Window, IDisposable
                         ImGui.SameLine();
                         ImGui.Text("  ");
                     });
+                    
                     ImGui.Dummy(new Vector2(0, 10));
-                    ImGui.Text("Anchor Member");
+                    ImGui.Text("Emote");
                     ImGui.SameLine();
-                    ImGuiEx.ImGuiLineRightAlign("Offsetanchor", () =>
+                    ImGuiEx.ImGuiLineRightAlign("Offsetcombo", () =>
                     {
-                        anchorchanged = ImGui.Checkbox("##anchor", ref isAnchor);
-                        if (ImGui.IsItemHovered())
+                        if (ImGui.BeginCombo("##EmoteCombo", emote))
                         {
-                            ImGui.BeginTooltip();
-                            ImGui.Text("An Anchor Member is the member that the rest");
-                            ImGui.Text("of the members base their positions off of.");
-                            ImGui.EndTooltip();
+                            ImGui.InputText("##Search", ref filterText, bufferSize);
+                            foreach (var j in Service.Emotes)
+                            {
+                                var i = j.Replace("/", "");
+                                if (!filterText.IsNullOrEmpty() && !i.Contains(filterText))
+                                {
+                                    continue;
+                                }
+                                if (ImGui.Selectable(i, (i == member.emote)))
+                                {
+                                    emote = i;
+                                }
+
+                                if (i == member.emote)
+                                {
+                                    ImGui.SetItemDefaultFocus();
+                                }
+                            }
+                            ImGui.EndCombo();
                         }
+                        
+
                         ImGui.SameLine();
                         ImGui.Text("  ");
                     });
-                    
 
 
-                    member.X = x;
-                    member.Y = y;
-                    member.ROT = rot;
+
+                    member.X = Math.Clamp(x,-10,10);
+                    member.Y = Math.Clamp(y, -10, 10);
+                    member.ROT = Math.Clamp(rot, -180, 180).Degrees().Rad;
                     member.isAnchor = isAnchor;
+                    member.emote = emote;
 
-                    if (xchanged || ychanged || rotchanged || anchorchanged)
+                    if (xchanged || ychanged || rotchanged || anchorchanged || emotechanged)
                     {
                         string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
                         File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
@@ -1134,5 +1226,12 @@ public class ConfigWindow : Window, IDisposable
             }
             ImGui.End();
         }
+    }
+
+    public static void SendNotification(string message)
+    {
+        Notification notif = new Notification();
+        notif.Content = message;
+        Service.NotificationManager.AddNotification(notif);
     }
 }
