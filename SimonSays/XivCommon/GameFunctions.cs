@@ -1,11 +1,10 @@
-﻿using System;
+using System;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using XivCommon.Functions;
 using XivCommon.Functions.FriendList;
-using XivCommon.Functions.Housing;
 using XivCommon.Functions.NamePlates;
 using XivCommon.Functions.Tooltips;
 using Framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
@@ -77,26 +76,21 @@ public class GameFunctions : IDisposable {
     /// </summary>
     public Journal Journal { get; }
 
-    /// <summary>
-    /// Housing functions
-    /// </summary>
-    public Housing Housing { get; }
-
-    internal GameFunctions(DalamudPluginInterface @interface, Hooks hooks) {
+    internal GameFunctions(IDalamudPluginInterface @interface, Hooks hooks) {
         var services = @interface.Create<Services>();
         if (services == null) {
             throw new Exception("could not create services");
         }
 
-        Logger.Log = services.Log;
+        Logger.Log = services.Log!;
 
-        this.Framework = services.Framework;
-        this.GameGui = services.GameGui;
+        this.Framework = services.Framework!;
+        this.GameGui = services.GameGui!;
 
-        var interop = services.GameInteropProvider;
-        var objectTable = services.ObjectTable;
-        var partyFinderGui = services.PartyFinderGui;
-        var scanner = services.SigScanner;
+        var interop = services.GameInteropProvider!;
+        var objectTable = services.ObjectTable!;
+        var partyFinderGui = services.PartyFinderGui!;
+        var scanner = services.SigScanner!;
 
         this.UiAlloc = new UiAlloc(scanner);
         this.Chat = new Chat(scanner);
@@ -110,7 +104,6 @@ public class GameFunctions : IDisposable {
         this.DutyFinder = new DutyFinder(scanner);
         this.Journal = new Journal(scanner);
         this.FriendList = new FriendList();
-        this.Housing = new Housing(scanner);
     }
 
     /// <inheritdoc />
@@ -138,7 +131,7 @@ public class GameFunctions : IDisposable {
     /// <returns>Pointer</returns>
     [Obsolete("Use Framework.Instance()->GetUiModule()")]
     public unsafe IntPtr GetUiModule() {
-        return (IntPtr) this.GetFramework()->GetUiModule();
+        return (IntPtr) this.GetFramework()->GetUIModule();
     }
 
     /// <summary>
@@ -147,7 +140,7 @@ public class GameFunctions : IDisposable {
     /// <returns>Pointer</returns>
     [Obsolete("Use Framework.Instance()->GetUiModule()->GetRaptureAtkModule()")]
     public unsafe IntPtr GetAtkModule() {
-        return (IntPtr) this.GetFramework()->GetUiModule()->GetRaptureAtkModule();
+        return (IntPtr) this.GetFramework()->GetUIModule()->GetRaptureAtkModule();
     }
 
     /// <summary>
@@ -156,7 +149,7 @@ public class GameFunctions : IDisposable {
     /// <returns>Pointer</returns>
     [Obsolete("Use Framework.Instance()->GetUiModule()->GetAgentModule()")]
     public unsafe IntPtr GetAgentModule() {
-        return (IntPtr) this.GetFramework()->GetUiModule()->GetAgentModule();
+        return (IntPtr) this.GetFramework()->GetUIModule()->GetAgentModule();
     }
 
     /// <summary>
@@ -167,7 +160,7 @@ public class GameFunctions : IDisposable {
     /// <exception cref="InvalidOperationException">if the signature for the function could not be found</exception>
     [Obsolete("Use Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId)")]
     public unsafe IntPtr GetAgentByInternalId(uint id) {
-        return (IntPtr) this.GetFramework()->GetUiModule()->GetAgentModule()->GetAgentByInternalId((AgentId) id);
+        return (IntPtr) this.GetFramework()->GetUIModule()->GetAgentModule()->GetAgentByInternalId((AgentId) id);
     }
 
     /// <summary>
@@ -177,6 +170,6 @@ public class GameFunctions : IDisposable {
     /// <exception cref="InvalidOperationException">if the signature for the function could not be found</exception>
     [Obsolete("Use AtkStage.GetSingleton()")]
     public unsafe IntPtr GetAtkStageSingleton() {
-        return (IntPtr) AtkStage.GetSingleton();
+        return (IntPtr) AtkStage.Instance();
     }
 }

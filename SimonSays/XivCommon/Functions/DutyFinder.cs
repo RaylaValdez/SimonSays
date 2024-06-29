@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -20,16 +20,16 @@ public class DutyFinder {
 
     private delegate IntPtr OpenRouletteDelegate(IntPtr agent, byte roulette, byte a3);
 
-    private readonly OpenDutyDelegate? _openDuty;
-    private readonly OpenRouletteDelegate? _openRoulette;
+    private readonly OpenDutyDelegate? openDuty;
+    private readonly OpenRouletteDelegate? openRoulette;
 
     internal DutyFinder(ISigScanner scanner) {
         if (scanner.TryScanText(Signatures.OpenRegularDuty, out var openDutyPtr, "Duty Finder (open duty)")) {
-            this._openDuty = Marshal.GetDelegateForFunctionPointer<OpenDutyDelegate>(openDutyPtr);
+            this.openDuty = Marshal.GetDelegateForFunctionPointer<OpenDutyDelegate>(openDutyPtr);
         }
 
         if (scanner.TryScanText(Signatures.OpenRoulette, out var openRoulettePtr, "Duty Finder (open roulette)")) {
-            this._openRoulette = Marshal.GetDelegateForFunctionPointer<OpenRouletteDelegate>(openRoulettePtr);
+            this.openRoulette = Marshal.GetDelegateForFunctionPointer<OpenRouletteDelegate>(openRoulettePtr);
         }
     }
 
@@ -48,13 +48,13 @@ public class DutyFinder {
     /// <param name="contentFinderCondition">ID of duty to show</param>
     /// <exception cref="InvalidOperationException">if the open duty function could not be found in memory</exception>
     public unsafe void OpenDuty(uint contentFinderCondition) {
-        if (this._openDuty == null) {
+        if (this.openDuty == null) {
             throw new InvalidOperationException("Could not find signature for open duty function");
         }
 
-        var agent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.ContentsFinder);
+        var agent = (IntPtr) Framework.Instance()->GetUIModule()->GetAgentModule()->GetAgentByInternalId(AgentId.ContentsFinder);
 
-        this._openDuty(agent, contentFinderCondition, 0);
+        this.openDuty(agent, contentFinderCondition, 0);
     }
 
     /// <summary>
@@ -70,12 +70,12 @@ public class DutyFinder {
     /// </summary>
     /// <param name="roulette">ID of roulette to show</param>
     public unsafe void OpenRoulette(byte roulette) {
-        if (this._openRoulette == null) {
+        if (this.openRoulette == null) {
             throw new InvalidOperationException("Could not find signature for open roulette function");
         }
 
-        var agent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.ContentsFinder);
+        var agent = (IntPtr) Framework.Instance()->GetUIModule()->GetAgentModule()->GetAgentByInternalId(AgentId.ContentsFinder);
 
-        this._openRoulette(agent, roulette, 0);
+        this.openRoulette(agent, roulette, 0);
     }
 }

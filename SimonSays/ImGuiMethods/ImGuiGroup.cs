@@ -20,7 +20,7 @@ namespace PunishLib.ImGuiMethods
             public uint HeaderTextColor { get; init; } = ImGui.GetColorU32(ImGuiCol.Text);
 
             // Set the default value of the HeaderTextAction property to null
-            public Action HeaderTextAction { get; init; } = null;
+            public Action? HeaderTextAction { get; init; } = null;
 
             // Set the default value of the BorderColor property to the color of ImGuiCol.Border
             public uint BorderColor { get; init; } = ImGui.GetColorU32(ImGuiCol.Border);
@@ -44,7 +44,7 @@ namespace PunishLib.ImGuiMethods
             public float MaxX { get; set; }
         }
 
-        private static readonly Stack<GroupBoxOptions> groupBoxOptionsStack = new();
+        private static readonly Stack<GroupBoxOptions> GroupBoxOptionsStack = new();
 
         /// <summary>
         /// Begins a group box with the specified ID, minimum window percent, and options.
@@ -53,7 +53,7 @@ namespace PunishLib.ImGuiMethods
         /// <param name="minimumWindowPercent">The minimum window percent for the group box.</param>
         /// <param name="options">The options for the group box.</param>
         /// <returns>A boolean indicating whether the group box was successfully begun.</returns>
-        public static bool BeginGroupBox(string id = null, float minimumWindowPercent = 1.0f, GroupBoxOptions options = null)
+        public static bool BeginGroupBox(string? id = null, float minimumWindowPercent = 1.0f, GroupBoxOptions? options = null)
         {
             // Create a new instance of GroupBoxOptions if options is null
             options ??= new GroupBoxOptions();
@@ -104,7 +104,7 @@ namespace PunishLib.ImGuiMethods
             var spacing = style.ItemSpacing.X * (1 - minimumWindowPercent);
 
             // Calculate the width of the content region within the group box
-            var contentRegionWidth = groupBoxOptionsStack.TryPeek(out var parent) ? parent.Width - parent.BorderPadding.X * 2 : ImGui.GetWindowContentRegionMax().X - style.WindowPadding.X;
+            var contentRegionWidth = GroupBoxOptionsStack.TryPeek(out var parent) ? parent.Width - parent.BorderPadding.X * 2 : ImGui.GetWindowContentRegionMax().X - style.WindowPadding.X;
 
             // Calculate the desired width of the group box
             var width = Math.Max(contentRegionWidth * minimumWindowPercent - spacing, 1);
@@ -141,7 +141,7 @@ namespace PunishLib.ImGuiMethods
             ImGui.PushItemWidth(MathF.Floor((width - options.BorderPadding.X * 2) * 0.65f));
 
             // Push the options onto the stack
-            groupBoxOptionsStack.Push(options);
+            GroupBoxOptionsStack.Push(options);
 
             // If the group box is open, return true
             if (open) return true;
@@ -175,7 +175,7 @@ namespace PunishLib.ImGuiMethods
         public static unsafe void EndGroupBox()
         {
             // Pop the options from the groupBoxOptionsStack
-            var options = groupBoxOptionsStack.Pop();
+            var options = GroupBoxOptionsStack.Pop();
 
             // Check if autoAdjust is true if the width of options is less than or equal to 0
             var autoAdjust = options.Width <= 0;

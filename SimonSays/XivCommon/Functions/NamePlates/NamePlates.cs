@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
 using Dalamud.Game.Text.SeStringHandling;
@@ -15,7 +15,7 @@ namespace XivCommon.Functions.NamePlates;
 /// </summary>
 public class NamePlates : IDisposable {
     private static class Signatures {
-        internal const string NamePlateUpdate = "48 8B C4 41 56 48 81 EC ?? ?? ?? ?? 48 89 58 F0";
+        internal const string NamePlateUpdate = "4C 8B DC 41 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 49 8B 40 20";
     }
 
     private unsafe delegate IntPtr NamePlateUpdateDelegate(AddonNamePlate* addon, NumberArrayData** numberData, StringArrayData** stringData);
@@ -23,7 +23,7 @@ public class NamePlates : IDisposable {
     /// <summary>
     /// The delegate for name plate update events.
     /// </summary>
-    public delegate void NamePlateUpdateEvent(NamePlateUpdateEventArgs Args);
+    public delegate void NamePlateUpdateEvent(NamePlateUpdateEventArgs args);
 
     /// <summary>
     /// <para>
@@ -36,7 +36,7 @@ public class NamePlates : IDisposable {
     public event NamePlateUpdateEvent? OnUpdate;
 
     private GameFunctions Functions { get; }
-    private readonly Hook<NamePlateUpdateDelegate>? _namePlateUpdateHook;
+    private readonly Hook<NamePlateUpdateDelegate>? namePlateUpdateHook;
 
     /// <summary>
     /// <para>
@@ -57,16 +57,16 @@ public class NamePlates : IDisposable {
 
         if (scanner.TryScanText(Signatures.NamePlateUpdate, out var updatePtr)) {
             unsafe {
-                this._namePlateUpdateHook = interop.HookFromAddress<NamePlateUpdateDelegate>(updatePtr, this.NamePlateUpdateDetour);
+                this.namePlateUpdateHook = interop.HookFromAddress<NamePlateUpdateDelegate>(updatePtr, this.NamePlateUpdateDetour);
             }
 
-            this._namePlateUpdateHook.Enable();
+            this.namePlateUpdateHook.Enable();
         }
     }
 
     /// <inheritdoc />
     public void Dispose() {
-        this._namePlateUpdateHook?.Dispose();
+        this.namePlateUpdateHook?.Dispose();
     }
 
     private const int PlateTypeIndex = 1;
@@ -88,7 +88,7 @@ public class NamePlates : IDisposable {
             Logger.Log.Error(ex, "Exception in NamePlateUpdateDetour");
         }
 
-        return this._namePlateUpdateHook!.Original(addon, numberData, stringData);
+        return this.namePlateUpdateHook!.Original(addon, numberData, stringData);
     }
 
     private unsafe void NamePlateUpdateDetourInner(NumberArrayData** numberData, StringArrayData** stringData) {
@@ -100,7 +100,7 @@ public class NamePlates : IDisposable {
             return;
         }
 
-        var atkModule = Framework.Instance()->GetUiModule()->GetRaptureAtkModule();
+        var atkModule = Framework.Instance()->GetUIModule()->GetRaptureAtkModule();
 
         var active = numbers->IntArray[0];
 
@@ -125,7 +125,7 @@ public class NamePlates : IDisposable {
             }
 
             var npObjIndex = numbers->IntArray[numbersIndex + NamePlateObjectIndex];
-            var info = (&atkModule->NamePlateInfoArray)[npObjIndex];
+            var info = atkModule->NamePlateInfoEntries[npObjIndex];
 
             var icon = numbers->IntArray[numbersIndex + IconIndex];
             var nameColour = *(ByteColor*) &numbers->IntArray[numbersIndex + ColourIndex];
@@ -147,7 +147,7 @@ public class NamePlates : IDisposable {
             var letterRaw = strings->StringArray[EnemyLetterIndex + i];
             var letter = Util.ReadSeString((IntPtr) letterRaw);
 
-            var Args = new NamePlateUpdateEventArgs(info.ObjectID.ObjectID) {
+            var args = new NamePlateUpdateEventArgs(info.ObjectId.ObjectId) {
                 Name = new SeString(name.Payloads),
                 FreeCompany = new SeString(fc.Payloads),
                 Title = new SeString(title.Payloads),
@@ -162,7 +162,7 @@ public class NamePlates : IDisposable {
             };
 
             try {
-                this.OnUpdate?.Invoke(Args);
+                this.OnUpdate?.Invoke(args);
             } catch (Exception ex) {
                 Logger.Log.Error(ex, "Exception in name plate update event");
             }
@@ -184,44 +184,44 @@ public class NamePlates : IDisposable {
                 }
             }
 
-            if (name != Args.Name) {
-                Replace(Args.Name.Encode(), NameIndex + i);
+            if (name != args.Name) {
+                Replace(args.Name.Encode(), NameIndex + i);
             }
 
-            if (title != Args.Title) {
-                Replace(Args.Title.Encode(), TitleIndex + i);
+            if (title != args.Title) {
+                Replace(args.Title.Encode(), TitleIndex + i);
             }
 
-            if (fc != Args.FreeCompany) {
-                Replace(Args.FreeCompany.Encode(), FreeCompanyIndex + i);
+            if (fc != args.FreeCompany) {
+                Replace(args.FreeCompany.Encode(), FreeCompanyIndex + i);
             }
 
-            if (level != Args.Level) {
-                Replace(Args.Level.Encode(), LevelIndex + i);
+            if (level != args.Level) {
+                Replace(args.Level.Encode(), LevelIndex + i);
             }
 
-            if (letter != Args.EnemyLetter) {
+            if (letter != args.EnemyLetter) {
                 // FIXME: sometimes the pointer here in the game is garbage, so freeing is a heap corruption
                 //        figure out how to free this properly
-                Replace(Args.EnemyLetter.Encode(), EnemyLetterIndex + i, false);
+                Replace(args.EnemyLetter.Encode(), EnemyLetterIndex + i, false);
             }
 
-            if (icon != Args.Icon) {
-                numbers->SetValue(numbersIndex + IconIndex, (int) Args.Icon);
+            if (icon != args.Icon) {
+                numbers->SetValue(numbersIndex + IconIndex, (int) args.Icon);
             }
 
-            var colour = (ByteColor) Args.Colour;
+            var colour = (ByteColor) args.Colour;
             var colourInt = *(int*) &colour;
             if (colourInt != numbers->IntArray[numbersIndex + ColourIndex]) {
                 numbers->SetValue(numbersIndex + ColourIndex, colourInt);
             }
 
-            if (plateType != (int) Args.Type) {
-                numbers->SetValue(numbersIndex + PlateTypeIndex, (int) Args.Type);
+            if (plateType != (int) args.Type) {
+                numbers->SetValue(numbersIndex + PlateTypeIndex, (int) args.Type);
             }
 
-            if (flags != Args.Flags) {
-                numbers->SetValue(numbersIndex + FlagsIndex, Args.Flags);
+            if (flags != args.Flags) {
+                numbers->SetValue(numbersIndex + FlagsIndex, args.Flags);
             }
         }
     }

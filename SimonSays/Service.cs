@@ -81,7 +81,6 @@ namespace SimonSays
 
         public static ExcelSheet<Emote>? EmoteList;
         public static HashSet<string> Emotes = new HashSet<string>();
-        public static XivCommonBase? CommonBase;
 
         [PluginService] public static IDtrBar DtrBar { get; private set; } = null!;
         [PluginService] public static IPluginLog Log { get; private set; } = null!;
@@ -93,6 +92,7 @@ namespace SimonSays
         [PluginService] public static IGameInteropProvider Hook { get; private set; } = null!;
         [PluginService] public static IFramework Framework { get; private set; } = null!;
         [PluginService] public static INotificationManager NotificationManager { get; private set; } = null!;
+        [PluginService] public static ITextureProvider TextureProvider { get; private set; } = null!;
     }
 
 

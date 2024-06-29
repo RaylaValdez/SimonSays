@@ -25,18 +25,18 @@ public unsafe class OverrideMovement : IDisposable
 {
     public bool Enabled
     {
-        get => _rmiWalkHook.IsEnabled;
+        get => rmiWalkHook.IsEnabled;
         set
         {
             if (value)
             {
-                _rmiWalkHook.Enable();
-                _rmiFlyHook.Enable();
+                rmiWalkHook.Enable();
+                rmiFlyHook.Enable();
             }
             else
             {
-                _rmiWalkHook.Disable();
-                _rmiFlyHook.Disable();
+                rmiWalkHook.Disable();
+                rmiFlyHook.Disable();
             }
         }
     }
@@ -60,15 +60,15 @@ public unsafe class OverrideMovement : IDisposable
     public DateTime LastTimeTurned = DateTime.Now;
 
     public delegate void OnCompleteDelegate();
-    public event OnCompleteDelegate OnComplete;
+    public event OnCompleteDelegate? OnComplete;
 
     private delegate void RMIWalkDelegate(void* self, float* sumLeft, float* sumForward, float* sumTurnLeft, byte* haveBackwardOrStrafe, byte* a6, byte bAdditiveUnk);
     [Signature("E8 ?? ?? ?? ?? 80 7B 3E 00 48 8D 3D")]
-    private Hook<RMIWalkDelegate> _rmiWalkHook = null!;
+    private readonly Hook<RMIWalkDelegate> rmiWalkHook = null!;
 
     private delegate void RMIFlyDelegate(void* self, PlayerMoveControllerFlyInput* result);
     [Signature("E8 ?? ?? ?? ?? 0F B6 0D ?? ?? ?? ?? B8")]
-    private Hook<RMIFlyDelegate> _rmiFlyHook = null!;
+    private readonly Hook<RMIFlyDelegate> rmiFlyHook = null!;
 
     /// <summary>
     /// Initializes the OverrideMovement instance, sets up hooks, and logs their addresses.
@@ -79,8 +79,8 @@ public unsafe class OverrideMovement : IDisposable
         Service.Hook.InitializeFromAttributes(this);
 
         // Log the addresses of the walk and fly hooks
-        Service.Log.Information($"RMIWalk address: 0x{_rmiWalkHook.Address:X}");
-        Service.Log.Information($"RMIFly address: 0x{_rmiFlyHook.Address:X}");
+        Service.Log.Information($"RMIWalk address: 0x{rmiWalkHook.Address:X}");
+        Service.Log.Information($"RMIFly address: 0x{rmiFlyHook.Address:X}");
     }
 
     // Destructor (called when object goes out of scope/no longer exists)
@@ -99,8 +99,8 @@ public unsafe class OverrideMovement : IDisposable
         // Dispose of the walk and fly hooks
         SoftDisable = true;
         Enabled = false;
-        _rmiWalkHook.Dispose();
-        _rmiFlyHook.Dispose();
+        rmiWalkHook.Dispose();
+        rmiFlyHook.Dispose();
     }
 
     public void SetCallback(OnCompleteDelegate callback)
@@ -125,7 +125,7 @@ public unsafe class OverrideMovement : IDisposable
     private void RMIWalkDetour(void* self, float* sumLeft, float* sumForward, float* sumTurnLeft, byte* haveBackwardOrStrafe, byte* a6, byte bAdditiveUnk)
     {
         // Call the original method
-        _rmiWalkHook.Original(self, sumLeft, sumForward, sumTurnLeft, haveBackwardOrStrafe, a6, bAdditiveUnk);
+        rmiWalkHook.Original(self, sumLeft, sumForward, sumTurnLeft, haveBackwardOrStrafe, a6, bAdditiveUnk);
 
         // Return if soft disable is active
         if (SoftDisable)
@@ -147,7 +147,6 @@ public unsafe class OverrideMovement : IDisposable
         }
 
         bool hasMoved = false;
-        bool hasTurned = false;
 
         DateTime currTime = DateTime.Now;
 
@@ -176,7 +175,6 @@ public unsafe class OverrideMovement : IDisposable
                     if (!hasMoved && ShouldTurn && RotationToDestination() is float relRot && relRot != 0)
                     {
                         *sumTurnLeft = relRot;
-                        hasTurned = true;
                         LastTimeTurned = currTime;
                     }
 
@@ -210,14 +208,13 @@ public unsafe class OverrideMovement : IDisposable
     private void RMIFlyDetour(void* self, PlayerMoveControllerFlyInput* result)
     {
         // Call the original method
-        _rmiFlyHook.Original(self, result);
+        rmiFlyHook.Original(self, result);
 
         // Return if soft disable is active
         if (SoftDisable)
             return;
 
         bool hasMoved = false;
-        bool hasTurned = false;
 
         DateTime currTime = DateTime.Now;
 
@@ -243,7 +240,6 @@ public unsafe class OverrideMovement : IDisposable
                 {
                     if (!hasMoved)
                     {
-                        hasTurned = true;
                         LastTimeTurned = currTime;
                     }
 
@@ -303,13 +299,11 @@ public unsafe class OverrideMovement : IDisposable
         if (float.IsNaN(dirH.Rad) || float.IsInfinity(dirH.Rad) || float.IsNaN(dirV.Rad) || float.IsInfinity(dirV.Rad))
         {
             throw new Exception("Direction was NaN or infinity");
-            return null;
         }
 
         if (float.IsNaN(cameraDir.Rad) || float.IsInfinity(cameraDir.Rad))
         {
             throw new Exception("Camera direction was NaN or infinity");
-            return null;
         }
 
         // Return a tuple containing horizontal and vertical angles

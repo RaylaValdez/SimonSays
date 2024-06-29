@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -30,8 +30,8 @@ public class Examine {
     /// </summary>
     /// <param name="object">Object to open window for</param>
     /// <exception cref="InvalidOperationException">If the signature for this function could not be found</exception>
-    public void OpenExamineWindow(GameObject @object) {
-        this.OpenExamineWindow(@object.ObjectId);
+    public void OpenExamineWindow(IGameObject @object) {
+        this.OpenExamineWindow(@object.EntityId);
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ public class Examine {
         // if 29f8 ever changes, I'd just scan for it in old binary and find what it is in the new binary at the same spot
         // 40 55 53 57 41 54 41 55 41 56 48 8D 6C 24
         // offset below is 4C 8B B0 ?? ?? ?? ?? 4D 85 F6 0F 84 ?? ?? ?? ?? 0F B6 83
-        var agentModule = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule();
+        var agentModule = (IntPtr) Framework.Instance()->GetUIModule()->GetAgentModule();
         var rciData = Marshal.ReadIntPtr(agentModule + 0x1B0);
 
         // offsets at sig E8 ?? ?? ?? ?? 33 C0 EB 4C

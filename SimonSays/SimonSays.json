@@ -10,7 +10,7 @@
         "emote",
         "sync"
     ],
-    "DalamudApiLevel": 9,
+    "DalamudApiLevel": 10,
     "LoadRequiredState": 0,
     "LoadSync": false,
     "CanUnloadAsync": false,

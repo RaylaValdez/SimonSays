@@ -13,7 +13,7 @@ namespace XivCommon.Functions;
 public class Talk : IDisposable {
     private static class Signatures {
         internal const string SetAtkValue = "E8 ?? ?? ?? ?? 41 03 ED";
-        internal const string ShowMessageBox = "4C 8B DC 55 57 41 55 49 8D 6B 98";
+        internal const string ShowMessageBox = "4C 8B DC 55 56 41 55 49 8D 6B 88";
     }
 
     // Updated: 5.5
@@ -45,7 +45,7 @@ public class Talk : IDisposable {
     public event TalkEventDelegate? OnTalk;
 
     internal Talk(ISigScanner scanner, IGameInteropProvider interop, bool hooksEnabled) {
-        if (scanner.TryScanText(Signatures.SetAtkValue, out var setAtkPtr, "Talk - set atk Value")) {
+        if (scanner.TryScanText(Signatures.SetAtkValue, out var setAtkPtr, "Talk - set atk value")) {
             this.SetAtkValueString = Marshal.GetDelegateForFunctionPointer<SetAtkValueStringDelegate>(setAtkPtr);
         } else {
             return;
@@ -124,7 +124,7 @@ public enum TalkStyle : byte {
     Lights = 2,
 
     /// <summary>
-    /// A style used for when Characters are shouting.
+    /// A style used for when characters are shouting.
     /// </summary>
     Shout = 3,
 
@@ -144,17 +144,17 @@ public enum TalkStyle : byte {
     Allagan = 6,
 
     /// <summary>
-    /// The style used for system Messages.
+    /// The style used for system messages.
     /// </summary>
     System = 7,
 
     /// <summary>
-    /// A mixture of the system Message style and the dragon style.
+    /// A mixture of the system message style and the dragon style.
     /// </summary>
     DragonSystem = 8,
 
     /// <summary>
-    /// The system Message style with a purple background.
+    /// The system message style with a purple background.
     /// </summary>
     PurpleSystem = 9,
 }

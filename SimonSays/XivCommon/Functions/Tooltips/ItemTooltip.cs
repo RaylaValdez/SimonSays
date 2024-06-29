@@ -1,12 +1,12 @@
-using Dalamud.Game.Text.SeStringHandling;
+﻿using Dalamud.Game.Text.SeStringHandling;
 
-namespace XivCommon.Functions.Tooltips; 
+namespace XivCommon.Functions.Tooltips;
 
 /// <summary>
 /// The class allowing for item tooltip manipulation
 /// </summary>
 public unsafe class ItemTooltip : BaseTooltip {
-    internal ItemTooltip(Tooltips.StringArrayDataSetStringDelegate sadSetString, byte*** stringArrayData, int** numberArrayData) : base(sadSetString, stringArrayData, numberArrayData) {
+    internal ItemTooltip(byte*** stringArrayData, int** numberArrayData) : base(stringArrayData, numberArrayData) {
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -13,13 +13,13 @@ namespace XivCommon.Functions;
 /// </summary>
 public class ChatBubbles : IDisposable {
     private static class Signatures {
-        internal const string ChatBubbleOpen = "E8 ?? ?? ?? ?? C7 43 ?? ?? ?? ?? ?? 48 8B 0D ?? ?? ?? ?? E8";
-        internal const string ChatBubbleUpdate = "48 85 D2 0F 84 ?? ?? ?? ?? 48 89 5C 24 ?? 57 48 83 EC 20 8B 41 0C";
+        internal const string ChatBubbleOpen = "E8 ?? ?? ?? ?? F6 86 ?? ?? ?? ?? ?? C7 46";
+        internal const string ChatBubbleUpdate = "48 85 D2 0F 84 ?? ?? ?? ?? 48 89 6C 24 ?? 56 48 83 EC 30";
     }
 
     private IObjectTable ObjectTable { get; }
 
-    private delegate void OpenChatBubbleDelegate(IntPtr manager, IntPtr @object, IntPtr text, byte a4);
+    private delegate void OpenChatBubbleDelegate(IntPtr agent, IntPtr @object, IntPtr text, nint a4, byte a5);
 
     private delegate void UpdateChatBubbleDelegate(IntPtr bubblePtr, IntPtr @object);
 
@@ -30,12 +30,12 @@ public class ChatBubbles : IDisposable {
     /// <summary>
     /// The delegate for chat bubble events.
     /// </summary>
-    public delegate void OnChatBubbleDelegate(ref GameObject @object, ref SeString text);
+    public delegate void OnChatBubbleDelegate(ref IGameObject @object, ref SeString text);
 
     /// <summary>
     /// The delegate for chat bubble update events.
     /// </summary>
-    public delegate void OnUpdateChatBubbleDelegate(ref GameObject @object);
+    public delegate void OnUpdateChatBubbleDelegate(ref IGameObject @object);
 
     /// <summary>
     /// <para>
@@ -81,16 +81,16 @@ public class ChatBubbles : IDisposable {
         this.UpdateChatBubbleHook?.Dispose();
     }
 
-    private void OpenChatBubbleDetour(IntPtr manager, IntPtr @object, IntPtr text, byte a4) {
+    private void OpenChatBubbleDetour(IntPtr manager, IntPtr @object, IntPtr text, nint a4, byte a5) {
         try {
-            this.OpenChatBubbleDetourInner(manager, @object, text, a4);
+            this.OpenChatBubbleDetourInner(manager, @object, text, a4, a5);
         } catch (Exception ex) {
             Logger.Log.Error(ex, "Exception in chat bubble detour");
-            this.OpenChatBubbleHook!.Original(manager, @object, text, a4);
+            this.OpenChatBubbleHook!.Original(manager, @object, text, a4, a5);
         }
     }
 
-    private void OpenChatBubbleDetourInner(IntPtr manager, IntPtr objectPtr, IntPtr textPtr, byte a4) {
+    private void OpenChatBubbleDetourInner(IntPtr manager, IntPtr objectPtr, IntPtr textPtr, nint a4, byte a5) {
         var @object = this.ObjectTable.CreateObjectReference(objectPtr);
         if (@object == null) {
             return;
@@ -108,7 +108,7 @@ public class ChatBubbles : IDisposable {
 
         unsafe {
             fixed (byte* newTextPtr = newText) {
-                this.OpenChatBubbleHook!.Original(manager, @object.Address, (IntPtr) newTextPtr, a4);
+                this.OpenChatBubbleHook!.Original(manager, @object.Address, (IntPtr) newTextPtr, a4, a5);
             }
         }
     }

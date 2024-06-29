@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -25,9 +25,9 @@ public class FriendList {
     public unsafe IList<FriendListEntry> List {
         get {
             var friendListAgent = (IntPtr) Framework.Instance()
-                        ->GetUiModule()
+                        ->GetUIModule()
                     ->GetAgentModule()
-                ->GetAgentByInternalId(AgentId.SocialFriendList);
+                ->GetAgentByInternalId(AgentId.Friendlist);
             if (friendListAgent == IntPtr.Zero) {
                 return Array.Empty<FriendListEntry>();
             }

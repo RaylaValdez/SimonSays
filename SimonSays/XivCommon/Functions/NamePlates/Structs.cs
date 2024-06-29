@@ -11,16 +11,16 @@ internal unsafe struct NumberArrayData {
     [FieldOffset(0x20)]
     public int* IntArray;
 
-    public void SetValue(int index, int Value) {
+    public void SetValue(int index, int value) {
         if (index >= this.AtkArrayData.Size) {
             return;
         }
 
-        if (this.IntArray[index] == Value) {
+        if (this.IntArray[index] == value) {
             return;
         }
 
-        this.IntArray[index] = Value;
+        this.IntArray[index] = value;
         this.AtkArrayData.HasModifiedData = 1;
     }
 }
@@ -59,7 +59,7 @@ internal unsafe struct StringArrayData {
 }
 
 /// <summary>
-/// The various different name plate Types
+/// The various different name plate types
 /// </summary>
 public enum PlateType {
     /// <summary>

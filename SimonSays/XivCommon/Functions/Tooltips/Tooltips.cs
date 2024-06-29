@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using Dalamud.Game;
 using Dalamud.Game.Gui;
 using Dalamud.Hooking;
@@ -12,22 +11,18 @@ namespace XivCommon.Functions.Tooltips;
 /// </summary>
 public class Tooltips : IDisposable {
     private static class Signatures {
-        internal const string AgentItemDetailUpdateTooltip = "E8 ?? ?? ?? ?? 48 8B 5C 24 ?? 48 89 AE ?? ?? ?? ?? 48 89 AE";
-        internal const string AgentActionDetailUpdateTooltip = "E8 ?? ?? ?? ?? EB 68 FF 50 40";
-        internal const string SadSetString = "E8 ?? ?? ?? ?? F6 47 14 08";
+        internal const string AgentItemDetailUpdateTooltip = "E8 ?? ?? ?? ?? 48 8B 6C 24 ?? 48 8B 74 24 ?? 4C 89 B7";
+        internal const string AgentActionDetailUpdateTooltip = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? FF 50 40";
     }
 
     // Last checked: 6.0
     // E8 ?? ?? ?? ?? EB 68 FF 50 40
     private const int AgentActionDetailUpdateFlagOffset = 0x58;
 
-    internal unsafe delegate void StringArrayDataSetStringDelegate(IntPtr self, int index, byte* str, byte updatePtr, byte copyToUi, byte dontSetModified);
-
     private unsafe delegate ulong ItemUpdateTooltipDelegate(IntPtr agent, int** numberArrayData, byte*** stringArrayData, float a4);
 
     private unsafe delegate void ActionUpdateTooltipDelegate(IntPtr agent, int** numberArrayData, byte*** stringArrayData);
 
-    private StringArrayDataSetStringDelegate? SadSetString { get; }
     private Hook<ItemUpdateTooltipDelegate>? ItemUpdateTooltipHook { get; }
     private Hook<ActionUpdateTooltipDelegate>? ActionGenerateTooltipHook { get; }
 
@@ -67,12 +62,6 @@ public class Tooltips : IDisposable {
 
     internal Tooltips(ISigScanner scanner, IGameGui gui, IGameInteropProvider interop, bool enabled) {
         this.GameGui = gui;
-
-        if (scanner.TryScanText(Signatures.SadSetString, out var setStringPtr, "Tooltips - StringArrayData::SetString")) {
-            this.SadSetString = Marshal.GetDelegateForFunctionPointer<StringArrayDataSetStringDelegate>(setStringPtr);
-        } else {
-            return;
-        }
 
         if (!enabled) {
             return;
@@ -116,7 +105,7 @@ public class Tooltips : IDisposable {
     }
 
     private unsafe void ItemUpdateTooltipDetourInner(int** numberArrayData, byte*** stringArrayData) {
-        this.ItemTooltip = new ItemTooltip(this.SadSetString!, stringArrayData, numberArrayData);
+        this.ItemTooltip = new ItemTooltip(stringArrayData, numberArrayData);
 
         try {
             this.OnItemTooltip?.Invoke(this.ItemTooltip, this.GameGui.HoveredItem);
@@ -141,7 +130,7 @@ public class Tooltips : IDisposable {
     }
 
     private unsafe void ActionUpdateTooltipDetourInner(int** numberArrayData, byte*** stringArrayData) {
-        this.ActionTooltip = new ActionTooltip(this.SadSetString!, stringArrayData, numberArrayData);
+        this.ActionTooltip = new ActionTooltip(stringArrayData, numberArrayData);
 
         try {
             this.OnActionTooltip?.Invoke(this.ActionTooltip, this.GameGui.HoveredAction);

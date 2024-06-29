@@ -28,16 +28,16 @@ namespace SimonSays
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]
-        private DalamudPluginInterface? PluginInterface;
+        private IDalamudPluginInterface? pluginInterface;
 
         /// <summary>
         /// Initializes the plugin with the provided DalamudPluginInterface instance.
         /// </summary>
         /// <param name="PluginInterface">The DalamudPluginInterface instance to initialize the plugin with.</param>
-        public void Initialize(DalamudPluginInterface PluginInterface)
+        public void Initialize(IDalamudPluginInterface PluginInterface)
         {
             // Set the DalamudPluginInterface instance for the plugin
-            this.PluginInterface = PluginInterface;
+            this.pluginInterface = PluginInterface;
         }
 
 
@@ -47,7 +47,7 @@ namespace SimonSays
         public void Save()
         {
             // Save the plugin configuration
-            this.PluginInterface!.SavePluginConfig(this);
+            this.pluginInterface!.SavePluginConfig(this);
         }
 
     }

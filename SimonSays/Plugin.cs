@@ -32,37 +32,38 @@ namespace SimonSays
         public const string Source = "https://github.com/RaylaValdez/SimonSays";
 
         // Static references for plugin-wide use
-        public static DalamudPluginInterface? PluginInterfaceStatic { get; private set; }
+        public static IDalamudPluginInterface? PluginInterfaceStatic { get; private set; }
         public static Configuration? Configuration { get; private set; }
 
         // Plugin components
         public string Name => "SimonSays";
-        private DalamudPluginInterface PluginInterface { get; init; }
+        private IDalamudPluginInterface PluginInterface { get; init; }
         private ICommandManager CommandManager { get; init; }
-        private WindowSystem WindowSystem = new("SimonSays");
+        private WindowSystem windowSystem = new("SimonSays");
         private ConfigWindow ConfigWindow { get; init; }
-        public static string ConfigDirectory { get; set; }
-        public static string ConfigFile { get; set; }
-        public static string PresetDirectory { get; set; }
-        private readonly DtrBarEntry DtrEntry;
+        public static string ConfigDirectory { get; set; } = string.Empty;
+        public static string ConfigFile { get; set; } = string.Empty;
+        public static string PresetDirectory { get; set; } = string.Empty;
+        private readonly IDtrBarEntry dtrEntry;
 
         // Constructor
         public Plugin(
-            [RequiredVersion("1.0")] DalamudPluginInterface PluginInterface,
-            [RequiredVersion("1.0")] ICommandManager CommandManager)
+            IDalamudPluginInterface pluginInterface,
+            ICommandManager commandManager)
         {
             // Initialize plugin components
-            this.PluginInterface = PluginInterface;
-            this.CommandManager = CommandManager;
+            this.PluginInterface = pluginInterface;
+            this.CommandManager = commandManager;
             PluginInterfaceStatic = PluginInterface;
 
             // Initialize configuration
             Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             Configuration.Initialize(this.PluginInterface);
 
+            PluginInterface.Create<Service>();
             // Initialize and add configuration window
             ConfigWindow = new ConfigWindow(this);
-            WindowSystem.AddWindow(ConfigWindow);
+            windowSystem.AddWindow(ConfigWindow);
 
             // Create Directory
 
@@ -99,13 +100,14 @@ namespace SimonSays
             // Set up UI events and create necessary services
             this.PluginInterface.UiBuilder.Draw += DrawUI;
             this.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
-            PluginInterface.Create<Service>();
+            this.PluginInterface.UiBuilder.OpenMainUi += DrawConfigUI;
+            
 
             // Set up Framework Update
             Service.Framework.Update += FrameworkUpdate;
 
             // Set up DTRBar 
-            DtrEntry ??= Service.DtrBar.Get("SimonSays");
+            dtrEntry = Service.DtrBar.Get("SimonSays");
 
             // Set up chat message event handler and create emote list
             Service.ChatGui.ChatMessage += Meat.OnChatMessage;
@@ -126,10 +128,10 @@ namespace SimonSays
         public void Dispose()
         {
             // Remove all windows from the WindowSystem
-            this.WindowSystem.RemoveAllWindows();
+            this.windowSystem.RemoveAllWindows();
 
             // Remove DTR Entry
-            DtrEntry.Remove();
+            dtrEntry.Remove();
 
             // Remove Framework
             Service.Framework.Update -= FrameworkUpdate;
@@ -153,13 +155,13 @@ namespace SimonSays
         private void FrameworkUpdate(object framework)
         {
             // Check if DtrEntry is shown
-            if (DtrEntry.Shown)
+            if (dtrEntry.Shown)
             {
                 // Set the text of DtrEntry to display the name and the current listening status
-                DtrEntry.Text = new SeString(new TextPayload($"{Name}: {(Configuration.IsListening ? "On" : "Off")}"));
+                dtrEntry.Text = new SeString(new TextPayload($"{Name}: {(Configuration!.IsListening ? "On" : "Off")}"));
 
                 // Set the OnClick event of DtrEntry to toggle the listening status when clicked
-                DtrEntry.OnClick = () => Configuration.IsListening ^= true;
+                dtrEntry.OnClick = () => Configuration.IsListening ^= true;
             }
         }
 
@@ -171,12 +173,12 @@ namespace SimonSays
         private void DoThisCommandHandlingMeat(string[] ArgSplit)
         {
             // Default to false, only set to true if explicitly specified in arguments
-            bool SyncPos = false;
+            var SyncPos = false;
 
             // /simonsays emote
             // Applying emote to other and yourself
-            string emote = ArgSplit[0];
-            string otherEmote = emote;
+            var emote = ArgSplit[0];
+            var otherEmote = emote;
 
             // Check if positional syncing is explicitly specified in arguments OR other emote specified
             if (ArgSplit.Length == 2)
@@ -209,7 +211,7 @@ namespace SimonSays
             }
 
             // Check if positional syncing is disabled and print a message
-            if (!Configuration.PosSync)
+            if (!Configuration!.PosSync)
             {
                 SyncPos = false;
                 Service.ChatGui.Print("Enable Positional Syncing in settings for Command-based syncing.");
@@ -240,7 +242,7 @@ namespace SimonSays
             if (Command == Sync)
             {
                 // Check if positional syncing is enabled
-                if (!Configuration.PosSync)
+                if (!Configuration!.PosSync)
                 {
                     return;
                 }
@@ -292,7 +294,7 @@ namespace SimonSays
         private void DrawUI()
         {
             // Use the WindowSystem to draw the user interface
-            this.WindowSystem.Draw();
+            this.windowSystem.Draw();
         }
 
 

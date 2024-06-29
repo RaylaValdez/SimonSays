@@ -1,33 +1,25 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Text.Json;
 using System.Collections.Generic;
-using System.Numerics;
 using System.Linq;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
 using Dalamud.Game.Text;
-using Lumina.Excel.GeneratedSheets2;
-using System.Reflection;
 using PunishLib.ImGuiMethods;
-using Dalamud.Interface.Internal;
 using Dalamud.Game.ClientState.Objects.Types;
-using FFXIVClientStructs.FFXIV.Common.Math;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
-using FFVector2 = FFXIVClientStructs.FFXIV.Common.Math.Vector2;
+using Dalamud.Interface.Textures;
 using Vector2 = System.Numerics.Vector2;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using Vector4 = System.Numerics.Vector4;
 using SimonSays.Helpers;
-using FFXIVClientStructs.FFXIV.Client.System.Input;
-using Dalamud.IoC;
 using Dalamud.Interface.ImGuiNotification;
 using ImPlotNET;
-using Lumina.Excel.GeneratedSheets;
+
 
 namespace SimonSays.Windows;
 
@@ -41,9 +33,9 @@ public class ConfigWindow : Window, IDisposable
 {
     private Configuration configuration;
     private string testText = "Simon Says : hum";
-    private IDalamudTextureWrap? aboutImage;
+    private ISharedImmediateTexture aboutImage;
 
-    private static readonly bool enableDebug = false;
+    private static readonly bool EnableDebug = false;
 
     private Vector2 contextMenuPosition;
     private Vector2 contextMenuSize = new Vector2(135, 34);
@@ -55,15 +47,14 @@ public class ConfigWindow : Window, IDisposable
     public static bool renamingWindowOpen = false;
     public static bool newMemberWindowOpen = false;
     public static bool contextPopupOpen = false;
-
-    const int bufferSize = 1024;
+    private const int BufferSize = 1024;
     public static string nameBuffer = "Change Me";
     public static string filterText = String.Empty;
     public static string renameBuffer = String.Empty;
 
     public static Vector4 oldTitleColorActive = Vector4.Zero;
 
-    public static Preset activePreset = null;
+    public static Preset? activePreset = null;
 
     public static List<Vector4> memberColors = new List<Vector4>
     {
@@ -105,10 +96,10 @@ public class ConfigWindow : Window, IDisposable
         this.Size = new System.Numerics.Vector2(500, 900);
         this.SizeCondition = ImGuiCond.FirstUseEver;
 
-        this.configuration = Plugin.Configuration;
+        this.configuration = Plugin.Configuration!;
 
-        var imagePath = Path.Combine(Plugin.PluginInterfaceStatic.AssemblyLocation.Directory?.FullName!, "ts500.png");
-        aboutImage = Plugin.PluginInterfaceStatic.UiBuilder.LoadImage(imagePath);
+        var imagePath = Path.Combine(Plugin.PluginInterfaceStatic!.AssemblyLocation.Directory?.FullName!, "ts500.png");
+        aboutImage = Service.TextureProvider.GetFromFile(imagePath);
     }
 
     public void Dispose() { }
@@ -482,7 +473,7 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.EndTabItem();
             }
 
-            if (enableDebug && ImGui.BeginTabItem("Debug"))
+            if (EnableDebug && ImGui.BeginTabItem("Debug"))
             {
                 DrawDebugPositionalInformation();
                 ImGui.EndTabItem();
@@ -505,7 +496,11 @@ public class ConfigWindow : Window, IDisposable
                 {
                     ImGuiEx.ImGuiLineCentered("AboutImage", () =>
                     {
-                        ImGui.Image(aboutImage.ImGuiHandle, new System.Numerics.Vector2(300, 300));
+                        if (aboutImage.TryGetWrap(out var texture,out var exception))
+                        {
+                            ImGui.Image(texture.ImGuiHandle, new System.Numerics.Vector2(300, 300));
+                        }
+                        
                     });
                 }
                 ImGui.Text("");
@@ -708,14 +703,14 @@ public class ConfigWindow : Window, IDisposable
                                     // Initialize Members if null
                                     if (activePreset.Members == null)
                                     {
-                                        activePreset.Members = new();
+                                        activePreset.Members = [];
                                     }
 
                                     // Check if PresetName is valid
                                     if (!string.IsNullOrEmpty(activePreset.PresetName))
                                     {
                                         // Serialize and write to file
-                                        string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
+                                        var jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
                                         File.WriteAllText(Plugin.PresetDirectory + "/" + activePreset.PresetName + ".json", jsonString);
                                         
                                     }
@@ -798,12 +793,15 @@ public class ConfigWindow : Window, IDisposable
                         {
                             if (IconButtonWithText(FontAwesomeIcon.StreetView, "", "Add targetted Character."))
                             {
-                                GameObject? target = Service.TargetManager.Target;
+                                IGameObject? target = Service.TargetManager.Target;
                                 if (target != null)
                                 {
-                                    activePreset.Members!.Add(new PresetMember(target.Name.ToString()));
-                                    string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
-                                    File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                                    if (activePreset != null)
+                                    {
+                                        activePreset.Members!.Add(new PresetMember(target.Name.ToString()));
+                                        string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
+                                        File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                                    }
                                 }
 
                             }
@@ -813,10 +811,13 @@ public class ConfigWindow : Window, IDisposable
 
                             if (IconButtonWithText(FontAwesomeIcon.Minus, "", "Remove Selected Member"))
                             {
-                                // activePreset.Members.Remove(selectedMember);
-                                activePreset.Members = activePreset.Members.Where((member) => member.CharacterName != selectedMember).ToList(); // select every member that doesn't have the same character name
-                                string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
-                                File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                                if (activePreset != null)
+                                {
+                                    // activePreset.Members.Remove(selectedMember);
+                                    activePreset.Members = activePreset.Members.Where((member) => member.CharacterName != selectedMember).ToList(); // select every member that doesn't have the same character name
+                                    string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
+                                    File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                                }
                             }
                         });
                     }
@@ -961,7 +962,6 @@ public class ConfigWindow : Window, IDisposable
                 {
                     PresetMember member = activePreset?.Members?.FirstOrDefault(((m) => m.CharacterName == selectedMember)) ?? new PresetMember();
 
-                    int comboCurItemIndex = 0;
 
                     float x = (float)member.X;
                     float y = (float)member.Y;
@@ -1027,7 +1027,7 @@ public class ConfigWindow : Window, IDisposable
                     {
                         if (ImGui.BeginCombo("##EmoteCombo", emote))
                         {
-                            ImGui.InputText("##Search", ref filterText, bufferSize);
+                            ImGui.InputText("##Search", ref filterText, BufferSize);
                             foreach (var j in Service.Emotes)
                             {
                                 var i = j.Replace("/", "");
@@ -1141,7 +1141,7 @@ public class ConfigWindow : Window, IDisposable
                 {
                     ImGui.Text("Name");
                     ImGui.SameLine();
-                    ImGui.InputText("##", ref nameBuffer, (uint)bufferSize);
+                    ImGui.InputText("##", ref nameBuffer, (uint)BufferSize);
                     ImGui.SameLine();
                     if (IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
                     {
@@ -1174,10 +1174,14 @@ public class ConfigWindow : Window, IDisposable
                 {
                     ImGui.Text("Name");
                     ImGui.SameLine();
-                    ImGui.InputText("##", ref renameBuffer, (uint)bufferSize);
+                    ImGui.InputText("##", ref renameBuffer, (uint)BufferSize);
                     ImGui.SameLine();
                     if (IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
                     {
+                        if (activePreset == null)
+                        {
+                            return;
+                        }
                         var prevName = activePreset.PresetName;
                         activePreset.PresetName = renameBuffer;
 
@@ -1206,7 +1210,7 @@ public class ConfigWindow : Window, IDisposable
                 {
                     ImGui.Text("Character Name");
                     ImGui.SameLine();
-                    ImGui.InputText("##", ref nameBuffer, (uint)bufferSize);
+                    ImGui.InputText("##", ref nameBuffer, (uint)BufferSize);
                     ImGui.SameLine();
                     if (IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
                     {

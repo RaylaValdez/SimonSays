@@ -88,11 +88,15 @@ namespace SimonSays
         public static void Command(XivChatType Type, string Message, bool ForceForTesting = false)
         {
             // Check if the plugin is listening for commands
-            if (!Plugin.Configuration.IsListening)
+            if (Plugin.Configuration == null)
             {
                 return;
             }
 
+            if (!Plugin.Configuration.IsListening)
+            {
+                return;
+            }
             // Check if the channel is enabled for the command, unless forced for testing
             Plugin.Configuration.EnabledChannels.TryGetValue((int)Type, out bool Enabled);
             if (!Enabled && !ForceForTesting)
@@ -119,7 +123,7 @@ namespace SimonSays
                 return;
             }
 
-            var Chat = new XivCommonBase(Plugin.PluginInterfaceStatic).Functions.Chat;
+            var Chat = new XivCommonBase(Plugin.PluginInterfaceStatic!).Functions.Chat;
 
             // Optionally add "motion" if configured for motion-only emotes
             if (Plugin.Configuration.MotionOnly)
@@ -135,19 +139,19 @@ namespace SimonSays
         /// <summary>
         /// Handles incoming chat messages and delegates them to the Command method.
         /// </summary>
-        /// <param name="Type">The type of chat message.</param>
-        /// <param name="SenderId">The ID of the message sender.</param>
-        /// <param name="Sender">The sender's name.</param>
-        /// <param name="Message">The content of the chat message.</param>
-        /// <param name="IsHandled">A flag indicating whether the message is already handled.</param>
-        public static void OnChatMessage(XivChatType Type, uint SenderId, ref SeString Sender, ref SeString Message, ref bool IsHandled)
+        /// <param name="type">The type of chat message.</param>
+        /// <param name="senderId">The ID of the message sender.</param>
+        /// <param name="sender">The sender's name.</param>
+        /// <param name="message">The content of the chat message.</param>
+        /// <param name="isHandled">A flag indicating whether the message is already handled.</param>
+        public static void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
         {
             // If the message is already handled, return
-            if (IsHandled)
+            if (isHandled)
                 return;
 
             // Delegate the message to the Command method for processing
-            Command(Type, Message.ToString());
+            Command(type, message.ToString());
         }
 
 
@@ -159,16 +163,23 @@ namespace SimonSays
         public static void StartScooch(Vector3? Offset = null, OverrideMovement.OnCompleteDelegate? callback = null)
         {
             // Get the target object from the TargetManager service
-            GameObject? Target = Service.TargetManager.Target;
+            var Target = Service.TargetManager.Target;
 
+            if (movement == null)
+            {
+                return;
+            }
             // Clear any existing movement callbacks
             movement.ClearCallback();
 
             // Check if a target is selected
             if (Target != null)
             {
-                // Initiate character movement towards the target with an offset
-                ScoochOnOver(Offset, Target);
+                if (Target.TargetObject != null)
+                {
+                    // Initiate character movement towards the target with an offset
+                    ScoochOnOver(Offset, Target.TargetObject);
+                }
             }
             else
             {
@@ -191,8 +202,12 @@ namespace SimonSays
         /// </summary>
         public static void StopScooch()
         {
-            // Disable character movement
-            movement.SoftDisable = true;
+            if (movement != null)
+            {
+                // Disable character movement
+                movement.SoftDisable = true;
+            }
+
         }
 
 
@@ -200,10 +215,15 @@ namespace SimonSays
         /// Moves the local player's character towards the specified target GameObject.
         /// </summary>
         /// <param name="Target">The target GameObject to move towards.</param>
-        public static void ScoochOnOver(Vector3? Offset, GameObject Target)
+        public static void ScoochOnOver(Vector3? Offset, IGameObject Target)
         {
             // Get the local player character
             var Character = Service.ClientState.LocalPlayer;
+
+            if (Character == null)
+            {
+                return;
+            }
 
             // Check if the offset is null
             if (Offset == null)
@@ -233,13 +253,17 @@ namespace SimonSays
 
             // Apply the offset rotation to the target rotation
             TarRot += Offset.Value.Y.Degrees().Rad;
+            
+            if (movement != null)
+            {
 
-            // Set the desired position and rotation for character movement
-            movement.DesiredPosition = TarPos;
-            movement.DesiredRotation = TarRot;
+                // Set the desired position and rotation for character movement
+                movement.DesiredPosition = TarPos;
+                movement.DesiredRotation = TarRot;
 
-            // Enable character movement
-            movement.SoftDisable = false;
+                // Enable character movement
+                movement.SoftDisable = false;
+            }
         }
 
 
@@ -262,8 +286,8 @@ namespace SimonSays
                 return;
             }
 
-            GameObject? Target = Service.TargetManager.Target;
-            var Chat = new XivCommonBase(Plugin.PluginInterfaceStatic).Functions.Chat;
+            IGameObject? Target = Service.TargetManager.Target;
+            var Chat = new XivCommonBase(Plugin.PluginInterfaceStatic!).Functions.Chat;
 
             // Synchronize positions if requested
             if (ShouldSyncPosition)
@@ -276,7 +300,7 @@ namespace SimonSays
                     if (Target != null)
                     {
                         Service.Log.Information("Telling target to do emote " + OtherEmote);
-                        Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + OtherEmote);
+                        Chat.SendMessage("/tell <t> " + Plugin.Configuration!.CatchPhrase + " " + OtherEmote);
                     }
 
                     // Execute the emote globally
@@ -289,7 +313,7 @@ namespace SimonSays
                 if (Target != null)
                 {
                     Service.Log.Information("Telling target to do emote " + OtherEmote);
-                    Chat.SendMessage("/tell <t> " + Plugin.Configuration.CatchPhrase + " " + OtherEmote);
+                    Chat.SendMessage("/tell <t> " + Plugin.Configuration!.CatchPhrase + " " + OtherEmote);
                 }
 
                 // Execute the emote globally
@@ -315,7 +339,7 @@ namespace SimonSays
             }
 
             // Search for the first EmoteOffset in the EmoteOffsets list that is enabled and matches the Emote string
-            EmoteOffsets? emoteOffset = Plugin.Configuration.EmoteOffsets.FirstOrDefault((offset) => offset.Enabled && offset.Emote == Emote);
+            EmoteOffsets? emoteOffset = Plugin.Configuration!.EmoteOffsets.FirstOrDefault((offset) => offset.Enabled && offset.Emote == Emote);
 
             // Check if an EmoteOffset was found
             if (emoteOffset != null)

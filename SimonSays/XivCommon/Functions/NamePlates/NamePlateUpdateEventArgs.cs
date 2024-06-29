@@ -59,7 +59,7 @@ public class NamePlateUpdateEventArgs {
 
     /// <summary>
     /// <para>
-    /// The Type of this name plate.
+    /// The type of this name plate.
     /// </para>
     /// <para>
     /// Changing this without setting the appropriate fields can cause the game to crash.

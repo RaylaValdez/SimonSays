@@ -6,23 +6,23 @@ namespace XivCommon;
 
 internal class Services {
     [PluginService]
-    internal IPluginLog Log { get; private set; }
+    internal IPluginLog? Log { get; private set; }
 
     [PluginService]
-    internal IFramework Framework { get; private set; }
+    internal IFramework? Framework { get; private set; }
 
     [PluginService]
-    internal IGameGui GameGui { get; private set; }
+    internal IGameGui? GameGui { get; private set; }
 
     [PluginService]
-    internal IGameInteropProvider GameInteropProvider { get; private set; }
+    internal IGameInteropProvider? GameInteropProvider { get; private set; }
 
     [PluginService]
-    internal IObjectTable ObjectTable { get; private set; }
+    internal IObjectTable? ObjectTable { get; private set; }
 
     [PluginService]
-    internal IPartyFinderGui PartyFinderGui { get; private set; }
+    internal IPartyFinderGui? PartyFinderGui { get; private set; }
 
     [PluginService]
-    internal ISigScanner SigScanner { get; private set; }
+    internal ISigScanner? SigScanner { get; private set; }
 }

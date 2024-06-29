@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
@@ -14,12 +14,12 @@ namespace XivCommon.Functions;
 public class PartyFinder : IDisposable {
     private static class Signatures {
         internal const string RequestListings = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 40 0F 10 81";
-        internal const string JoinCrossParty = "E8 ?? ?? ?? ?? 41 0F B7 07 49 8B CC";
+        internal const string JoinCrossParty = "E8 ?? ?? ?? ?? 41 0F B7 04 24 49 8B CD";
     }
 
     private delegate byte RequestPartyFinderListingsDelegate(IntPtr agent, byte categoryIdx);
 
-    private delegate IntPtr JoinPfDelegate(IntPtr manager, IntPtr a2, int Type, IntPtr packetData, uint a5);
+    private delegate IntPtr JoinPfDelegate(IntPtr manager, IntPtr a2, int type, IntPtr packetData, uint a5);
 
     private RequestPartyFinderListingsDelegate? RequestPartyFinderListings { get; }
     private Hook<RequestPartyFinderListingsDelegate>? RequestPfListingsHook { get; }
@@ -28,7 +28,7 @@ public class PartyFinder : IDisposable {
     /// <summary>
     /// The delegate for party join events.
     /// </summary>
-    public delegate void JoinPfEventDelegate(PartyFinderListing listing);
+    public delegate void JoinPfEventDelegate(IPartyFinderListing listing);
 
     /// <summary>
     /// <para>
@@ -38,13 +38,13 @@ public class PartyFinder : IDisposable {
     /// Requires the <see cref="Hooks.PartyFinderJoins"/> hook to be enabled.
     /// </para>
     /// </summary>
-    public event JoinPfEventDelegate? JoinParty;
+    public event JoinPfEventDelegate? OnJoinParty;
 
     private IPartyFinderGui PartyFinderGui { get; }
     private bool JoinsEnabled { get; }
     private bool ListingsEnabled { get; }
     private IntPtr PartyFinderAgent { get; set; } = IntPtr.Zero;
-    private Dictionary<uint, PartyFinderListing> Listings { get; } = new();
+    private Dictionary<uint, IPartyFinderListing> Listings { get; } = new();
     private int LastBatch { get; set; } = -1;
 
     /// <summary>
@@ -58,7 +58,7 @@ public class PartyFinder : IDisposable {
     /// Keys are the listing ID for fast lookup by ID. Values are the listing itself.
     /// </para>
     /// </summary>
-    public IReadOnlyDictionary<uint, PartyFinderListing> CurrentListings => this.Listings;
+    public IReadOnlyDictionary<uint, IPartyFinderListing> CurrentListings => this.Listings;
 
     internal PartyFinder(ISigScanner scanner, IPartyFinderGui partyFinderGui, IGameInteropProvider interop, Hooks hooks) {
         this.PartyFinderGui = partyFinderGui;
@@ -92,12 +92,12 @@ public class PartyFinder : IDisposable {
         this.RequestPfListingsHook?.Dispose();
     }
 
-    private void ReceiveListing(PartyFinderListing listing, PartyFinderListingEventArgs Args) {
-        if (Args.BatchNumber != this.LastBatch) {
+    private void ReceiveListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args) {
+        if (args.BatchNumber != this.LastBatch) {
             this.Listings.Clear();
         }
 
-        this.LastBatch = Args.BatchNumber;
+        this.LastBatch = args.BatchNumber;
 
         this.Listings[listing.Id] = listing;
     }
@@ -107,20 +107,20 @@ public class PartyFinder : IDisposable {
         return this.RequestPfListingsHook!.Original(agent, categoryIdx);
     }
 
-    private IntPtr JoinPfDetour(IntPtr manager, IntPtr a2, int Type, IntPtr packetData, uint a5) {
+    private IntPtr JoinPfDetour(IntPtr manager, IntPtr a2, int type, IntPtr packetData, uint a5) {
         // Updated: 5.5
         const int idOffset = -0x20;
 
-        var ret = this.JoinPfHook!.Original(manager, a2, Type, packetData, a5);
+        var ret = this.JoinPfHook!.Original(manager, a2, type, packetData, a5);
 
-        if (this.JoinParty == null || (JoinType) Type != JoinType.PartyFinder || packetData == IntPtr.Zero) {
+        if (this.OnJoinParty == null || (JoinType) type != JoinType.PartyFinder || packetData == IntPtr.Zero) {
             return ret;
         }
 
         try {
             var id = (uint) Marshal.ReadInt32(packetData + idOffset);
             if (this.Listings.TryGetValue(id, out var listing)) {
-                this.JoinParty?.Invoke(listing);
+                this.OnJoinParty?.Invoke(listing);
             }
         } catch (Exception ex) {
             Logger.Log.Error(ex, "Exception in PF join detour");

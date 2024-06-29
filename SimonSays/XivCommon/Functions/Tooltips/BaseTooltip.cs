@@ -1,14 +1,13 @@
-using System;
+﻿using System;
 using Dalamud.Game.Text.SeStringHandling;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 
-namespace XivCommon.Functions.Tooltips; 
+namespace XivCommon.Functions.Tooltips;
 
 /// <summary>
 /// The base class for tooltips
 /// </summary>
 public abstract unsafe class BaseTooltip {
-    private Tooltips.StringArrayDataSetStringDelegate SadSetString { get; }
-
     /// <summary>
     /// A pointer to the StringArrayData class for this tooltip.
     /// </summary>
@@ -19,8 +18,7 @@ public abstract unsafe class BaseTooltip {
     /// </summary>
     protected readonly int** NumberArrayData;
 
-    internal BaseTooltip(Tooltips.StringArrayDataSetStringDelegate sadSetString, byte*** stringArrayData, int** numberArrayData) {
-        this.SadSetString = sadSetString;
+    internal BaseTooltip(byte*** stringArrayData, int** numberArrayData) {
         this._stringArrayData = stringArrayData;
         this.NumberArrayData = numberArrayData;
     }
@@ -43,7 +41,7 @@ public abstract unsafe class BaseTooltip {
             var encoded = value.Encode().Terminate();
 
             fixed (byte* encodedPtr = encoded) {
-                this.SadSetString((IntPtr) this._stringArrayData, index, encodedPtr, 0, 1, 1);
+                ((StringArrayData*) this._stringArrayData)->SetValue(index, encodedPtr, false, true, true);
             }
         }
     }
