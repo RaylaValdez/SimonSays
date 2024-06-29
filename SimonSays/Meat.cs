@@ -41,11 +41,8 @@ namespace SimonSays
             }
 
             // Check if camera is already set up
-            if (camera == null)
-            {
-                // If not, create a new instance of OverrideCamera
-                camera = new OverrideCamera();
-            }
+            // If not, create a new instance of OverrideCamera
+            camera ??= new OverrideCamera();
         }
 
 
@@ -98,14 +95,14 @@ namespace SimonSays
                 return;
             }
             // Check if the channel is enabled for the command, unless forced for testing
-            Plugin.Configuration.EnabledChannels.TryGetValue((int)Type, out bool Enabled);
+            Plugin.Configuration.EnabledChannels.TryGetValue((int)Type, out var Enabled);
             if (!Enabled && !ForceForTesting)
             {
                 return;
             }
 
             // Get the configured catchphrase
-            string CatchPhrase = Plugin.Configuration.CatchPhrase;
+            var CatchPhrase = Plugin.Configuration.CatchPhrase;
 
             // Check if the message starts with the catchphrase
             if (!Message.StartsWith(CatchPhrase))
@@ -114,7 +111,7 @@ namespace SimonSays
             }
 
             // Extract the emote from the message
-            string Emote = Message.Substring(CatchPhrase.Length).TrimStart();
+            var Emote = Message[CatchPhrase.Length..].TrimStart();
 
             // Validate and sanitize the emote
             if (!SanitizeEmote(ref Emote))
@@ -128,7 +125,7 @@ namespace SimonSays
             // Optionally add "motion" if configured for motion-only emotes
             if (Plugin.Configuration.MotionOnly)
             {
-                Emote = Emote + " motion";
+                Emote += " motion";
             }
 
             // Execute the emote
@@ -167,6 +164,7 @@ namespace SimonSays
 
             if (movement == null)
             {
+                Service.Log.Debug("movement is null");
                 return;
             }
             // Clear any existing movement callbacks
@@ -175,11 +173,9 @@ namespace SimonSays
             // Check if a target is selected
             if (Target != null)
             {
-                if (Target.TargetObject != null)
-                {
-                    // Initiate character movement towards the target with an offset
-                    ScoochOnOver(Offset, Target.TargetObject);
-                }
+                // Initiate character movement towards the target with an offset
+                ScoochOnOver(Offset, Target);
+
             }
             else
             {
@@ -234,7 +230,7 @@ namespace SimonSays
 
             // Get the target position and rotation
             Vector3 TarPos = Target.Position;
-            float TarRot = Target.Rotation;
+            var TarRot = Target.Rotation;
 
             // Handle invalid rotation values by using the character's rotation
             if (float.IsNaN(TarRot) || float.IsInfinity(TarRot))
@@ -244,8 +240,8 @@ namespace SimonSays
             }
 
             // Calculate the offset relative to the target
-            float offsetX = Offset.Value.X * MathF.Sin(TarRot);
-            float offsetZ = Offset.Value.Z * MathF.Sin(TarRot);
+            var offsetX = Offset.Value.X * MathF.Sin(TarRot);
+            var offsetZ = Offset.Value.Z * MathF.Sin(TarRot);
 
             // Apply the offset to the target position
             TarPos.X += offsetX;
@@ -253,7 +249,7 @@ namespace SimonSays
 
             // Apply the offset rotation to the target rotation
             TarRot += Offset.Value.Y.Degrees().Rad;
-            
+
             if (movement != null)
             {
 
@@ -286,13 +282,13 @@ namespace SimonSays
                 return;
             }
 
-            IGameObject? Target = Service.TargetManager.Target;
+            var Target = Service.TargetManager.Target;
             var Chat = new XivCommonBase(Plugin.PluginInterfaceStatic!).Functions.Chat;
 
             // Synchronize positions if requested
             if (ShouldSyncPosition)
             {
-                Vector3 TempOffset = EmoteHasOffset(Emote);
+                var TempOffset = EmoteHasOffset(Emote);
                 // Start scooching with the callback that executes the emote once we have arrived at our destination
                 StartScooch(TempOffset, () =>
                 {
@@ -329,7 +325,7 @@ namespace SimonSays
         public static Vector3 EmoteHasOffset(string Emote)
         {
             // Create a new Vector3 object called Offset
-            Vector3 Offset = new Vector3();
+            var Offset = new Vector3();
 
             // Check if the Emote string is null or empty
             if (string.IsNullOrEmpty(Emote))
@@ -339,7 +335,7 @@ namespace SimonSays
             }
 
             // Search for the first EmoteOffset in the EmoteOffsets list that is enabled and matches the Emote string
-            EmoteOffsets? emoteOffset = Plugin.Configuration!.EmoteOffsets.FirstOrDefault((offset) => offset.Enabled && offset.Emote == Emote);
+            var emoteOffset = Plugin.Configuration!.EmoteOffsets.FirstOrDefault((offset) => offset.Enabled && offset.Emote == Emote);
 
             // Check if an EmoteOffset was found
             if (emoteOffset != null)

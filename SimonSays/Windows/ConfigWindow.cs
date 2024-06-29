@@ -31,62 +31,16 @@ namespace SimonSays.Windows;
 /// </remarks>
 public class ConfigWindow : Window, IDisposable
 {
-    private Configuration configuration;
+    private readonly Configuration configuration;
     private string testText = "Simon Says : hum";
-    private ISharedImmediateTexture aboutImage;
+    private readonly ISharedImmediateTexture aboutImage;
 
     private static readonly bool EnableDebug = false;
 
     private Vector2 contextMenuPosition;
-    private Vector2 contextMenuSize = new Vector2(135, 34);
+    private Vector2 contextMenuSize = new(135, 34);
     private bool isFirstFrame = true;
-
-    public static string selectedLayout = String.Empty;
-    public static string selectedMember = String.Empty;
-    public static bool namingWindowOpen = false;
-    public static bool renamingWindowOpen = false;
-    public static bool newMemberWindowOpen = false;
-    public static bool contextPopupOpen = false;
     private const int BufferSize = 1024;
-    public static string nameBuffer = "Change Me";
-    public static string filterText = String.Empty;
-    public static string renameBuffer = String.Empty;
-
-    public static Vector4 oldTitleColorActive = Vector4.Zero;
-
-    public static Preset? activePreset = null;
-
-    public static List<Vector4> memberColors = new List<Vector4>
-    {
-        new Vector4(0.722f, 0.325f, 0.623f, 1.0f),
-        new Vector4(0.7051666666666666f, 0.335625f, 0.605875f, 1.0f),
-        new Vector4(0.6883333333333332f, 0.34625f, 0.5887499999999999f, 1.0f),
-        new Vector4(0.6715f, 0.356875f, 0.5716249999999999f, 1.0f),
-        new Vector4(0.6546666666666667f, 0.36750000000000005f, 0.5545f, 1.0f),
-        new Vector4(0.6378333333333334f, 0.37812500000000004f, 0.537375f, 1.0f),
-        new Vector4(0.621f, 0.38875f, 0.52025f, 1.0f),
-        new Vector4(0.6041666666666666f, 0.399375f, 0.503125f, 1.0f),
-        new Vector4(0.5873333333333334f, 0.41000000000000003f, 0.48600000000000004f, 1.0f),
-        new Vector4(0.5705f, 0.42062499999999997f, 0.46887500000000004f, 1.0f),
-        new Vector4(0.5536666666666665f, 0.43125f, 0.45174999999999993f, 1.0f),
-        new Vector4(0.5368333333333333f, 0.44187499999999996f, 0.434625f, 1.0f),
-        new Vector4(0.52f, 0.4525f, 0.4175f, 1.0f),
-        new Vector4(0.5031666666666667f, 0.463125f, 0.40037500000000004f, 1.0f),
-        new Vector4(0.4863333333333334f, 0.47374999999999995f, 0.38325000000000004f, 1.0f),
-        new Vector4(0.46950000000000003f, 0.484375f, 0.36612500000000003f, 1.0f),
-        new Vector4(0.4526666666666668f, 0.49499999999999994f, 0.3490000000000001f, 1.0f),
-        new Vector4(0.4358333333333334f, 0.505625f, 0.33187500000000003f, 1.0f),
-        new Vector4(0.4190000000000001f, 0.5162499999999999f, 0.3147500000000001f, 1.0f),
-        new Vector4(0.4021666666666668f, 0.526875f, 0.29762500000000014f, 1.0f),
-        new Vector4(0.3853333333333334f, 0.5374999999999999f, 0.28050000000000014f, 1.0f),
-        new Vector4(0.3685000000000001f, 0.5481249999999999f, 0.26337500000000014f, 1.0f),
-        new Vector4(0.3516666666666668f, 0.5587499999999999f, 0.24625000000000014f, 1.0f),
-        new Vector4(0.3348333333333335f, 0.5693749999999999f, 0.22912500000000016f, 1.0f)
-
-    };
-
-
-
 
     public ConfigWindow(Plugin plugin) : base(
         "SimonSays Settings",
@@ -102,7 +56,10 @@ public class ConfigWindow : Window, IDisposable
         aboutImage = Service.TextureProvider.GetFromFile(imagePath);
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+    }
 
     /// <summary>
     /// Draws a checkbox for a chat channel at the specified index.
@@ -113,14 +70,13 @@ public class ConfigWindow : Window, IDisposable
         // Get the key and value of the chat channel at the specified index
         var key = ChatChannelTypes.ChatTypes.Keys.ToList()[index];
         var Value = ChatChannelTypes.ChatTypes[key];
-        int channel = key;
+        var channel = key;
 
         // Get the previous configuration value for the channel
-        bool prevVal = false;
-        configuration.EnabledChannels.TryGetValue(channel, out prevVal);
+        configuration.EnabledChannels.TryGetValue(channel, out var prevVal);
 
         // Draw the checkbox and update the configuration if the value changes
-        bool newVal = prevVal;
+        var newVal = prevVal;
         ImGui.TableNextColumn();
         if (ImGui.Checkbox(Value, ref newVal))
         {
@@ -136,7 +92,7 @@ public class ConfigWindow : Window, IDisposable
     private void DrawEnabled()
     {
         // Get the current value of the IsListening property from the configuration
-        bool isListening = configuration.IsListening;
+        var isListening = configuration.IsListening;
 
         // Draw the "Enabled" checkbox and update the isListening variable with the new value
         if (ImGui.Checkbox("Enabled", ref isListening))
@@ -167,20 +123,20 @@ public class ConfigWindow : Window, IDisposable
         var ChatTypes = ChatChannelTypes.ChatTypes;
 
         // Calculate the maximum number of rows in the table
-        int max = (int)Math.Ceiling(ChatTypes.Count / 3d);
+        var max = (int)Math.Ceiling(ChatTypes.Count / 3d);
 
         // Loop through each row in the table
-        for (int i = 0; i < Math.Ceiling(ChatTypes.Count / 3d); i++) // row loop
+        for (var i = 0; i < Math.Ceiling(ChatTypes.Count / 3d); i++) // row loop
         {
             // Loop through each column in the table
-            for (int j = 0; j < 3; j++) // column loop
+            for (var j = 0; j < 3; j++) // column loop
             {
                 // Check if the current index is out of bounds
                 if ((j * max) + i > ChatTypes.Count - 1)
                     continue; // Move to the next iteration
 
                 // Calculate the index of the current checkbox
-                int index = (j * max) + i;
+                var index = (j * max) + i;
 
                 // Draw the checkbox for the current channel
                 DrawCheckbox(index);
@@ -199,7 +155,7 @@ public class ConfigWindow : Window, IDisposable
     private void DrawCatchPhBox()
     {
         // Get the current catch phrase from the configuration
-        string inputText = configuration.CatchPhrase;
+        var inputText = configuration.CatchPhrase;
 
         // Draw the input text box and check if the text has been modified
         if (ImGui.InputText("", ref inputText, 500U))
@@ -218,7 +174,7 @@ public class ConfigWindow : Window, IDisposable
     private void DrawMiscOptions()
     {
         // Get the value of the MotionOnly property from the configuration object
-        bool motionOnly = configuration.MotionOnly;
+        var motionOnly = configuration.MotionOnly;
 
         // Display a checkbox in the ImGui window with the label "Motion Only" and bind it to the motionOnly variable
         // If the checkbox value is changed, the motionOnly variable will be updated
@@ -249,7 +205,7 @@ public class ConfigWindow : Window, IDisposable
     private void DrawExperimentCheckboxes()
     {
         // Get the value of the PosSync property from the configuration object
-        bool posSync = configuration.PosSync;
+        var posSync = configuration.PosSync;
 
         // Display a checkbox labeled "Positional Sync" and bind its value to the posSync variable
         if (ImGui.Checkbox("Positional Sync", ref posSync))
@@ -282,7 +238,7 @@ public class ConfigWindow : Window, IDisposable
     /// <summary>
     /// Draws debug positional information on the screen.
     /// </summary>
-    private void DrawDebugPositionalInformation()
+    private static void DrawDebugPositionalInformation()
     {
         // Check if the movement object is null
         if (Meat.movement == null)
@@ -298,7 +254,7 @@ public class ConfigWindow : Window, IDisposable
         ImGui.Text($"Rotation distance (deg): {Meat.movement.RotationDistance}");
 
         // Get the current time
-        DateTime currTime = DateTime.Now;
+        var currTime = DateTime.Now;
 
         // Display the time since the last movement
         ImGui.Text($"Time since last moved: {(currTime - Meat.movement.LastTimeMoved).TotalSeconds}");
@@ -311,7 +267,7 @@ public class ConfigWindow : Window, IDisposable
 
         // Get the target position and rotation
         var tarPos = Meat.movement.DesiredPosition;
-        float tarRot = Meat.movement.DesiredRotation;
+        var tarRot = Meat.movement.DesiredRotation;
 
         // Convert the rotation to degrees
         tarRot = Helpers.AngleConversions.ToDeg(tarRot);
@@ -334,8 +290,8 @@ public class ConfigWindow : Window, IDisposable
 
     public override void PreDraw()
     {
-        ImGuiStylePtr StylePtr = ImGui.GetStyle();
-        oldTitleColorActive = StylePtr.Colors[(int)ImGuiCol.TitleBgActive];
+        var StylePtr = ImGui.GetStyle();
+        ConfigWindowHelpers.oldTitleColorActive = StylePtr.Colors[(int)ImGuiCol.TitleBgActive];
 
         StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = (new Vector4(081, 054, 148, 211) / 255f);
 
@@ -375,15 +331,15 @@ public class ConfigWindow : Window, IDisposable
         ImGui.PushStyleVar(ImGuiStyleVar.ButtonTextAlign, new Vector2(0.5f, 0.5f));
         ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0, 0));
         // Colors
-        ImGui.PushStyleColor(ImGuiCol.TitleBgActive, (new Vector4(081, 054, 148, 211)) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, (new Vector4(130, 068, 153, 241)) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, (new Vector4(184, 083, 159, 241)) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.Separator, (new Vector4(130, 068, 153, 241)) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.SeparatorHovered, (new Vector4(130, 068, 153, 200)) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.SeparatorActive, (new Vector4(184, 083, 159, 241)) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.ResizeGripActive, (new Vector4(184, 083, 159, 241)) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.TabHovered, (new Vector4(130, 068, 153, 200)) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.TabActive, (new Vector4(184, 083, 159, 241)) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(081, 054, 148, 211) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(130, 068, 153, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(184, 083, 159, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.Separator, new Vector4(130, 068, 153, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.SeparatorHovered, new Vector4(130, 068, 153, 200) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.SeparatorActive, new Vector4(184, 083, 159, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.ResizeGripActive, new Vector4(184, 083, 159, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.TabHovered, new Vector4(130, 068, 153, 200) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.TabActive, new Vector4(184, 083, 159, 241) / 255f);
         ImGui.PushStyleColor(ImGuiCol.Border, (new Vector4(0.35f, 0.35f, 0.35f, 0.75f)));
         ImGui.PushStyleColor(ImGuiCol.FrameBg, (new Vector4(50, 46, 51, 122) / 255f));
 
@@ -447,13 +403,13 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.Text("");
                 ImGui.Text("Single Emote Example :");
                 ImGui.Text("");
-                string example =
+                var example =
                     "/micon hum Emote\n" +                    "/tell <t> Simon Says : hum\n" +                    "/hum\n";
                 ImGui.InputTextMultiline("##Example", ref example, 200, new(200, 75), ImGuiInputTextFlags.ReadOnly);
                 ImGui.Text("");
                 ImGui.Text("Multiple Emote Example :");
                 ImGui.Text("");
-                string multiexample =
+                var multiexample =
                     "/micon hum Emote\n" +                    "/tell <t> Simon Says : hum\n" +                    "/hum\n" +
                     "/wait 3\n" +
                     "/tell <t> Simon Says : dance\n" +
@@ -496,11 +452,11 @@ public class ConfigWindow : Window, IDisposable
                 {
                     ImGuiEx.ImGuiLineCentered("AboutImage", () =>
                     {
-                        if (aboutImage.TryGetWrap(out var texture,out var exception))
+                        if (aboutImage.TryGetWrap(out var texture, out var exception))
                         {
                             ImGui.Image(texture.ImGuiHandle, new System.Numerics.Vector2(300, 300));
                         }
-                        
+
                     });
                 }
                 ImGui.Text("");
@@ -578,9 +534,9 @@ public class ConfigWindow : Window, IDisposable
 
     public override void PostDraw()
     {
-        ImGuiStylePtr StylePtr = ImGui.GetStyle();
+        var StylePtr = ImGui.GetStyle();
 
-        StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = oldTitleColorActive;
+        StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = ConfigWindowHelpers.oldTitleColorActive;
 
 
         base.PostDraw();
@@ -590,7 +546,7 @@ public class ConfigWindow : Window, IDisposable
     {
         ImGui.PushID(text);
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0.0f));
-        bool selected = ImGuiComponents.IconButton(icon); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Imgui icon button here
+        var selected = ImGuiComponents.IconButton(icon); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Imgui icon button here
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip(tooltip);
@@ -613,15 +569,15 @@ public class ConfigWindow : Window, IDisposable
 
     public static void OffsetsTab()
     {
-        float WindowWidth = ImGui.GetWindowWidth();
-        float WindowHeight = ImGui.GetWindowHeight();
+        var WindowWidth = ImGui.GetWindowWidth();
+        var WindowHeight = ImGui.GetWindowHeight();
 
-        Vector2 LeftSize = new Vector2(WindowWidth / 4.3f, WindowHeight / 1.5f);
-        Vector2 LayoutsChildSize = new Vector2(-1, LeftSize.Y / 2.5f);
-        Vector2 LayoutsSize = new Vector2(-1, -1);
-        Vector2 MembersSize = new Vector2(-1, -1);
-        Vector2 MiddleSize = new Vector2(WindowWidth / 2, WindowHeight / 1.5f);
-        Vector2 RightSize = new Vector2(WindowWidth / 4.3f, WindowHeight / 1.5f);
+        var LeftSize = new Vector2(WindowWidth / 4.3f, WindowHeight / 1.5f);
+        var LayoutsChildSize = new Vector2(-1, LeftSize.Y / 2.5f);
+        var LayoutsSize = new Vector2(-1, -1);
+        var MembersSize = new Vector2(-1, -1);
+        var MiddleSize = new Vector2(WindowWidth / 2, WindowHeight / 1.5f);
+        var RightSize = new Vector2(WindowWidth / 4.3f, WindowHeight / 1.5f);
 
         ImGui.NewLine();
         if (ImGui.BeginChild("left", LeftSize, true, ImGuiWindowFlags.NoCollapse))
@@ -638,7 +594,7 @@ public class ConfigWindow : Window, IDisposable
                         {
                             ImGui.SetNextWindowPos(new Vector2(10.0f, 100.0f));
                             ImGui.SetNextWindowSize(new Vector2(200.0f, 60.0f));
-                            namingWindowOpen = true;
+                            ConfigWindowHelpers.namingWindowOpen = true;
                         }
 
                         ImGui.SameLine();
@@ -646,31 +602,31 @@ public class ConfigWindow : Window, IDisposable
                         ImGui.SameLine();
                         if (IconButtonWithText(FontAwesomeIcon.Minus, "", "Delete selected Preset"))
                         {
-                            File.Delete(Plugin.PresetDirectory + "/" + selectedLayout + ".json");
-                            selectedLayout = String.Empty;
-                            activePreset = null;
+                            File.Delete(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json");
+                            ConfigWindowHelpers.selectedLayout = string.Empty;
+                            ConfigWindowHelpers.activePreset = null;
                         }
                         ImGui.SameLine();
                         ImGui.Dummy(new Vector2(1, 0));
                         ImGui.SameLine();
                         if (IconButtonWithText(FontAwesomeIcon.Clipboard, "", "Copy Preset to Clipboard"))
                         {
-                            if (!string.IsNullOrEmpty(selectedLayout))
+                            if (!string.IsNullOrEmpty(ConfigWindowHelpers.selectedLayout))
                             {
-                                var presetContent = File.ReadAllLines(Plugin.PresetDirectory + "/" + selectedLayout + ".json");
-                                string contentToCopy = string.Join(Environment.NewLine, presetContent);
+                                var presetContent = File.ReadAllLines(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json");
+                                var contentToCopy = string.Join(Environment.NewLine, presetContent);
 
                                 // Copy to clipboard
                                 ImGui.SetClipboardText(contentToCopy);
 
-                                Notification clipboardsuccess = new Notification();
+                                var clipboardsuccess = new Notification();
                                 clipboardsuccess.Content = "Preset copied to Clipboard.";
 
                                 Service.NotificationManager.AddNotification(clipboardsuccess);
                             }
                             else
                             {
-                                Notification clipboardfailure = new Notification();
+                                var clipboardfailure = new Notification();
                                 clipboardfailure.Content = "Select a preset to copy to Clipboard.";
 
                                 Service.NotificationManager.AddNotification(clipboardfailure);
@@ -679,7 +635,7 @@ public class ConfigWindow : Window, IDisposable
                         ImGui.SameLine();
                         ImGui.Dummy(new Vector2(1, 0));
                         ImGui.SameLine();
-                        bool importInProgress = false; // Flag to track import progress
+                        var importInProgress = false; // Flag to track import progress
 
                         if (IconButtonWithText(FontAwesomeIcon.FileImport, "", "Import Preset from Clipboard"))
                         {
@@ -695,24 +651,23 @@ public class ConfigWindow : Window, IDisposable
 
                                     // Clear clipboard text immediately to avoid re-imports
                                     ImGui.SetClipboardText("");
+                                    ConfigWindowHelpers.
 
-                                    // Deserialize preset content
-                                    activePreset = JsonSerializer.Deserialize<Preset>(presetContent) ?? new Preset();
-                                    selectedLayout = activePreset.PresetName;
+                                                                        // Deserialize preset content
+                                                                        activePreset = JsonSerializer.Deserialize<Preset>(presetContent) ?? new Preset();
+                                    ConfigWindowHelpers.selectedLayout = ConfigWindowHelpers.activePreset.PresetName;
 
                                     // Initialize Members if null
-                                    if (activePreset.Members == null)
-                                    {
-                                        activePreset.Members = [];
-                                    }
+                                    ConfigWindowHelpers.activePreset.Members ??= [];
 
                                     // Check if PresetName is valid
-                                    if (!string.IsNullOrEmpty(activePreset.PresetName))
+                                    if (!string.IsNullOrEmpty(ConfigWindowHelpers.activePreset.PresetName))
                                     {
                                         // Serialize and write to file
-                                        var jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
-                                        File.WriteAllText(Plugin.PresetDirectory + "/" + activePreset.PresetName + ".json", jsonString);
-                                        
+                                        var options = new JsonSerializerOptions { WriteIndented = true };
+                                        var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
+                                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.activePreset.PresetName + ".json", jsonString);
+
                                     }
                                     else
                                     {
@@ -721,7 +676,7 @@ public class ConfigWindow : Window, IDisposable
                                 }
                                 catch (Exception)
                                 {
-                                    Notification importFailure = new Notification();
+                                    var importFailure = new Notification();
                                     importFailure.Content = "You can only import valid Presets";
                                     Service.NotificationManager.AddNotification(importFailure);
                                 }
@@ -738,44 +693,38 @@ public class ConfigWindow : Window, IDisposable
 
                 //ImGui.Dummy(new Vector2(0, 0));
 
-                using (var Layouts = ImRaii.ListBox("##", LayoutsSize))
+                using var Layouts = ImRaii.ListBox("##", LayoutsSize);
+                if (Layouts.Success)
                 {
-                    if (Layouts.Success)
+                    foreach (var file in Directory.EnumerateFiles(Plugin.PresetDirectory))
                     {
-                        foreach (var file in Directory.EnumerateFiles(Plugin.PresetDirectory))
+                        var fileName = Path.GetFileNameWithoutExtension(file);
+                        if (ImGui.Selectable(fileName, ConfigWindowHelpers.selectedLayout == fileName))
                         {
-                            var fileName = Path.GetFileNameWithoutExtension(file);
-                            if (ImGui.Selectable(fileName, selectedLayout == fileName))
+                            ConfigWindowHelpers.selectedLayout = fileName;
+
+                            var presetContent = File.ReadAllLines(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json");
+                            var jsonString = string.Join(Environment.NewLine, presetContent);
+                            ConfigWindowHelpers.
+
+
+                                                            activePreset = JsonSerializer.Deserialize<Preset>(jsonString) ?? new Preset();
+                            ConfigWindowHelpers.activePreset.Members ??= [];
+
+                        }
+
+                        if (ConfigWindowHelpers.selectedLayout == fileName)
+                        {
+                            if (ImGui.IsItemHovered())
                             {
-                                selectedLayout = fileName;
-
-                                var presetContent = File.ReadAllLines(Plugin.PresetDirectory + "/" + selectedLayout + ".json");
-                                string jsonString = string.Join(Environment.NewLine, presetContent);
-
-
-
-                                activePreset = JsonSerializer.Deserialize<Preset>(jsonString) ?? new Preset();
-                                if (activePreset.Members == null)
+                                if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                                 {
-                                    activePreset.Members = new();
-                                }
-
-                            }
-
-                            if (selectedLayout == fileName)
-                            {
-                                if (ImGui.IsItemHovered())
-                                {
-                                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                                    {
-                                        Service.Log.Debug("Opening context popup");
-
-                                        contextPopupOpen = true;
-                                    }
+                                    Service.Log.Debug("Opening context popup");
+                                    ConfigWindowHelpers.
+                                                                            contextPopupOpen = true;
                                 }
                             }
                         }
-
                     }
 
                 }
@@ -783,7 +732,7 @@ public class ConfigWindow : Window, IDisposable
             ImGui.EndChild();
             if (ImGui.BeginChild("members", MembersSize, true, ImGuiWindowFlags.NoCollapse))
             {
-                if (!selectedLayout.IsNullOrEmpty())
+                if (!ConfigWindowHelpers.selectedLayout.IsNullOrEmpty())
                 {
                     if (ImGui.BeginChild("memberbuttons", new Vector2(-1, ImGui.GetTextLineHeight() * 2.3f), false, ImGuiWindowFlags.NoCollapse))
                     {
@@ -793,14 +742,15 @@ public class ConfigWindow : Window, IDisposable
                         {
                             if (IconButtonWithText(FontAwesomeIcon.StreetView, "", "Add targetted Character."))
                             {
-                                IGameObject? target = Service.TargetManager.Target;
+                                var target = Service.TargetManager.Target;
                                 if (target != null)
                                 {
-                                    if (activePreset != null)
+                                    if (ConfigWindowHelpers.activePreset != null)
                                     {
-                                        activePreset.Members!.Add(new PresetMember(target.Name.ToString()));
-                                        string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
-                                        File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                                        ConfigWindowHelpers.activePreset.Members!.Add(new PresetMember(target.Name.ToString()));
+                                        var options = new JsonSerializerOptions { WriteIndented = true };
+                                        var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
+                                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
                                     }
                                 }
 
@@ -811,32 +761,32 @@ public class ConfigWindow : Window, IDisposable
 
                             if (IconButtonWithText(FontAwesomeIcon.Minus, "", "Remove Selected Member"))
                             {
-                                if (activePreset != null)
+                                if (ConfigWindowHelpers.activePreset != null)
                                 {
-                                    // activePreset.Members.Remove(selectedMember);
-                                    activePreset.Members = activePreset.Members.Where((member) => member.CharacterName != selectedMember).ToList(); // select every member that doesn't have the same character name
-                                    string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
-                                    File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                                    ConfigWindowHelpers.
+                                                                        // activePreset.Members.Remove(selectedMember);
+                                                                        activePreset.Members = ConfigWindowHelpers.activePreset.Members.Where((member) => member.CharacterName != ConfigWindowHelpers.selectedMember).ToList(); // select every member that doesn't have the same character name
+                                    var options = new JsonSerializerOptions { WriteIndented = true };
+                                    var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
+                                    File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
                                 }
                             }
                         });
                     }
                     ImGui.EndChild();
 
-                    using (var Members = ImRaii.ListBox("##", MembersSize))
+                    using var Members = ImRaii.ListBox("##", MembersSize);
+                    if (Members.Success)
                     {
-                        if (Members.Success)
+                        if (ConfigWindowHelpers.activePreset != null)
                         {
-                            if (activePreset != null)
+                            if (ConfigWindowHelpers.activePreset.Members != null)
                             {
-                                if (activePreset.Members != null)
+                                foreach (var member in ConfigWindowHelpers.activePreset.Members.ToList())
                                 {
-                                    foreach (var member in activePreset.Members.ToList())
+                                    if (ImGui.Selectable(member.CharacterName, ConfigWindowHelpers.selectedMember == member.CharacterName))
                                     {
-                                        if (ImGui.Selectable(member.CharacterName, selectedMember == member.CharacterName))
-                                        {
-                                            selectedMember = member.CharacterName;
-                                        }
+                                        ConfigWindowHelpers.selectedMember = member.CharacterName;
                                     }
                                 }
                             }
@@ -850,96 +800,98 @@ public class ConfigWindow : Window, IDisposable
         ImGui.SameLine();
         if (ImGui.BeginChild("middle", MiddleSize, true, ImGuiWindowFlags.NoCollapse))
         {
-            if (selectedLayout != null)
+            if (ConfigWindowHelpers.selectedLayout != null)
             {
                 double minX = -10;
                 double maxX = 10;
                 double minY = -10;
                 double maxY = 10;
                 ImPlot.SetNextAxesLimits(minX, maxX, minY, maxY, ImPlotCond.Always);
-                if (ImPlot.BeginPlot(selectedLayout, new Vector2(-1, -1), ImPlotFlags.None | ImPlotFlags.NoLegend))
+                if (ImPlot.BeginPlot(ConfigWindowHelpers.selectedLayout, new Vector2(-1, -1), ImPlotFlags.None | ImPlotFlags.NoLegend))
                 {
-                    if (activePreset != null)
+                    if (ConfigWindowHelpers.activePreset != null)
                     {
-                        if (activePreset.Members != null)
+                        if (ConfigWindowHelpers.activePreset.Members != null)
                         {
-                            ImPlotPoint mousePos = ImPlot.GetPlotMousePos();
+                            var mousePos = ImPlot.GetPlotMousePos();
 
 
-                            int colorIndex = 0;
-                            foreach (var member in activePreset.Members.ToList())
+                            var colorIndex = 0;
+                            foreach (var member in ConfigWindowHelpers.activePreset.Members.ToList())
                             {
-                                double X = member.X;
-                                double Y = member.Y;
-                                float rot = member.ROT;
+                                var X = member.X;
+                                var Y = member.Y;
+                                var rot = member.ROT;
 
                                 // Ensure colorIndex does not exceed the bounds of memberColors
-                                if (colorIndex >= memberColors.Count)
+                                if (colorIndex >= ConfigWindowHelpers.memberColors.Count)
                                 {
                                     colorIndex = 0; // Reset colorIndex if it exceeds the list size
                                 }
 
-                                if (ImPlot.DragPoint((int)ImGui.GetID(member.CharacterName), ref X, ref Y, memberColors[colorIndex], 15f))
+                                if (ImPlot.DragPoint((int)ImGui.GetID(member.CharacterName), ref X, ref Y, ConfigWindowHelpers.memberColors[colorIndex], 15f))
                                 {
-                                    selectedMember = member.CharacterName;
+                                    ConfigWindowHelpers.selectedMember = member.CharacterName;
                                 }
                                 if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
                                 {
                                     // where a is [x,y] and b is [mouseX, mouseY] : (a squared) + (y squared) = vector magnitude aka distance
-                                    double distance = ((X - mousePos.x) * (X - mousePos.x)) + ((Y - mousePos.y) * (Y - mousePos.y));
+                                    var distance = ((X - mousePos.x) * (X - mousePos.x)) + ((Y - mousePos.y) * (Y - mousePos.y));
 
                                     if (distance < 0.15f)
                                     {
-                                        selectedMember = member.CharacterName;
-                                        SendNotification("Selected : " + selectedMember);
+                                        ConfigWindowHelpers.selectedMember = member.CharacterName;
+                                        SendNotification("Selected : " + ConfigWindowHelpers.selectedMember);
                                     }
                                 }
-                                string initials = string.Join("", member.CharacterName.Split(" ").SelectMany(s => s.FirstOrDefault().ToString()));
+                                var initials = string.Join("", member.CharacterName.Split(" ").SelectMany(s => s.FirstOrDefault().ToString()));
 
                                 ImPlot.PlotText(initials, X, Y);
 
                                 // Calculate the end point of the arrow based on the rotation angle
-                                float arrowLength = 1f; // Length of the arrow
-                                float rotOffset = -rot + MathF.PI / 2;
-                                float endX = (float)(X + arrowLength * Math.Cos(rotOffset));
-                                float endY = (float)(Y + arrowLength * Math.Sin(rotOffset));
+                                var arrowLength = 1f; // Length of the arrow
+                                var rotOffset = -rot + (MathF.PI / 2);
+                                var endX = (float)(X + (arrowLength * Math.Cos(rotOffset)));
+                                var endY = (float)(Y + (arrowLength * Math.Sin(rotOffset)));
 
                                 // Prepare the points for PlotLine
-                                float[] xs = new float[] { (float)X, endX };
-                                float[] ys = new float[] { (float)Y, endY };
+                                var xs = new float[] { (float)X, endX };
+                                var ys = new float[] { (float)Y, endY };
 
                                 ImPlot.SetupLegend(ImPlotLocation.NorthWest, ImPlotLegendFlags.NoMenus);
                                 // Plot the arrow to show the rotation
-                                ImPlot.SetNextLineStyle(memberColors[colorIndex]);
+                                ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
                                 ImPlot.PlotLine(member.CharacterName, ref xs[0], ref ys[0], 2);
 
                                 // Calculate the points for the arrowhead
-                                float arrowheadLength = 0.25f; // Length of the arrowhead lines
-                                float angleOffset = (125f).Degrees().Rad;
+                                var arrowheadLength = 0.25f; // Length of the arrowhead lines
+                                var angleOffset = (125f).Degrees().Rad;
 
-                                float leftX = (float)(endX + arrowheadLength * Math.Cos(rotOffset + angleOffset));
-                                float leftY = (float)(endY + arrowheadLength * Math.Sin(rotOffset + angleOffset));
+                                var leftX = (float)(endX + (arrowheadLength * Math.Cos(rotOffset + angleOffset)));
+                                var leftY = (float)(endY + (arrowheadLength * Math.Sin(rotOffset + angleOffset)));
 
-                                float rightX = (float)(endX + arrowheadLength * Math.Cos(rotOffset - angleOffset));
-                                float rightY = (float)(endY + arrowheadLength * Math.Sin(rotOffset - angleOffset));
+                                var rightX = (float)(endX + (arrowheadLength * Math.Cos(rotOffset - angleOffset)));
+                                var rightY = (float)(endY + (arrowheadLength * Math.Sin(rotOffset - angleOffset)));
 
-                                float[] leftArrowXs = new float[] { endX, leftX };
-                                float[] leftArrowYs = new float[] { endY, leftY };
+                                var leftArrowXs = new float[] { endX, leftX };
+                                var leftArrowYs = new float[] { endY, leftY };
 
-                                float[] rightArrowXs = new float[] { endX, rightX };
-                                float[] rightArrowYs = new float[] { endY, rightY };
+                                var rightArrowXs = new float[] { endX, rightX };
+                                var rightArrowYs = new float[] { endY, rightY };
 
                                 // Plot the arrowhead
-                                ImPlot.SetNextLineStyle(memberColors[colorIndex]);
+                                ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
                                 ImPlot.PlotLine(member.CharacterName + "_leftArrowhead", ref leftArrowXs[0], ref leftArrowYs[0], 2);
-                                ImPlot.SetNextLineStyle(memberColors[colorIndex]);
+                                ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
                                 ImPlot.PlotLine(member.CharacterName + "_rightArrowhead", ref rightArrowXs[0], ref rightArrowYs[0], 2);
 
                                 member.X = X;
                                 member.Y = Y;
 
-                                string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
-                                File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                                var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
+                                var options = jsonSerializerOptions;
+                                var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
+                                File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
 
                                 colorIndex++; // Increment colorIndex for the next iteration
                             }
@@ -956,26 +908,26 @@ public class ConfigWindow : Window, IDisposable
         ImGui.SameLine();
         if (ImGui.BeginChild("right", RightSize, true, ImGuiWindowFlags.NoCollapse))
         {
-            if (ImGui.BeginChild("Properties", new Vector2(-1,ImGui.GetWindowHeight()-RightSize.Y / 2.29f), true, ImGuiWindowFlags.NoCollapse))
+            if (ImGui.BeginChild("Properties", new Vector2(-1, ImGui.GetWindowHeight() - (RightSize.Y / 2.29f)), true, ImGuiWindowFlags.NoCollapse))
             {
-                if (!selectedMember.IsNullOrEmpty())
+                if (!ConfigWindowHelpers.selectedMember.IsNullOrEmpty())
                 {
-                    PresetMember member = activePreset?.Members?.FirstOrDefault(((m) => m.CharacterName == selectedMember)) ?? new PresetMember();
+                    var member = ConfigWindowHelpers.activePreset?.Members?.FirstOrDefault(((m) => m.CharacterName == ConfigWindowHelpers.selectedMember)) ?? new PresetMember();
 
 
-                    float x = (float)member.X;
-                    float y = (float)member.Y;
-                    float rot = member.ROT.Radians().Deg;
-                    bool isAnchor = member.isAnchor;
-                    string emote = member.emote;
+                    var x = (float)member.X;
+                    var y = (float)member.Y;
+                    var rot = member.ROT.Radians().Deg;
+                    var isAnchor = member.isAnchor;
+                    var emote = member.emote;
 
-                    bool xchanged = false;
-                    bool ychanged = false;
-                    bool rotchanged = false;
-                    bool anchorchanged = false;
-                    bool emotechanged = false;
+                    var xchanged = false;
+                    var ychanged = false;
+                    var rotchanged = false;
+                    var anchorchanged = false;
+                    var emotechanged = false;
 
-                    ImGui.Text(selectedMember.ToString() + " Properties");
+                    ImGui.Text(ConfigWindowHelpers.selectedMember.ToString() + " Properties");
                     ImGui.Dummy(new Vector2(0, 10));
                     ImGui.Text("Anchor Member");
                     ImGui.SameLine();
@@ -997,7 +949,7 @@ public class ConfigWindow : Window, IDisposable
                     ImGui.SameLine();
                     ImGuiEx.ImGuiLineRightAlign("Offsetx", () =>
                     {
-                        xchanged = ImGui.DragFloat("##x", ref x, 0.05f);
+                        xchanged = ImGui.DragFloat("##x", ref x, 0.05f, 0f, 0f, "%.2f");
                         ImGui.SameLine();
                         ImGui.Text("  ");
                     });
@@ -1006,7 +958,7 @@ public class ConfigWindow : Window, IDisposable
                     ImGui.SameLine();
                     ImGuiEx.ImGuiLineRightAlign("Offsety", () =>
                     {
-                        ychanged = ImGui.DragFloat("##y", ref y, 0.05f);
+                        ychanged = ImGui.DragFloat("##y", ref y, 0.05f, 0f, 0f, "%.2f");
                         ImGui.SameLine();
                         ImGui.Text("  ");
                     });
@@ -1015,11 +967,11 @@ public class ConfigWindow : Window, IDisposable
                     ImGui.SameLine();
                     ImGuiEx.ImGuiLineRightAlign("Offsetrot", () =>
                     {
-                        rotchanged = ImGui.DragFloat("##rot", ref rot, 0.05f);
+                        rotchanged = ImGui.DragFloat("##rot", ref rot, 0.05f, 0f, 0f, "%.2f");
                         ImGui.SameLine();
                         ImGui.Text("  ");
                     });
-                    
+
                     ImGui.Dummy(new Vector2(0, 10));
                     ImGui.Text("Emote");
                     ImGui.SameLine();
@@ -1027,11 +979,11 @@ public class ConfigWindow : Window, IDisposable
                     {
                         if (ImGui.BeginCombo("##EmoteCombo", emote))
                         {
-                            ImGui.InputText("##Search", ref filterText, BufferSize);
+                            ImGui.InputText("##Search", ref ConfigWindowHelpers.filterText, BufferSize);
                             foreach (var j in Service.Emotes)
                             {
                                 var i = j.Replace("/", "");
-                                if (!filterText.IsNullOrEmpty() && !i.Contains(filterText))
+                                if (!ConfigWindowHelpers.filterText.IsNullOrEmpty() && !i.Contains(ConfigWindowHelpers.filterText))
                                 {
                                     continue;
                                 }
@@ -1047,24 +999,33 @@ public class ConfigWindow : Window, IDisposable
                             }
                             ImGui.EndCombo();
                         }
-                        
+
 
                         ImGui.SameLine();
                         ImGui.Text("  ");
                     });
 
+                    if (member.isAnchor)
+                    {
+                        x = 0;
+                        y = 0;
+                        rot = 0;
+                    }
 
-
-                    member.X = Math.Clamp(x,-10,10);
+                    member.X = Math.Clamp(x, -10, 10);
                     member.Y = Math.Clamp(y, -10, 10);
                     member.ROT = Math.Clamp(rot, -180, 180).Degrees().Rad;
                     member.isAnchor = isAnchor;
                     member.emote = emote;
 
+
+
                     if (xchanged || ychanged || rotchanged || anchorchanged || emotechanged)
                     {
-                        string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
-                        File.WriteAllText(Plugin.PresetDirectory + "/" + selectedLayout + ".json", jsonString);
+                        var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
+                        var options = jsonSerializerOptions;
+                        var jsonString = JsonSerializer.Serialize<Preset?>(ConfigWindowHelpers.activePreset, options);
+                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
                     }
 
                 }
@@ -1076,7 +1037,39 @@ public class ConfigWindow : Window, IDisposable
             ImGui.EndChild();
             if (ImGui.BeginChild("Actions", LayoutsChildSize, true, ImGuiWindowFlags.NoCollapse))
             {
+                if (!ConfigWindowHelpers.selectedLayout.IsNullOrEmpty())
+                {
+                    ImGui.Text("Actions");
+                    ImGui.Dummy(new Vector2(0, 10));
+                    ImGui.Text("Position Test");
+                    ImGui.SameLine();
+                    ImGuiEx.ImGuiLineRightAlign("OffsetPos", () =>
+                    {
+                        if (IconButtonWithText(FontAwesomeIcon.PersonWalkingArrowRight, "", "Test your positions, if your character name is part of\r\nthis preset you will move to your designated spot."))
+                        {
 
+                        }
+                        ImGui.SameLine();
+                        ImGui.Text("  ");
+                    });
+                    ImGui.Dummy(new Vector2(0, 10));
+                    ImGui.Text("Begin Preset");
+                    ImGui.SameLine();
+                    ImGuiEx.ImGuiLineRightAlign("OffsetPlay", () =>
+                    {
+                        if (IconButtonWithText(FontAwesomeIcon.Play, "", "Send a party message containing all instructions.\r\nThis will begin the Preset, emotes tied to members of the preset will play."))
+                        {
+
+                        }
+                        ImGui.SameLine();
+                        ImGui.Text("  ");
+                    });
+                    
+                }
+                else
+                {
+                    ImGui.Text("Select a preset to see available actions.");
+                }
             }
             ImGui.EndChild();
         }
@@ -1089,7 +1082,7 @@ public class ConfigWindow : Window, IDisposable
 
     public void ContextPopup()
     {
-        if (contextPopupOpen)
+        if (ConfigWindowHelpers.contextPopupOpen)
         {
             // Set window size on the first frame
             if (isFirstFrame)
@@ -1101,7 +1094,7 @@ public class ConfigWindow : Window, IDisposable
             ImGui.SetNextWindowSize(contextMenuSize);
             ImGui.SetNextWindowPos(contextMenuPosition);
 
-            if (ImGui.Begin("Contextual Menu", ref contextPopupOpen, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar))
+            if (ImGui.Begin("Contextual Menu", ref ConfigWindowHelpers.contextPopupOpen, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar))
             {
                 Service.Log.Debug("You should be seeing a context menu right about now");
 
@@ -1109,19 +1102,19 @@ public class ConfigWindow : Window, IDisposable
                 {
                     ImGui.SetNextWindowPos(new Vector2(10.0f, 100.0f));
                     ImGui.SetNextWindowSize(new Vector2(200.0f, 60.0f));
-                    renamingWindowOpen = true;
-                    contextPopupOpen = false;
-                    renameBuffer = activePreset?.PresetName ?? "";
+                    ConfigWindowHelpers.renamingWindowOpen = true;
+                    ConfigWindowHelpers.contextPopupOpen = false;
+                    ConfigWindowHelpers.renameBuffer = ConfigWindowHelpers.activePreset?.PresetName ?? "";
                 }
             }
             ImGui.End();
             if (!ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
             {
-                contextPopupOpen = false;
+                ConfigWindowHelpers.contextPopupOpen = false;
             }
 
             // Reset isFirstFrame if contextPopupOpen is false
-            if (!contextPopupOpen)
+            if (!ConfigWindowHelpers.contextPopupOpen)
             {
                 isFirstFrame = true;
             }
@@ -1130,30 +1123,32 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
-    public void OpenNamingWindow()
+    public static void OpenNamingWindow()
     {
-        if (namingWindowOpen)
+        if (ConfigWindowHelpers.namingWindowOpen)
         {
 
-            if (ImGui.Begin("Preset Name", ref namingWindowOpen))
+            if (ImGui.Begin("Preset Name", ref ConfigWindowHelpers.namingWindowOpen))
             {
                 if (ImGui.BeginChild("##", new Vector2(-1, -1), true))
                 {
                     ImGui.Text("Name");
                     ImGui.SameLine();
-                    ImGui.InputText("##", ref nameBuffer, (uint)BufferSize);
+                    ImGui.InputText("##", ref ConfigWindowHelpers.nameBuffer, (uint)BufferSize);
                     ImGui.SameLine();
                     if (IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
                     {
                         var preset = new Preset
                         {
-                            PresetName = nameBuffer,
+                            PresetName = ConfigWindowHelpers.nameBuffer,
                         };
 
-                        string jsonString = JsonSerializer.Serialize(preset, new JsonSerializerOptions { WriteIndented = true });
-                        File.WriteAllText(Plugin.PresetDirectory + "/" + nameBuffer + ".json", jsonString);
-
-                        namingWindowOpen = false;
+                        var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
+                        var options = jsonSerializerOptions;
+                        var jsonString = JsonSerializer.Serialize(preset, options);
+                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.nameBuffer + ".json", jsonString);
+                        ConfigWindowHelpers.
+                                                namingWindowOpen = false;
 
                     }
                 }
@@ -1163,33 +1158,35 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
-    public void OpenReNamingWindow()
+    public static void OpenReNamingWindow()
     {
-        if (renamingWindowOpen)
+        if (ConfigWindowHelpers.renamingWindowOpen)
         {
 
-            if (ImGui.Begin("Rename a preset", ref renamingWindowOpen))
+            if (ImGui.Begin("Rename a preset", ref ConfigWindowHelpers.renamingWindowOpen))
             {
                 if (ImGui.BeginChild("##", new Vector2(-1, -1), true))
                 {
                     ImGui.Text("Name");
                     ImGui.SameLine();
-                    ImGui.InputText("##", ref renameBuffer, (uint)BufferSize);
+                    ImGui.InputText("##", ref ConfigWindowHelpers.renameBuffer, (uint)BufferSize);
                     ImGui.SameLine();
                     if (IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
                     {
-                        if (activePreset == null)
+                        if (ConfigWindowHelpers.activePreset == null)
                         {
                             return;
                         }
-                        var prevName = activePreset.PresetName;
-                        activePreset.PresetName = renameBuffer;
+                        var prevName = ConfigWindowHelpers.activePreset.PresetName;
+                        ConfigWindowHelpers.activePreset.PresetName = ConfigWindowHelpers.renameBuffer;
 
-                        string jsonString = JsonSerializer.Serialize(activePreset, new JsonSerializerOptions { WriteIndented = true });
-                        File.WriteAllText(Plugin.PresetDirectory + "/" + renameBuffer + ".json", jsonString);
+                        var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
+                        var options = jsonSerializerOptions;
+                        var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
+                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.renameBuffer + ".json", jsonString);
                         File.Delete(Plugin.PresetDirectory + "/" + prevName + ".json");
-
-                        renamingWindowOpen = false;
+                        ConfigWindowHelpers.
+                                                renamingWindowOpen = false;
 
                     }
                 }
@@ -1199,30 +1196,30 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
-    public void OpenNewMemberWindow()
+    public static void OpenNewMemberWindow()
     {
-        if (newMemberWindowOpen)
+        if (ConfigWindowHelpers.newMemberWindowOpen)
         {
 
-            if (ImGui.Begin("Member's Character Name", ref newMemberWindowOpen))
+            if (ImGui.Begin("Member's Character Name", ref ConfigWindowHelpers.newMemberWindowOpen))
             {
                 if (ImGui.BeginChild("##", new Vector2(-1, -1), true))
                 {
                     ImGui.Text("Character Name");
                     ImGui.SameLine();
-                    ImGui.InputText("##", ref nameBuffer, (uint)BufferSize);
+                    ImGui.InputText("##", ref ConfigWindowHelpers.nameBuffer, (uint)BufferSize);
                     ImGui.SameLine();
                     if (IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
                     {
                         var preset = new Preset
                         {
-                            PresetName = nameBuffer,
+                            PresetName = ConfigWindowHelpers.nameBuffer,
                         };
 
-                        string jsonString = JsonSerializer.Serialize(preset);
-                        File.WriteAllText(Plugin.PresetDirectory + "/" + nameBuffer + ".json", jsonString);
-
-                        newMemberWindowOpen = false;
+                        var jsonString = JsonSerializer.Serialize(preset);
+                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.nameBuffer + ".json", jsonString);
+                        ConfigWindowHelpers.
+                                                newMemberWindowOpen = false;
 
                     }
                 }
@@ -1234,7 +1231,7 @@ public class ConfigWindow : Window, IDisposable
 
     public static void SendNotification(string message)
     {
-        Notification notif = new Notification();
+        var notif = new Notification();
         notif.Content = message;
         Service.NotificationManager.AddNotification(notif);
     }

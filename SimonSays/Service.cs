@@ -43,35 +43,35 @@ namespace SimonSays
             }
 
             // Iterate through Emote data to extract emote commands and aliases
-            foreach (Emote Emote in EmoteList)
+            foreach (var Emote in EmoteList)
             {
                 // Extract and add main emote command
-                TextCommand? Value = Emote.TextCommand.Value;
-                SeString? Cmd = (Value != null) ? Value.Command : null;
+                var Value = Emote.TextCommand.Value;
+                var Cmd = Value?.Command;
                 if (Cmd != null && Cmd != "")
                 {
                     Emotes.Add(Cmd);
                 }
 
                 // Extract and add short emote command
-                TextCommand? Value2 = Emote.TextCommand.Value;
-                Cmd = ((Value2 != null) ? Value2.ShortCommand : null);
+                var Value2 = Emote.TextCommand.Value;
+                Cmd = (Value2?.ShortCommand);
                 if (Cmd != null && Cmd != "")
                 {
                     Emotes.Add(Cmd);
                 }
 
                 // Extract and add emote alias
-                TextCommand? Value3 = Emote.TextCommand.Value;
-                Cmd = ((Value3 != null) ? Value3.Alias : null);
+                var Value3 = Emote.TextCommand.Value;
+                Cmd = (Value3?.Alias);
                 if (Cmd != null && Cmd != "")
                 {
                     Emotes.Add(Cmd);
                 }
 
                 // Extract and add short emote alias
-                TextCommand? Value4 = Emote.TextCommand.Value;
-                Cmd = ((Value4 != null) ? Value4.ShortAlias : null);
+                var Value4 = Emote.TextCommand.Value;
+                Cmd = (Value4?.ShortAlias);
                 if (Cmd != null && Cmd != "")
                 {
                     Emotes.Add(Cmd);
@@ -80,7 +80,7 @@ namespace SimonSays
         }
 
         public static ExcelSheet<Emote>? EmoteList;
-        public static HashSet<string> Emotes = new HashSet<string>();
+        public static HashSet<string> Emotes = [];
 
         [PluginService] public static IDtrBar DtrBar { get; private set; } = null!;
         [PluginService] public static IPluginLog Log { get; private set; } = null!;

@@ -36,10 +36,10 @@ namespace SimonSays
         public static Configuration? Configuration { get; private set; }
 
         // Plugin components
-        public string Name => "SimonSays";
+        public static string Name => "SimonSays";
         private IDalamudPluginInterface PluginInterface { get; init; }
         private ICommandManager CommandManager { get; init; }
-        private WindowSystem windowSystem = new("SimonSays");
+        private readonly WindowSystem windowSystem = new("SimonSays");
         private ConfigWindow ConfigWindow { get; init; }
         public static string ConfigDirectory { get; set; } = string.Empty;
         public static string ConfigFile { get; set; } = string.Empty;
@@ -170,7 +170,7 @@ namespace SimonSays
         /// Handles the execution of a command related to meat processing.
         /// </summary>
         /// <param name="ArgSplit">An array containing the arguments for the command.</param>
-        private void DoThisCommandHandlingMeat(string[] ArgSplit)
+        private static void DoThisCommandHandlingMeat(string[] ArgSplit)
         {
             // Default to false, only set to true if explicitly specified in arguments
             var SyncPos = false;
@@ -185,7 +185,7 @@ namespace SimonSays
             {
                 // /simonsays emote true
                 // Emote is still
-                if (ArgSplit[1].ToLower() == "true" || ArgSplit[1] == "1")
+                if (ArgSplit[1].Equals("true", System.StringComparison.CurrentCultureIgnoreCase) || ArgSplit[1] == "1")
                 {
                     SyncPos = true;
                 }
@@ -204,7 +204,7 @@ namespace SimonSays
                 emote = ArgSplit[1];
                 otherEmote = ArgSplit[0];
 
-                if (ArgSplit[2].ToLower() == "true" || ArgSplit[2] == "1")
+                if (ArgSplit[2].Equals("true", System.StringComparison.CurrentCultureIgnoreCase) || ArgSplit[2] == "1")
                 {
                     SyncPos = true;
                 }
@@ -236,7 +236,7 @@ namespace SimonSays
 
 
             // Split arguments for further processing
-            string[] ArgSplit = Args.Split(' ');
+            var ArgSplit = Args.Split(' ');
 
             // Synchronize positions command
             if (Command == Sync)
@@ -247,7 +247,7 @@ namespace SimonSays
                     return;
                 }
 
-                string Emote = "";
+                var Emote = "";
 
                 // /sync emote
                 if (ArgSplit.Length >= 1)
