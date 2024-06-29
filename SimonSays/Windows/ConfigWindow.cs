@@ -765,7 +765,7 @@ public class ConfigWindow : Window, IDisposable
                                 {
                                     ConfigWindowHelpers.
                                                                         // activePreset.Members.Remove(selectedMember);
-                                                                        activePreset.Members = ConfigWindowHelpers.activePreset.Members.Where((member) => member.CharacterName != ConfigWindowHelpers.selectedMember).ToList(); // select every member that doesn't have the same character name
+                                                                        activePreset.Members = ConfigWindowHelpers.activePreset.Members.Where((member) => member.CharacterName != ConfigWindowHelpers.GetSelectedMember()).ToList(); // select every member that doesn't have the same character name
                                     var options = new JsonSerializerOptions { WriteIndented = true };
                                     var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
                                     File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
@@ -784,9 +784,9 @@ public class ConfigWindow : Window, IDisposable
                             {
                                 foreach (var member in ConfigWindowHelpers.activePreset.Members.ToList())
                                 {
-                                    if (ImGui.Selectable(member.CharacterName, ConfigWindowHelpers.selectedMember == member.CharacterName))
+                                    if (ImGui.Selectable(member.CharacterName, ConfigWindowHelpers.GetSelectedMember() == member.CharacterName))
                                     {
-                                        ConfigWindowHelpers.selectedMember = member.CharacterName;
+                                        ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
                                     }
                                 }
                             }
@@ -831,7 +831,7 @@ public class ConfigWindow : Window, IDisposable
 
                                 if (ImPlot.DragPoint((int)ImGui.GetID(member.CharacterName), ref X, ref Y, ConfigWindowHelpers.memberColors[colorIndex], 15f))
                                 {
-                                    ConfigWindowHelpers.selectedMember = member.CharacterName;
+                                    ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
                                 }
                                 if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
                                 {
@@ -840,50 +840,48 @@ public class ConfigWindow : Window, IDisposable
 
                                     if (distance < 0.15f)
                                     {
-                                        ConfigWindowHelpers.selectedMember = member.CharacterName;
-                                        SendNotification("Selected : " + ConfigWindowHelpers.selectedMember);
+                                        ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
+                                        SendNotification("Selected : " + ConfigWindowHelpers.GetSelectedMember());
                                     }
                                 }
                                 var initials = string.Join("", member.CharacterName.Split(" ").SelectMany(s => s.FirstOrDefault().ToString()));
 
                                 ImPlot.PlotText(initials, X, Y);
 
-                                // Calculate the end point of the arrow based on the rotation angle
-                                var arrowLength = 1f; // Length of the arrow
+                                // Constants
+                                const float arrowLength = 1f;
+                                const float arrowheadLength = 0.1f * arrowLength;
+                                const float angleOffset = 2.18166f; // 125 degrees in radians
+
+                                // Calculate arrow end point
                                 var rotOffset = -rot + (MathF.PI / 2);
                                 var endX = (float)(X + (arrowLength * Math.Cos(rotOffset)));
                                 var endY = (float)(Y + (arrowLength * Math.Sin(rotOffset)));
 
-                                // Prepare the points for PlotLine
+                                // Prepare the main arrow points
                                 var xs = new float[] { (float)X, endX };
                                 var ys = new float[] { (float)Y, endY };
 
                                 ImPlot.SetupLegend(ImPlotLocation.NorthWest, ImPlotLegendFlags.NoMenus);
-                                // Plot the arrow to show the rotation
                                 ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
                                 ImPlot.PlotLine(member.CharacterName, ref xs[0], ref ys[0], 2);
 
-                                // Calculate the points for the arrowhead
-                                var arrowheadLength = 0.25f; // Length of the arrowhead lines
-                                var angleOffset = (125f).Degrees().Rad;
+                                // Helper function for arrowhead calculation
+                                void PlotArrowhead(float baseX, float baseY, float angle)
+                                {
+                                    var offsetX = (float)(arrowheadLength * Math.Cos(angle));
+                                    var offsetY = (float)(arrowheadLength * Math.Sin(angle));
 
-                                var leftX = (float)(endX + (arrowheadLength * Math.Cos(rotOffset + angleOffset)));
-                                var leftY = (float)(endY + (arrowheadLength * Math.Sin(rotOffset + angleOffset)));
+                                    var arrowheadXs = new float[] { baseX, baseX + offsetX };
+                                    var arrowheadYs = new float[] { baseY, baseY + offsetY };
 
-                                var rightX = (float)(endX + (arrowheadLength * Math.Cos(rotOffset - angleOffset)));
-                                var rightY = (float)(endY + (arrowheadLength * Math.Sin(rotOffset - angleOffset)));
+                                    ImPlot.PlotLine(member.CharacterName + "_arrowhead", ref arrowheadXs[0], ref arrowheadYs[0], 2);
+                                }
 
-                                var leftArrowXs = new float[] { endX, leftX };
-                                var leftArrowYs = new float[] { endY, leftY };
+                                // Plot the arrowheads
+                                PlotArrowhead(endX, endY, rotOffset + angleOffset);
+                                PlotArrowhead(endX, endY, rotOffset - angleOffset);
 
-                                var rightArrowXs = new float[] { endX, rightX };
-                                var rightArrowYs = new float[] { endY, rightY };
-
-                                // Plot the arrowhead
-                                ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
-                                ImPlot.PlotLine(member.CharacterName + "_leftArrowhead", ref leftArrowXs[0], ref leftArrowYs[0], 2);
-                                ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
-                                ImPlot.PlotLine(member.CharacterName + "_rightArrowhead", ref rightArrowXs[0], ref rightArrowYs[0], 2);
 
                                 member.X = X;
                                 member.Y = Y;
@@ -910,9 +908,9 @@ public class ConfigWindow : Window, IDisposable
         {
             if (ImGui.BeginChild("Properties", new Vector2(-1, ImGui.GetWindowHeight() - (RightSize.Y / 2.29f)), true, ImGuiWindowFlags.NoCollapse))
             {
-                if (!ConfigWindowHelpers.selectedMember.IsNullOrEmpty())
+                if (!ConfigWindowHelpers.GetSelectedMember().IsNullOrEmpty())
                 {
-                    var member = ConfigWindowHelpers.activePreset?.Members?.FirstOrDefault(((m) => m.CharacterName == ConfigWindowHelpers.selectedMember)) ?? new PresetMember();
+                    var member = ConfigWindowHelpers.activePreset?.Members?.FirstOrDefault(((m) => m.CharacterName == ConfigWindowHelpers.GetSelectedMember())) ?? new PresetMember();
 
 
                     var x = (float)member.X;
@@ -927,7 +925,7 @@ public class ConfigWindow : Window, IDisposable
                     var anchorchanged = false;
                     var emotechanged = false;
 
-                    ImGui.Text(ConfigWindowHelpers.selectedMember.ToString() + " Properties");
+                    ImGui.Text(ConfigWindowHelpers.GetSelectedMember().ToString() + " Properties");
                     ImGui.Dummy(new Vector2(0, 10));
                     ImGui.Text("Anchor Member");
                     ImGui.SameLine();
@@ -1047,7 +1045,15 @@ public class ConfigWindow : Window, IDisposable
                     {
                         if (IconButtonWithText(FontAwesomeIcon.PersonWalkingArrowRight, "", "Test your positions, if your character name is part of\r\nthis preset you will move to your designated spot."))
                         {
+                            var Target = Service.TargetManager.Target;
+                            var member = ConfigWindowHelpers.activePreset?.Members?.FirstOrDefault(m => m.CharacterName == ConfigWindowHelpers.GetSelectedMember());
+                            if (member != null)
+                            {
+                                Service.Log.Debug("Moving to X = " + member.X.ToString());
+                                Service.Log.Debug("Moving to Z = " + member.Y.ToString());
+                                Meat.ScoochPresetOffset(new FFXIVClientStructs.FFXIV.Common.Math.Vector3((float)member.X, 0f, (float)member.Y), Target!, member.ROT);
 
+                            }
                         }
                         ImGui.SameLine();
                         ImGui.Text("  ");
@@ -1064,7 +1070,7 @@ public class ConfigWindow : Window, IDisposable
                         ImGui.SameLine();
                         ImGui.Text("  ");
                     });
-                    
+
                 }
                 else
                 {

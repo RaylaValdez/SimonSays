@@ -206,6 +206,55 @@ namespace SimonSays
 
         }
 
+        public static void ScoochPresetOffset(Vector3? Offset, IGameObject Target, float Rotation)
+        {
+            // Get the local player character
+            var Character = Service.ClientState.LocalPlayer;
+
+            if (Character == null)
+            {
+                return;
+            }
+
+            // Check if the offset is null
+            if (Offset == null)
+            {
+                // Set the offset to zero vector
+                Offset = Vector3.Zero;
+            }
+
+            // Get the target position and rotation
+            Vector3 DesiredPosition = Target.Position;
+            var AnchorRotation = Target.Rotation;
+            var DesiredRotation = -Rotation;
+
+            // Handle invalid rotation values by using the character's rotation
+            if (float.IsNaN(DesiredRotation) || float.IsInfinity(DesiredRotation))
+            {
+                // Use the character's rotation as the target rotation
+                DesiredRotation = Character.Rotation;
+            }
+
+            // Calculate the offset relative to the target
+            var offsetX = (-Offset.Value.X * MathF.Cos(AnchorRotation)) - (Offset.Value.Z * MathF.Sin(AnchorRotation));
+            var offsetZ = (-Offset.Value.X * MathF.Sin(AnchorRotation)) + (Offset.Value.Z * MathF.Cos(AnchorRotation));
+
+            // Apply the offset to the target position
+            DesiredPosition.X += offsetX;
+            DesiredPosition.Z += offsetZ;
+
+
+            if (movement != null)
+            {
+
+                // Set the desired position and rotation for character movement
+                movement.DesiredPosition = DesiredPosition;
+                movement.DesiredRotation = DesiredRotation;
+
+                // Enable character movement
+                movement.SoftDisable = false;
+            }
+        }
 
         /// <summary>
         /// Moves the local player's character towards the specified target GameObject.
@@ -240,8 +289,8 @@ namespace SimonSays
             }
 
             // Calculate the offset relative to the target
-            var offsetX = Offset.Value.X * MathF.Sin(TarRot);
-            var offsetZ = Offset.Value.Z * MathF.Sin(TarRot);
+            var offsetX = (-Offset.Value.X * MathF.Cos(TarRot)) - (Offset.Value.Z * MathF.Sin(TarRot));
+            var offsetZ = (-Offset.Value.X * MathF.Sin(TarRot)) + (Offset.Value.Z * MathF.Cos(TarRot));
 
             // Apply the offset to the target position
             TarPos.X += offsetX;

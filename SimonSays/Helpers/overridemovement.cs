@@ -101,6 +101,7 @@ public unsafe class OverrideMovement : IDisposable
         Enabled = false;
         rmiWalkHook.Dispose();
         rmiFlyHook.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public void SetCallback(OnCompleteDelegate callback)
@@ -146,16 +147,16 @@ public unsafe class OverrideMovement : IDisposable
             return;
         }
 
-        bool hasMoved = false;
+        var hasMoved = false;
 
-        DateTime currTime = DateTime.Now;
+        var currTime = DateTime.Now;
 
         // TODO: Introduce additional checks similar to PlayerMoveController::readInput
 
         try
         {
             // Check conditions for adjusting walk input
-            if (bAdditiveUnk == 0 && (IgnoreUserInput || *sumLeft == 0 && *sumForward == 0))
+            if (bAdditiveUnk == 0 && (IgnoreUserInput || (*sumLeft == 0 && *sumForward == 0)))
             {
                 // Move towards destination
                 if (DirectionToDestination(false) is var relDir && relDir != null)
@@ -214,16 +215,16 @@ public unsafe class OverrideMovement : IDisposable
         if (SoftDisable)
             return;
 
-        bool hasMoved = false;
+        var hasMoved = false;
 
-        DateTime currTime = DateTime.Now;
+        var currTime = DateTime.Now;
 
         // TODO: Introduce additional checks similar to PlayerMoveController::readInput
 
         try
         {
             // Fly towards destination if conditions are met
-            if ((IgnoreUserInput || result->Forward == 0 && result->Left == 0 && result->Up == 0))
+            if ((IgnoreUserInput || (result->Forward == 0 && result->Left == 0 && result->Up == 0)))
             {
                 if (DirectionToDestination(true) is var relDir && relDir != null)
                 {

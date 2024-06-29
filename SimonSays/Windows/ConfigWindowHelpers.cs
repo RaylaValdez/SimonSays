@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Text;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
@@ -24,19 +24,19 @@ using Vector4 = System.Numerics.Vector4;
 internal static class ConfigWindowHelpers
 {
 
-    public static string selectedLayout = String.Empty;
-    public static string selectedMember = String.Empty;
+    public static string selectedLayout = string.Empty;
+    private static string SelectedMember = string.Empty;
     public static bool namingWindowOpen = false;
     public static bool renamingWindowOpen = false;
     public static bool newMemberWindowOpen = false;
     public static bool contextPopupOpen = false;
     public static string nameBuffer = "Change Me";
-    public static string filterText = String.Empty;
-    public static string renameBuffer = String.Empty;
+    public static string filterText = string.Empty;
+    public static string renameBuffer = string.Empty;
     public static Vector4 oldTitleColorActive = Vector4.Zero;
     public static Preset? activePreset = null;
-    public static List<Vector4> memberColors = new List<Vector4>
-    {
+    public static List<Vector4> memberColors =
+    [
         new Vector4(0.722f, 0.325f, 0.623f, 1.0f),
         new Vector4(0.7051666666666666f, 0.335625f, 0.605875f, 1.0f),
         new Vector4(0.6883333333333332f, 0.34625f, 0.5887499999999999f, 1.0f),
@@ -62,5 +62,15 @@ internal static class ConfigWindowHelpers
         new Vector4(0.3516666666666668f, 0.5587499999999999f, 0.24625000000000014f, 1.0f),
         new Vector4(0.3348333333333335f, 0.5693749999999999f, 0.22912500000000016f, 1.0f)
 
-    };
+    ];
+
+    public static string GetSelectedMember()
+    {
+        return SelectedMember;
+    }
+
+    public static void SetSelectedMember(string value)
+    {
+        SelectedMember = value;
+    }
 }
