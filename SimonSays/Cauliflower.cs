@@ -6,8 +6,11 @@ using System.Runtime.CompilerServices;
 
 namespace SimonSays
 {
+    /// <summary>
+    /// Configuration class, handling all information to be saved and used.
+    /// </summary>
     [Serializable]
-    public class Configuration : IPluginConfiguration
+    public class Cauliflower : IPluginConfiguration
     {
         public int Version { get; set; } = 0;
 
@@ -22,9 +25,9 @@ namespace SimonSays
         public bool PosSync { get; set; } = false;
 
         public bool UseGamepad { get; set; } = false;
-        public Dictionary<int, bool> EnabledChannels { get; set; } = new Dictionary<int, bool>();
+        public Dictionary<int, bool> EnabledChannels { get; set; } = [];
 
-        public List<EmoteOffsets> EmoteOffsets { get; set; } = new();
+        public List<EmoteOffsets> EmoteOffsets { get; set; } = [];
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]

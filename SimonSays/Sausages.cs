@@ -25,10 +25,13 @@ using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
 namespace SimonSays
 {
-    internal class Service
+    /// <summary>
+    /// Declares used Services and Functions relating to it.
+    /// </summary>
+    internal class Sausages
     {
         /// <summary>
-        /// Populates the list of emotes by extracting them from the game's Emote data.
+        /// Creates a list of emotes by extracting emote commands and aliases from Emote data obtained from the game.
         /// </summary>
         public static void CreateEmoteList()
         {
@@ -82,17 +85,68 @@ namespace SimonSays
         public static ExcelSheet<Emote>? EmoteList;
         public static HashSet<string> Emotes = [];
 
+        /// <summary>
+        /// Gets or sets the DtrBar plugin service.
+        /// </summary>
         [PluginService] public static IDtrBar DtrBar { get; private set; } = null!;
+        /// <summary>
+        /// Represents a static property in the PluginService class that provides access to an instance of IPluginLog for logging purposes.
+        /// The property is read-only and can be set only within the PluginService class.
+        /// The property is initialized to null! indicating that it must be set to a non-null value before use.
+        /// </summary>
         [PluginService] public static IPluginLog Log { get; private set; } = null!;
+        /// <summary>
+        /// Static property representing the IDataManager instance for the PluginService.
+        /// </summary>
         [PluginService] public static IDataManager DataManager { get; private set; } = null!;
+        /// <summary>
+        /// Represents a static property in the PluginService class that provides access to an IChatGui instance for interacting with chat GUI.
+        /// The property is read-only and can be set only within the PluginService class.
+        /// The property is initialized to null and marked as nullable reference type with the null-forgiving operator (!).
+        /// </summary>
         [PluginService] public static IChatGui ChatGui { get; private set; } = null!;
+        /// <summary>
+        /// Gets or sets the ICommandManager instance for the PluginService.
+        /// </summary>
         [PluginService] public static ICommandManager CommandManager { get; private set; } = null!;
+        /// <summary>
+        /// Gets or sets the client state for the plugin service.
+        /// </summary>
         [PluginService] public static IClientState ClientState { get; private set; } = null!;
+        /// <summary>
+        /// Gets or sets the TargetManager instance for the PluginService.
+        /// </summary>
         [PluginService] public static ITargetManager TargetManager { get; private set; } = null!;
+        /// <summary>
+        /// Gets or sets the IGameInteropProvider instance for the PluginService.
+        /// </summary>
         [PluginService] public static IGameInteropProvider Hook { get; private set; } = null!;
+        /// <summary>
+        /// Represents a static property in the PluginService class that provides access to an IFramework instance.
+        /// The property is read-only and can be set only within the PluginService class.
+        /// The property is initialized to null! indicating that it must be set before accessing it.
+        /// </summary>
         [PluginService] public static IFramework Framework { get; private set; } = null!;
+        /// <summary>
+        /// Gets or sets the NotificationManager instance for the PluginService.
+        /// </summary>
         [PluginService] public static INotificationManager NotificationManager { get; private set; } = null!;
+        /// <summary>
+        /// Gets or sets the texture provider for the plugin service.
+        /// </summary>
         [PluginService] public static ITextureProvider TextureProvider { get; private set; } = null!;
+        /// <summary>
+        /// Represents a static property in the PluginService class that provides access to an IObjectTable instance.
+        /// The property is read-only and can be set only within the PluginService class.
+        /// The property is initialized to null! indicating that it must be set to a non-null value before use.
+        /// </summary>
+        [PluginService] public static IObjectTable ObjectTable { get; private set; } = null!;
+        /// <summary>
+        /// Represents a static property in the PluginService class that provides access to the PartyList interface.
+        /// The property is read-only and can be set only within the PluginService class.
+        /// The property is initialized to null and must be set to a non-null value before accessing it.
+        /// </summary>
+        [PluginService] public static IPartyList PartyList { get; private set; } = null!;
     }
 
 

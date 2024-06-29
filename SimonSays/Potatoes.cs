@@ -17,7 +17,7 @@ namespace SimonSays
     /// <summary>
     /// Main plugin class for SimonSays, handling configuration, commands, and UI.
     /// </summary>
-    public sealed class Plugin : IDalamudPlugin
+    public sealed class Potatoes : IDalamudPlugin
     {
         // Command constants
         private const string Config = "/simonsaysconfig";
@@ -33,7 +33,7 @@ namespace SimonSays
 
         // Static references for plugin-wide use
         public static IDalamudPluginInterface? PluginInterfaceStatic { get; private set; }
-        public static Configuration? Configuration { get; private set; }
+        public static Cauliflower? Configuration { get; private set; }
 
         // Plugin components
         public static string Name => "SimonSays";
@@ -47,7 +47,7 @@ namespace SimonSays
         private readonly IDtrBarEntry dtrEntry;
 
         // Constructor
-        public Plugin(
+        public Potatoes(
             IDalamudPluginInterface pluginInterface,
             ICommandManager commandManager)
         {
@@ -57,10 +57,10 @@ namespace SimonSays
             PluginInterfaceStatic = PluginInterface;
 
             // Initialize configuration
-            Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            Configuration = this.PluginInterface.GetPluginConfig() as Cauliflower ?? new Cauliflower();
             Configuration.Initialize(this.PluginInterface);
 
-            PluginInterface.Create<Service>();
+            PluginInterface.Create<Sausages>();
             // Initialize and add configuration window
             ConfigWindow = new ConfigWindow(this);
             windowSystem.AddWindow(ConfigWindow);
@@ -104,20 +104,20 @@ namespace SimonSays
             
 
             // Set up Framework Update
-            Service.Framework.Update += FrameworkUpdate;
+            Sausages.Framework.Update += FrameworkUpdate;
 
             // Set up DTRBar 
-            dtrEntry = Service.DtrBar.Get("SimonSays");
+            dtrEntry = Sausages.DtrBar.Get("SimonSays");
 
             // Set up chat message event handler and create emote list
-            Service.ChatGui.ChatMessage += Meat.OnChatMessage;
-            Service.CreateEmoteList();
+            Sausages.ChatGui.ChatMessage += Meat.OnChatMessage;
+            Sausages.CreateEmoteList();
 
             // Initialize character movement
             Meat.Setup();
 
             // This line logs the count of EmoteOffsets in the Configuration object as an information message.
-            Service.Log.Information($"Configuration EmoteOffsets count: {Configuration.EmoteOffsets.Count}");
+            Sausages.Log.Information($"Configuration EmoteOffsets count: {Configuration.EmoteOffsets.Count}");
         }
 
 
@@ -134,7 +134,7 @@ namespace SimonSays
             dtrEntry.Remove();
 
             // Remove Framework
-            Service.Framework.Update -= FrameworkUpdate;
+            Sausages.Framework.Update -= FrameworkUpdate;
 
             // Dispose of the configuration window and character movement resources
             ConfigWindow.Dispose();
@@ -145,7 +145,7 @@ namespace SimonSays
             this.CommandManager.RemoveHandler(Sync);
             this.CommandManager.RemoveHandler(StopSync);
             this.CommandManager.RemoveHandler(DoThis);
-            Service.ChatGui.ChatMessage -= Meat.OnChatMessage;
+            Sausages.ChatGui.ChatMessage -= Meat.OnChatMessage;
         }
 
         /// <summary>
@@ -214,7 +214,7 @@ namespace SimonSays
             if (!Configuration!.PosSync)
             {
                 SyncPos = false;
-                Service.ChatGui.Print("Enable Positional Syncing in settings for Command-based syncing.");
+                Sausages.ChatGui.Print("Enable Positional Syncing in settings for Command-based syncing.");
             }
 
             // Initiate the SimonSays command with the specified arguments
@@ -282,7 +282,7 @@ namespace SimonSays
                 else
                 {
                     // No arguments given for SimonSays command
-                    Service.ChatGui.Print("No arguments given to SimonSays.");
+                    Sausages.ChatGui.Print("No arguments given to SimonSays.");
                 }
             }
         }

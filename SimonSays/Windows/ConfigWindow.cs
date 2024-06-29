@@ -31,7 +31,7 @@ namespace SimonSays.Windows;
 /// </remarks>
 public class ConfigWindow : Window, IDisposable
 {
-    private readonly Configuration configuration;
+    private readonly Cauliflower configuration;
     private string testText = "Simon Says : hum";
     private readonly ISharedImmediateTexture aboutImage;
 
@@ -42,7 +42,7 @@ public class ConfigWindow : Window, IDisposable
     private bool isFirstFrame = true;
     private const int BufferSize = 1024;
 
-    public ConfigWindow(Plugin plugin) : base(
+    public ConfigWindow(Potatoes plugin) : base(
         "SimonSays Settings",
         ImGuiWindowFlags.NoScrollbar)
     {
@@ -50,10 +50,10 @@ public class ConfigWindow : Window, IDisposable
         this.Size = new System.Numerics.Vector2(500, 900);
         this.SizeCondition = ImGuiCond.FirstUseEver;
 
-        this.configuration = Plugin.Configuration!;
+        this.configuration = Potatoes.Configuration!;
 
-        var imagePath = Path.Combine(Plugin.PluginInterfaceStatic!.AssemblyLocation.Directory?.FullName!, "ts500.png");
-        aboutImage = Service.TextureProvider.GetFromFile(imagePath);
+        var imagePath = Path.Combine(Potatoes.PluginInterfaceStatic!.AssemblyLocation.Directory?.FullName!, "ts500.png");
+        aboutImage = Sausages.TextureProvider.GetFromFile(imagePath);
     }
 
     public void Dispose()
@@ -68,8 +68,8 @@ public class ConfigWindow : Window, IDisposable
     private void DrawCheckbox(int index)
     {
         // Get the key and value of the chat channel at the specified index
-        var key = ChatChannelTypes.ChatTypes.Keys.ToList()[index];
-        var Value = ChatChannelTypes.ChatTypes[key];
+        var key = SaltAndPepper.ChatTypes.Keys.ToList()[index];
+        var Value = SaltAndPepper.ChatTypes[key];
         var channel = key;
 
         // Get the previous configuration value for the channel
@@ -120,7 +120,7 @@ public class ConfigWindow : Window, IDisposable
         ImGui.TableHeadersRow();
 
         // Get the list of chat types
-        var ChatTypes = ChatChannelTypes.ChatTypes;
+        var ChatTypes = SaltAndPepper.ChatTypes;
 
         // Calculate the maximum number of rows in the table
         var max = (int)Math.Ceiling(ChatTypes.Count / 3d);
@@ -195,7 +195,7 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.Button("Send"))
         {
             // Call the Meat.Command method with the XivChatType.None parameter, the value of the testText variable, and ForceForTesting set to true
-            Meat.Command(XivChatType.None, testText, ForceForTesting: true);
+            Meat.ProccessChatCommands(XivChatType.None, testText, ForceForTesting: true);
         }
     }
 
@@ -440,7 +440,7 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.Text("");
                 ImGuiEx.ImGuiLineCentered("AboutVersion", () =>
                 {
-                    ImGui.Text("SimonSays - " + typeof(Plugin).Assembly.GetName().Version?.ToString());
+                    ImGui.Text("SimonSays - " + typeof(Potatoes).Assembly.GetName().Version?.ToString());
                 });
                 ImGui.Text("");
                 ImGuiEx.ImGuiLineCentered("AboutCreators", () =>
@@ -471,7 +471,7 @@ public class ConfigWindow : Window, IDisposable
                     {
                         Process.Start(new ProcessStartInfo()
                         {
-                            FileName = Plugin.DiscordURL,
+                            FileName = Potatoes.DiscordURL,
                             UseShellExecute = true
                         });
                     }
@@ -482,7 +482,7 @@ public class ConfigWindow : Window, IDisposable
                     ImGui.SameLine();
                     if (ImGui.Button("Repo"))
                     {
-                        ImGui.SetClipboardText(Plugin.Repo);
+                        ImGui.SetClipboardText(Potatoes.Repo);
 
                         //Process.Start(new ProcessStartInfo()
                         //{
@@ -499,7 +499,7 @@ public class ConfigWindow : Window, IDisposable
                     {
                         Process.Start(new ProcessStartInfo()
                         {
-                            FileName = Plugin.Source,
+                            FileName = Potatoes.Source,
                             UseShellExecute = true
                         });
                     }
@@ -512,7 +512,7 @@ public class ConfigWindow : Window, IDisposable
                     {
                         Process.Start(new ProcessStartInfo()
                         {
-                            FileName = Plugin.BuyMeACoffee,
+                            FileName = Potatoes.BuyMeACoffee,
                             UseShellExecute = true
                         });
                     }
@@ -602,7 +602,7 @@ public class ConfigWindow : Window, IDisposable
                         ImGui.SameLine();
                         if (IconButtonWithText(FontAwesomeIcon.Minus, "", "Delete selected Preset"))
                         {
-                            File.Delete(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json");
+                            File.Delete(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json");
                             ConfigWindowHelpers.selectedLayout = string.Empty;
                             ConfigWindowHelpers.activePreset = null;
                         }
@@ -613,7 +613,7 @@ public class ConfigWindow : Window, IDisposable
                         {
                             if (!string.IsNullOrEmpty(ConfigWindowHelpers.selectedLayout))
                             {
-                                var presetContent = File.ReadAllLines(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json");
+                                var presetContent = File.ReadAllLines(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json");
                                 var contentToCopy = string.Join(Environment.NewLine, presetContent);
 
                                 // Copy to clipboard
@@ -622,14 +622,14 @@ public class ConfigWindow : Window, IDisposable
                                 var clipboardsuccess = new Notification();
                                 clipboardsuccess.Content = "Preset copied to Clipboard.";
 
-                                Service.NotificationManager.AddNotification(clipboardsuccess);
+                                Sausages.NotificationManager.AddNotification(clipboardsuccess);
                             }
                             else
                             {
                                 var clipboardfailure = new Notification();
                                 clipboardfailure.Content = "Select a preset to copy to Clipboard.";
 
-                                Service.NotificationManager.AddNotification(clipboardfailure);
+                                Sausages.NotificationManager.AddNotification(clipboardfailure);
                             }
                         }
                         ImGui.SameLine();
@@ -666,7 +666,7 @@ public class ConfigWindow : Window, IDisposable
                                         // Serialize and write to file
                                         var options = new JsonSerializerOptions { WriteIndented = true };
                                         var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
-                                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.activePreset.PresetName + ".json", jsonString);
+                                        File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.activePreset.PresetName + ".json", jsonString);
 
                                     }
                                     else
@@ -678,7 +678,7 @@ public class ConfigWindow : Window, IDisposable
                                 {
                                     var importFailure = new Notification();
                                     importFailure.Content = "You can only import valid Presets";
-                                    Service.NotificationManager.AddNotification(importFailure);
+                                    Sausages.NotificationManager.AddNotification(importFailure);
                                 }
                                 finally
                                 {
@@ -696,14 +696,14 @@ public class ConfigWindow : Window, IDisposable
                 using var Layouts = ImRaii.ListBox("##", LayoutsSize);
                 if (Layouts.Success)
                 {
-                    foreach (var file in Directory.EnumerateFiles(Plugin.PresetDirectory))
+                    foreach (var file in Directory.EnumerateFiles(Potatoes.PresetDirectory))
                     {
                         var fileName = Path.GetFileNameWithoutExtension(file);
                         if (ImGui.Selectable(fileName, ConfigWindowHelpers.selectedLayout == fileName))
                         {
                             ConfigWindowHelpers.selectedLayout = fileName;
 
-                            var presetContent = File.ReadAllLines(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json");
+                            var presetContent = File.ReadAllLines(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json");
                             var jsonString = string.Join(Environment.NewLine, presetContent);
                             ConfigWindowHelpers.
 
@@ -719,7 +719,7 @@ public class ConfigWindow : Window, IDisposable
                             {
                                 if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                                 {
-                                    Service.Log.Debug("Opening context popup");
+                                    Sausages.Log.Debug("Opening context popup");
                                     ConfigWindowHelpers.
                                                                             contextPopupOpen = true;
                                 }
@@ -742,7 +742,7 @@ public class ConfigWindow : Window, IDisposable
                         {
                             if (IconButtonWithText(FontAwesomeIcon.StreetView, "", "Add targetted Character."))
                             {
-                                var target = Service.TargetManager.Target;
+                                var target = Sausages.TargetManager.Target;
                                 if (target != null)
                                 {
                                     if (ConfigWindowHelpers.activePreset != null)
@@ -750,7 +750,7 @@ public class ConfigWindow : Window, IDisposable
                                         ConfigWindowHelpers.activePreset.Members!.Add(new PresetMember(target.Name.ToString()));
                                         var options = new JsonSerializerOptions { WriteIndented = true };
                                         var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
-                                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
+                                        File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
                                     }
                                 }
 
@@ -768,7 +768,7 @@ public class ConfigWindow : Window, IDisposable
                                                                         activePreset.Members = ConfigWindowHelpers.activePreset.Members.Where((member) => member.CharacterName != ConfigWindowHelpers.GetSelectedMember()).ToList(); // select every member that doesn't have the same character name
                                     var options = new JsonSerializerOptions { WriteIndented = true };
                                     var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
-                                    File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
+                                    File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
                                 }
                             }
                         });
@@ -829,29 +829,12 @@ public class ConfigWindow : Window, IDisposable
                                     colorIndex = 0; // Reset colorIndex if it exceeds the list size
                                 }
 
-                                if (ImPlot.DragPoint((int)ImGui.GetID(member.CharacterName), ref X, ref Y, ConfigWindowHelpers.memberColors[colorIndex], 15f))
-                                {
-                                    ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
-                                }
-                                if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
-                                {
-                                    // where a is [x,y] and b is [mouseX, mouseY] : (a squared) + (y squared) = vector magnitude aka distance
-                                    var distance = ((X - mousePos.x) * (X - mousePos.x)) + ((Y - mousePos.y) * (Y - mousePos.y));
-
-                                    if (distance < 0.15f)
-                                    {
-                                        ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
-                                        SendNotification("Selected : " + ConfigWindowHelpers.GetSelectedMember());
-                                    }
-                                }
-                                var initials = string.Join("", member.CharacterName.Split(" ").SelectMany(s => s.FirstOrDefault().ToString()));
-
-                                ImPlot.PlotText(initials, X, Y);
-
+                                var plotSize = ImPlot.GetPlotSize();
+                                
                                 // Constants
-                                const float arrowLength = 1f;
-                                const float arrowheadLength = 0.1f * arrowLength;
-                                const float angleOffset = 2.18166f; // 125 degrees in radians
+                                var arrowLength = 1.75f * 600f / plotSize.Length();
+                                var arrowheadLength = 0.3f * arrowLength;
+                                var angleOffset = 135f.Degrees().Rad;
 
                                 // Calculate arrow end point
                                 var rotOffset = -rot + (MathF.PI / 2);
@@ -863,8 +846,10 @@ public class ConfigWindow : Window, IDisposable
                                 var ys = new float[] { (float)Y, endY };
 
                                 ImPlot.SetupLegend(ImPlotLocation.NorthWest, ImPlotLegendFlags.NoMenus);
-                                ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
+                                ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex], 2f);
                                 ImPlot.PlotLine(member.CharacterName, ref xs[0], ref ys[0], 2);
+
+                                
 
                                 // Helper function for arrowhead calculation
                                 void PlotArrowhead(float baseX, float baseY, float angle)
@@ -879,8 +864,29 @@ public class ConfigWindow : Window, IDisposable
                                 }
 
                                 // Plot the arrowheads
+                                ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
                                 PlotArrowhead(endX, endY, rotOffset + angleOffset);
+                                ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
                                 PlotArrowhead(endX, endY, rotOffset - angleOffset);
+
+                                if (ImPlot.DragPoint((int)ImGui.GetID(member.CharacterName), ref X, ref Y, ConfigWindowHelpers.memberColors[colorIndex], 15f))
+                                {
+                                    ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
+                                }
+                                if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                                {
+                                    // where a is [x,y] and b is [mouseX, mouseY] : (a squared) + (y squared) = vector magnitude aka distance
+                                    var distance = ((X - mousePos.x) * (X - mousePos.x)) + ((Y - mousePos.y) * (Y - mousePos.y));
+
+                                    if (distance < 0.15f)
+                                    {
+                                        ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
+                                        Veggies.SendNotification("Selected : " + ConfigWindowHelpers.GetSelectedMember());
+                                    }
+                                }
+                                var initials = string.Join("", member.CharacterName.Split(" ").SelectMany(s => s.FirstOrDefault().ToString()));
+
+                                ImPlot.PlotText(initials, X, Y);
 
 
                                 member.X = X;
@@ -889,7 +895,7 @@ public class ConfigWindow : Window, IDisposable
                                 var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
                                 var options = jsonSerializerOptions;
                                 var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
-                                File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
+                                File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
 
                                 colorIndex++; // Increment colorIndex for the next iteration
                             }
@@ -978,7 +984,7 @@ public class ConfigWindow : Window, IDisposable
                         if (ImGui.BeginCombo("##EmoteCombo", emote))
                         {
                             ImGui.InputText("##Search", ref ConfigWindowHelpers.filterText, BufferSize);
-                            foreach (var j in Service.Emotes)
+                            foreach (var j in Sausages.Emotes)
                             {
                                 var i = j.Replace("/", "");
                                 if (!ConfigWindowHelpers.filterText.IsNullOrEmpty() && !i.Contains(ConfigWindowHelpers.filterText))
@@ -1023,7 +1029,7 @@ public class ConfigWindow : Window, IDisposable
                         var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
                         var options = jsonSerializerOptions;
                         var jsonString = JsonSerializer.Serialize<Preset?>(ConfigWindowHelpers.activePreset, options);
-                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
+                        File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.selectedLayout + ".json", jsonString);
                     }
 
                 }
@@ -1039,20 +1045,32 @@ public class ConfigWindow : Window, IDisposable
                 {
                     ImGui.Text("Actions");
                     ImGui.Dummy(new Vector2(0, 10));
-                    ImGui.Text("Position Test");
+                    ImGui.Text("Move to Positions");
                     ImGui.SameLine();
                     ImGuiEx.ImGuiLineRightAlign("OffsetPos", () =>
                     {
-                        if (IconButtonWithText(FontAwesomeIcon.PersonWalkingArrowRight, "", "Test your positions, if your character name is part of\r\nthis preset you will move to your designated spot."))
+                        if (IconButtonWithText(FontAwesomeIcon.PersonWalkingArrowRight, "", "Send a party message instructing members to move to their positions."))
                         {
-                            var Target = Service.TargetManager.Target;
-                            var member = ConfigWindowHelpers.activePreset?.Members?.FirstOrDefault(m => m.CharacterName == ConfigWindowHelpers.GetSelectedMember());
-                            if (member != null)
+                            if (ConfigWindowHelpers.activePreset != null)
                             {
-                                Service.Log.Debug("Moving to X = " + member.X.ToString());
-                                Service.Log.Debug("Moving to Z = " + member.Y.ToString());
-                                Meat.ScoochPresetOffset(new FFXIVClientStructs.FFXIV.Common.Math.Vector3((float)member.X, 0f, (float)member.Y), Target!, member.ROT);
-
+                                try
+                                {
+                                    var commandToSend = Gravy.CreatePartyChatPresetString(ConfigWindowHelpers.activePreset, Potatoes.Configuration!.CatchPhrase, false); // don't do emote
+                                    Meat.ProccessChatCommands(XivChatType.None, commandToSend.Replace("/p ", ""), true);
+                                    if (Sausages.PartyList.Length > 1)
+                                    {
+                                        Veggies.SendChatMessageAsIfPlayer(commandToSend);
+                                        Veggies.SendNotification("Sent instructions to party");
+                                    }
+                                }
+                                catch (OverflowException overflow)
+                                {
+                                    Veggies.SendNotification("Instructions failed to send: " + overflow.Message);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Veggies.SendNotification("Instructions failed to send: " + ex.Message);
+                                }
                             }
                         }
                         ImGui.SameLine();
@@ -1063,9 +1081,30 @@ public class ConfigWindow : Window, IDisposable
                     ImGui.SameLine();
                     ImGuiEx.ImGuiLineRightAlign("OffsetPlay", () =>
                     {
-                        if (IconButtonWithText(FontAwesomeIcon.Play, "", "Send a party message containing all instructions.\r\nThis will begin the Preset, emotes tied to members of the preset will play."))
+                        if (IconButtonWithText(FontAwesomeIcon.Play, "", "Send a party message instructing members to begin their emotes."))
                         {
-
+                            if (ConfigWindowHelpers.activePreset != null)
+                            {
+                                try
+                                {
+                                    var commandToSend = Gravy.CreatePartyChatPresetString(ConfigWindowHelpers.activePreset, Potatoes.Configuration!.CatchPhrase, true); // do do (hehe) emote
+                                    Meat.ProccessChatCommands(XivChatType.None, commandToSend.Replace("/p ", ""), true);
+                                    if (Sausages.PartyList.Length > 1)
+                                    {
+                                        Veggies.SendChatMessageAsIfPlayer(commandToSend);
+                                        Veggies.SendNotification("Sent instructions to party");
+                                    }
+                                    
+                                }
+                                catch (OverflowException overflow)
+                                {
+                                    Veggies.SendNotification("Instructions failed to send: " + overflow.Message);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Veggies.SendNotification("Instructions failed to send: " + ex.Message);
+                                }
+                            }
                         }
                         ImGui.SameLine();
                         ImGui.Text("  ");
@@ -1102,7 +1141,7 @@ public class ConfigWindow : Window, IDisposable
 
             if (ImGui.Begin("Contextual Menu", ref ConfigWindowHelpers.contextPopupOpen, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar))
             {
-                Service.Log.Debug("You should be seeing a context menu right about now");
+                Sausages.Log.Debug("You should be seeing a context menu right about now");
 
                 if (ImGui.Selectable("Rename Preset"))
                 {
@@ -1152,7 +1191,7 @@ public class ConfigWindow : Window, IDisposable
                         var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
                         var options = jsonSerializerOptions;
                         var jsonString = JsonSerializer.Serialize(preset, options);
-                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.nameBuffer + ".json", jsonString);
+                        File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.nameBuffer + ".json", jsonString);
                         ConfigWindowHelpers.
                                                 namingWindowOpen = false;
 
@@ -1189,8 +1228,8 @@ public class ConfigWindow : Window, IDisposable
                         var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
                         var options = jsonSerializerOptions;
                         var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
-                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.renameBuffer + ".json", jsonString);
-                        File.Delete(Plugin.PresetDirectory + "/" + prevName + ".json");
+                        File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.renameBuffer + ".json", jsonString);
+                        File.Delete(Potatoes.PresetDirectory + "/" + prevName + ".json");
                         ConfigWindowHelpers.
                                                 renamingWindowOpen = false;
 
@@ -1223,7 +1262,7 @@ public class ConfigWindow : Window, IDisposable
                         };
 
                         var jsonString = JsonSerializer.Serialize(preset);
-                        File.WriteAllText(Plugin.PresetDirectory + "/" + ConfigWindowHelpers.nameBuffer + ".json", jsonString);
+                        File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.nameBuffer + ".json", jsonString);
                         ConfigWindowHelpers.
                                                 newMemberWindowOpen = false;
 
@@ -1235,10 +1274,5 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
-    public static void SendNotification(string message)
-    {
-        var notif = new Notification();
-        notif.Content = message;
-        Service.NotificationManager.AddNotification(notif);
-    }
+
 }

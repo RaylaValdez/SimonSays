@@ -6,12 +6,15 @@ using System.Threading.Tasks;
 
 namespace SimonSays
 {
-    internal class ChatChannelTypes
+    /// <summary>
+    /// Chat Channel Types class, storing Channels as ints.
+    /// </summary>
+    internal class SaltAndPepper
     {
         /// <summary>
         /// Dictionary mapping numeric values to chat type strings.
         /// </summary>
-        public static Dictionary<int, string> ChatTypes = new Dictionary<int, string>
+        public static Dictionary<int, string> ChatTypes = new()
         {
             { 37, "CWLS1" },
             { 101, "CWLS2" },

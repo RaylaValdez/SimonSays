@@ -72,7 +72,7 @@ namespace SimonSays
             Emote = Emote.Replace("(", "").Replace(")", "").Replace("/", "").Replace("[", "").Replace("]", "").Replace("{", "").Replace("}", "").ToLower();
 
             // Check if the sanitized emote is in the list of valid emotes
-            return Service.Emotes.Contains("/" + Emote.ToLower());
+            return Sausages.Emotes.Contains("/" + Emote.ToLower());
         }
 
 
@@ -82,27 +82,27 @@ namespace SimonSays
         /// <param name="Type">The type of chat message.</param>
         /// <param name="Message">The content of the chat message.</param>
         /// <param name="ForceForTesting">Flag to force command execution for testing purposes.</param>
-        public static void Command(XivChatType Type, string Message, bool ForceForTesting = false)
+        public static void ProccessChatCommands(XivChatType Type, string Message, bool ForceForTesting = false)
         {
             // Check if the plugin is listening for commands
-            if (Plugin.Configuration == null)
+            if (Potatoes.Configuration == null)
             {
                 return;
             }
 
-            if (!Plugin.Configuration.IsListening)
+            if (!Potatoes.Configuration.IsListening)
             {
                 return;
             }
             // Check if the channel is enabled for the command, unless forced for testing
-            Plugin.Configuration.EnabledChannels.TryGetValue((int)Type, out var Enabled);
+            Potatoes.Configuration.EnabledChannels.TryGetValue((int)Type, out var Enabled);
             if (!Enabled && !ForceForTesting)
             {
                 return;
             }
 
             // Get the configured catchphrase
-            var CatchPhrase = Plugin.Configuration.CatchPhrase;
+            var CatchPhrase = Potatoes.Configuration.CatchPhrase;
 
             // Check if the message starts with the catchphrase
             if (!Message.StartsWith(CatchPhrase))
@@ -113,23 +113,27 @@ namespace SimonSays
             // Extract the emote from the message
             var Emote = Message[CatchPhrase.Length..].TrimStart();
 
-            // Validate and sanitize the emote
-            if (!SanitizeEmote(ref Emote))
+            if (Emote.StartsWith("pe:") || Emote.StartsWith("pp:"))
             {
-                Service.ChatGui.Print("You haven't specified a correct Emote.");
+                Gravy.HandlePartyChatPreset(Emote);
                 return;
             }
 
-            var Chat = new XivCommonBase(Plugin.PluginInterfaceStatic!).Functions.Chat;
+            // Validate and sanitize the emote
+            if (!SanitizeEmote(ref Emote))
+            {
+                Sausages.ChatGui.Print("You haven't specified a correct Emote.");
+                return;
+            }
 
             // Optionally add "motion" if configured for motion-only emotes
-            if (Plugin.Configuration.MotionOnly)
+            if (Potatoes.Configuration.MotionOnly)
             {
                 Emote += " motion";
             }
 
             // Execute the emote
-            Chat.SendMessage("/" + Emote);
+            Veggies.SendChatMessageAsIfPlayer("/" + Emote);
         }
 
 
@@ -148,7 +152,7 @@ namespace SimonSays
                 return;
 
             // Delegate the message to the Command method for processing
-            Command(type, message.ToString());
+            ProccessChatCommands(type, message.ToString());
         }
 
 
@@ -160,11 +164,11 @@ namespace SimonSays
         public static void StartScooch(Vector3? Offset = null, OverrideMovement.OnCompleteDelegate? callback = null)
         {
             // Get the target object from the TargetManager service
-            var Target = Service.TargetManager.Target;
+            var Target = Sausages.TargetManager.Target;
 
             if (movement == null)
             {
-                Service.Log.Debug("movement is null");
+                Sausages.Log.Debug("movement is null");
                 return;
             }
             // Clear any existing movement callbacks
@@ -181,7 +185,7 @@ namespace SimonSays
             {
                 // Disable character movement and notify the user of the absence of a target
                 movement.SoftDisable = true;
-                Service.ChatGui.Print("You haven't got a Target, numpty");
+                Sausages.ChatGui.Print("You haven't got a Target, numpty");
             }
 
             // Check if a callback function is provided
@@ -209,7 +213,7 @@ namespace SimonSays
         public static void ScoochPresetOffset(Vector3? Offset, IGameObject Target, float Rotation)
         {
             // Get the local player character
-            var Character = Service.ClientState.LocalPlayer;
+            var Character = Sausages.ClientState.LocalPlayer;
 
             if (Character == null)
             {
@@ -263,7 +267,7 @@ namespace SimonSays
         public static void ScoochOnOver(Vector3? Offset, IGameObject Target)
         {
             // Get the local player character
-            var Character = Service.ClientState.LocalPlayer;
+            var Character = Sausages.ClientState.LocalPlayer;
 
             if (Character == null)
             {
@@ -322,17 +326,17 @@ namespace SimonSays
             // Validate and sanitize the provided emote
             if (!SanitizeEmote(ref Emote))
             {
-                Service.ChatGui.Print("You have not specified a valid emote");
+                Sausages.ChatGui.Print("You have not specified a valid emote");
                 return;
             }
             if (!SanitizeEmote(ref OtherEmote))
             {
-                Service.ChatGui.Print("You have not specified a valid other emote");
+                Sausages.ChatGui.Print("You have not specified a valid other emote");
                 return;
             }
 
-            var Target = Service.TargetManager.Target;
-            var Chat = new XivCommonBase(Plugin.PluginInterfaceStatic!).Functions.Chat;
+            var Target = Sausages.TargetManager.Target;
+
 
             // Synchronize positions if requested
             if (ShouldSyncPosition)
@@ -344,12 +348,12 @@ namespace SimonSays
                     // Send emote to the target if it exists
                     if (Target != null)
                     {
-                        Service.Log.Information("Telling target to do emote " + OtherEmote);
-                        Chat.SendMessage("/tell <t> " + Plugin.Configuration!.CatchPhrase + " " + OtherEmote);
+                        Sausages.Log.Information("Telling target to do emote " + OtherEmote);
+                        Veggies.SendChatMessageAsIfPlayer("/tell <t> " + Potatoes.Configuration!.CatchPhrase + " " + OtherEmote);
                     }
 
                     // Execute the emote globally
-                    Chat.SendMessage("/" + Emote);
+                    Veggies.SendChatMessageAsIfPlayer("/" + Emote);
                 });
             }
             else
@@ -357,12 +361,12 @@ namespace SimonSays
                 // Send emote to the target if it exists
                 if (Target != null)
                 {
-                    Service.Log.Information("Telling target to do emote " + OtherEmote);
-                    Chat.SendMessage("/tell <t> " + Plugin.Configuration!.CatchPhrase + " " + OtherEmote);
+                    Sausages.Log.Information("Telling target to do emote " + OtherEmote);
+                    Veggies.SendChatMessageAsIfPlayer("/tell <t> " + Potatoes.Configuration!.CatchPhrase + " " + OtherEmote);
                 }
 
                 // Execute the emote globally
-                Chat.SendMessage("/" + Emote);
+                Veggies.SendChatMessageAsIfPlayer("/" + Emote);
             }
         }
 
@@ -384,13 +388,13 @@ namespace SimonSays
             }
 
             // Search for the first EmoteOffset in the EmoteOffsets list that is enabled and matches the Emote string
-            var emoteOffset = Plugin.Configuration!.EmoteOffsets.FirstOrDefault((offset) => offset.Enabled && offset.Emote == Emote);
+            var emoteOffset = Potatoes.Configuration!.EmoteOffsets.FirstOrDefault((offset) => offset.Enabled && offset.Emote == Emote);
 
             // Check if an EmoteOffset was found
             if (emoteOffset != null)
             {
                 // If an EmoteOffset was found, log the information about the offset being used
-                Service.Log.Information($"Using emote offset {emoteOffset.Label} for emote {Emote}");
+                Sausages.Log.Information($"Using emote offset {emoteOffset.Label} for emote {Emote}");
 
                 // Set the X, Y, and Z values of the Offset to the values from the EmoteOffset
                 Offset.X = emoteOffset.X;

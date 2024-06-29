@@ -50,10 +50,10 @@ public unsafe class OverrideCamera : IDisposable
     public OverrideCamera()
     {
         // Initialize hooks from attributes
-        Service.Hook.InitializeFromAttributes(this);
+        Sausages.Hook.InitializeFromAttributes(this);
 
         // Log the address of the RMICamera hook
-        Service.Log.Information($"RMICamera address: 0x{_rmiCameraHook.Address:X}");
+        Sausages.Log.Information($"RMICamera address: 0x{_rmiCameraHook.Address:X}");
     }
 
 

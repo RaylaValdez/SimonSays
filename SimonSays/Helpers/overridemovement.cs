@@ -76,17 +76,17 @@ public unsafe class OverrideMovement : IDisposable
     public OverrideMovement()
     {
         // Initialize hooks from attributes
-        Service.Hook.InitializeFromAttributes(this);
+        Sausages.Hook.InitializeFromAttributes(this);
 
         // Log the addresses of the walk and fly hooks
-        Service.Log.Information($"RMIWalk address: 0x{rmiWalkHook.Address:X}");
-        Service.Log.Information($"RMIFly address: 0x{rmiFlyHook.Address:X}");
+        Sausages.Log.Information($"RMIWalk address: 0x{rmiWalkHook.Address:X}");
+        Sausages.Log.Information($"RMIFly address: 0x{rmiFlyHook.Address:X}");
     }
 
     // Destructor (called when object goes out of scope/no longer exists)
     ~OverrideMovement()
     {
-        Service.Log.Information("OverrideMovement is being destroyed");
+        Sausages.Log.Information("OverrideMovement is being destroyed");
     }
 
 
@@ -95,7 +95,7 @@ public unsafe class OverrideMovement : IDisposable
     /// </summary>
     public void Dispose()
     {
-        Service.Log.Information("Disposing of OverrideMovement");
+        Sausages.Log.Information("Disposing of OverrideMovement");
         // Dispose of the walk and fly hooks
         SoftDisable = true;
         Enabled = false;
@@ -191,7 +191,7 @@ public unsafe class OverrideMovement : IDisposable
         }
         catch (Exception e)
         {
-            Service.Log.Error(e, "RMIWalkDetour");
+            Sausages.Log.Error(e, "RMIWalkDetour");
             SoftDisable = true;
         }
 
@@ -252,7 +252,7 @@ public unsafe class OverrideMovement : IDisposable
         }
         catch (Exception e)
         {
-            Service.Log.Error(e, "RMIFlyDetour");
+            Sausages.Log.Error(e, "RMIFlyDetour");
             SoftDisable = true;
         }
     }
@@ -268,7 +268,7 @@ public unsafe class OverrideMovement : IDisposable
     private (Angle h, Angle v)? DirectionToDestination(bool allowVertical)
     {
         // Get the local player
-        var player = Service.ClientState.LocalPlayer;
+        var player = Sausages.ClientState.LocalPlayer;
 
         // Return null if the player is null
         if (player == null)
@@ -319,7 +319,7 @@ public unsafe class OverrideMovement : IDisposable
     private float RotationToDestination()
     {
         // Get the local player
-        var player = Service.ClientState.LocalPlayer;
+        var player = Sausages.ClientState.LocalPlayer;
 
         // Return 0 if the player is null
         if (player == null)
