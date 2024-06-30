@@ -22,7 +22,7 @@ namespace SimonSays
 
         public bool MotionOnly { get; set; } = true;
 
-        public bool PosSync { get; set; } = false;
+        public bool PosSync { get; set; } = true;
 
         public bool UseGamepad { get; set; } = false;
         public Dictionary<int, bool> EnabledChannels { get; set; } = [];

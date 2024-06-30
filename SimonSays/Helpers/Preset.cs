@@ -10,7 +10,7 @@ namespace SimonSays.Helpers
     public class Preset
     {
         public string PresetName { get; set; } = "Change Me";
-        public List<PresetMember> Members { get; set; } = new List<PresetMember>();
+        public List<PresetMember> Members { get; set; } = [];
     }
 
     public class PresetMember

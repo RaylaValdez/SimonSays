@@ -104,10 +104,10 @@ namespace PunishLib.ImGuiMethods
             var spacing = style.ItemSpacing.X * (1 - minimumWindowPercent);
 
             // Calculate the width of the content region within the group box
-            var contentRegionWidth = GroupBoxOptionsStack.TryPeek(out var parent) ? parent.Width - parent.BorderPadding.X * 2 : ImGui.GetWindowContentRegionMax().X - style.WindowPadding.X;
+            var contentRegionWidth = GroupBoxOptionsStack.TryPeek(out var parent) ? parent.Width - (parent.BorderPadding.X * 2) : ImGui.GetWindowContentRegionMax().X - style.WindowPadding.X;
 
             // Calculate the desired width of the group box
-            var width = Math.Max(contentRegionWidth * minimumWindowPercent - spacing, 1);
+            var width = Math.Max((contentRegionWidth * minimumWindowPercent) - spacing, 1);
 
             // Set the width of the options within the group box
             options.Width = minimumWindowPercent > 0 ? width : 0;
@@ -138,7 +138,7 @@ namespace PunishLib.ImGuiMethods
             ImGui.Indent(Math.Max(options.BorderPadding.X, 0.01f));
 
             // Set the item width to a percentage of the available width
-            ImGui.PushItemWidth(MathF.Floor((width - options.BorderPadding.X * 2) * 0.65f));
+            ImGui.PushItemWidth(MathF.Floor((width - (options.BorderPadding.X * 2)) * 0.65f));
 
             // Push the options onto the stack
             GroupBoxOptionsStack.Push(options);
@@ -240,7 +240,7 @@ namespace PunishLib.ImGuiMethods
         }
 
         [LibraryImport("cimgui")]
-        [UnmanagedCallConv(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+        [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
         private static partial nint igGetCurrentWindow();
         public static unsafe ImGuiWindow* GetCurrentWindow() => (ImGuiWindow*)igGetCurrentWindow();
         public static unsafe ImGuiWindowFlags GetCurrentWindowFlags() => GetCurrentWindow()->Flags;

@@ -24,13 +24,13 @@ public unsafe class OverrideCamera : IDisposable
 {
     public bool Enabled
     {
-        get => _rmiCameraHook.IsEnabled;
+        get => rmiCameraHook.IsEnabled;
         set
         {
             if (value)
-                _rmiCameraHook.Enable();
+                rmiCameraHook.Enable();
             else
-                _rmiCameraHook.Disable();
+                rmiCameraHook.Disable();
         }
     }
 
@@ -42,7 +42,7 @@ public unsafe class OverrideCamera : IDisposable
 
     private delegate void RMICameraDelegate(CameraEx* self, int inputMode, float speedH, float speedV);
     [Signature("40 53 48 83 EC 70 44 0F 29 44 24 ?? 48 8B D9")]
-    private Hook<RMICameraDelegate> _rmiCameraHook = null!;
+    private readonly Hook<RMICameraDelegate> rmiCameraHook = null!;
 
     /// <summary>
     /// Initializes the OverrideCamera instance, sets up hooks, and logs the address of the RMICamera hook.
@@ -53,7 +53,7 @@ public unsafe class OverrideCamera : IDisposable
         Sausages.Hook.InitializeFromAttributes(this);
 
         // Log the address of the RMICamera hook
-        Sausages.Log.Information($"RMICamera address: 0x{_rmiCameraHook.Address:X}");
+        Sausages.Log.Information($"RMICamera address: 0x{rmiCameraHook.Address:X}");
     }
 
 
@@ -63,7 +63,8 @@ public unsafe class OverrideCamera : IDisposable
     public void Dispose()
     {
         // Dispose of the camera hook
-        _rmiCameraHook.Dispose();
+        rmiCameraHook.Dispose();
+        GC.SuppressFinalize(this); 
     }
 
 
@@ -77,7 +78,7 @@ public unsafe class OverrideCamera : IDisposable
     private void RMICameraDetour(CameraEx* self, int inputMode, float speedH, float speedV)
     {
         // Call the original method
-        _rmiCameraHook.Original(self, inputMode, speedH, speedV);
+        rmiCameraHook.Original(self, inputMode, speedH, speedV);
 
         // Adjust camera input if conditions are met
         if (IgnoreUserInput || inputMode == 0) // Let the user override...

@@ -14,7 +14,7 @@ namespace PunishLib.ImGuiMethods
     internal static class ImGuiEx
     {
         // Dictionary to store the widths of centered lines
-        static readonly Dictionary<string, float> CenteredLineWidths = new();
+        private static readonly Dictionary<string, float> CenteredLineWidths = [];
 
         // Method to draw a centered line in ImGui
         public static void ImGuiLineCentered(string id, Action func)
@@ -23,7 +23,7 @@ namespace PunishLib.ImGuiMethods
             if (CenteredLineWidths.TryGetValue(id, out var dims))
             {
                 // Set the cursor position to center the line
-                ImGui.SetCursorPosX(ImGui.GetContentRegionAvail().X / 2 - dims / 2);
+                ImGui.SetCursorPosX((ImGui.GetContentRegionAvail().X / 2) - (dims / 2));
             }
             var oldCur = ImGui.GetCursorPosX();
             func();
@@ -70,7 +70,7 @@ namespace PunishLib.ImGuiMethods
         // Method to draw multiple empty lines
         public static void Spacer(int i)
         {
-            float l = ImGui.GetTextLineHeight();
+            var l = ImGui.GetTextLineHeight();
             if (i > 0)
             {
                 ImGui.Dummy(new Vector2(0, i * l));
@@ -79,12 +79,12 @@ namespace PunishLib.ImGuiMethods
 
         public static bool DrawToggleButtonWithTooltip(string buttonId, string tooltip, FontAwesomeIcon icon, ref bool enabledState)
         {
-            bool result = false;
-            bool buttonEnabled = enabledState;
+            var result = false;
+            var buttonEnabled = enabledState;
             if (buttonEnabled)
             {
-                ImGuiCol imGuiCol = ImGuiCol.Button;
-                Vector4 healerGreen = ImGuiColors.HealerGreen;
+                var imGuiCol = ImGuiCol.Button;
+                var healerGreen = ImGuiColors.HealerGreen;
                 healerGreen.W = 0.25f;
                 ImGui.PushStyleColor(imGuiCol, healerGreen);
             }
@@ -108,7 +108,7 @@ namespace PunishLib.ImGuiMethods
             ImGui.PushID(text);
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0.0f));
             ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(color.X, color.Y, color.Z, color.W));
-            bool selected = ImGuiComponents.IconButton(icon);
+            var selected = ImGuiComponents.IconButton(icon);
             ImGui.PopStyleColor();
             ImGui.SameLine();
             selected |= ImGui.Button(text);
