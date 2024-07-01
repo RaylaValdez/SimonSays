@@ -68,6 +68,7 @@ internal static class ConfigWindowHelpers
     ];
     public static string testText = "Simon Says : hum";
     public static ISharedImmediateTexture? aboutImage;
+    public static ImGuiStylePtr StylePtr = ImGui.GetStyle();
 
     public static string GetSelectedMember()
     {

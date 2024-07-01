@@ -300,11 +300,7 @@ namespace SimonSays.Windows.Tabs
                                     var ys = new float[] { (float)Y, endY };
 
                                     ImPlot.SetupLegend(ImPlotLocation.NorthWest, ImPlotLegendFlags.NoMenus);
-                                    ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex], 2f);
-                                    ImPlot.PlotLine(member.CharacterName, ref xs[0], ref ys[0], 2);
-
-
-
+                                    
                                     // Helper function for arrowhead calculation
                                     void PlotArrowhead(float baseX, float baseY, float angle)
                                     {
@@ -317,13 +313,46 @@ namespace SimonSays.Windows.Tabs
                                         ImPlot.PlotLine(member.CharacterName + "_arrowhead", ref arrowheadXs[0], ref arrowheadYs[0], 2);
                                     }
 
-                                    // Plot the arrowheads
-                                    ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
-                                    PlotArrowhead(endX, endY, rotOffset + angleOffset);
-                                    ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex]);
-                                    PlotArrowhead(endX, endY, rotOffset - angleOffset);
+                                    if (!member.isAnchor)
+                                    {
+                                        ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex], 2f);
+                                        ImPlot.PlotLine(member.CharacterName, ref xs[0], ref ys[0], 2);
+                                        ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex], 2f);
+                                        PlotArrowhead(endX, endY, rotOffset + angleOffset);
+                                        ImPlot.SetNextLineStyle(ConfigWindowHelpers.memberColors[colorIndex], 2f);
+                                        PlotArrowhead(endX, endY, rotOffset - angleOffset);
+                                    }
+                                    else
+                                    {
+                                        // Blue of the dummy plot rgb(76, 114, 176)
+                                        ImPlot.SetNextLineStyle(new System.Numerics.Vector4(76 / 255f, 114 / 255f, 176 / 255f, 255 / 255f), 2f);
+                                        ImPlot.PlotLine(member.CharacterName, ref xs[0], ref ys[0], 2);
+                                        ImPlot.SetNextLineStyle(new System.Numerics.Vector4(76 / 255f, 114 / 255f, 176 / 255f, 255 / 255f), 2f);
+                                        PlotArrowhead(endX, endY, rotOffset + angleOffset);
+                                        ImPlot.SetNextLineStyle(new System.Numerics.Vector4(76 / 255f, 114 / 255f, 176 / 255f, 255 / 255f), 2f);
+                                        PlotArrowhead(endX, endY, rotOffset - angleOffset);
+                                    }
+                                    
+                                    
 
-                                    if (ImPlot.DragPoint((int)ImGui.GetID(member.CharacterName), ref X, ref Y, ConfigWindowHelpers.memberColors[colorIndex], 15f))
+
+                                    var oldMarkerSize = ImPlot.GetStyle().MarkerSize;
+                                    if (member.isAnchor)
+                                    {
+                                        var plotDouble = new float[] { (float)X, (float)Y };
+                                        var localPlotSize = new float[] { (float)1 / 15f, (float)1 / 15f };
+
+                                        ImPlot.GetStyle().MarkerSize = 15f;
+                                        ImPlot.PlotScatter("##DummyPlot", ref plotDouble[0], 1);
+
+                                        //ImPlot.PlotText(FontAwesomeIcon.Anchor.ToString(), X, Y); // supposed to be an anchor icon 
+                                    }
+                                    else
+                                    {
+                                        ImPlot.GetStyle().MarkerSize = 15f;
+                                    }
+
+                                    if ((!member.isAnchor) && ImPlot.DragPoint((int)ImGui.GetID(member.CharacterName), ref X, ref Y, ConfigWindowHelpers.memberColors[colorIndex], 15f))
                                     {
                                         ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
                                     }
@@ -339,6 +368,7 @@ namespace SimonSays.Windows.Tabs
                                         }
                                     }
                                     var initials = string.Join("", member.CharacterName.Split(" ").SelectMany(s => s.FirstOrDefault().ToString()));
+
 
                                     ImPlot.PlotText(initials, X, Y);
 

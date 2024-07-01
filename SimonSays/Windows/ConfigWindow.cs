@@ -41,9 +41,11 @@ public class ConfigWindow : Window, IDisposable
     {
         this.Size = new System.Numerics.Vector2(1285, 815);
         this.SizeCondition = ImGuiCond.FirstUseEver | ImGuiCond.Appearing;
-        var cunt = "cunt";
+
+        
         var imagePath = Path.Combine(Potatoes.PluginInterfaceStatic!.AssemblyLocation.Directory?.FullName!, "ts500.png");
         ConfigWindowHelpers.aboutImage = Sausages.TextureProvider.GetFromFile(imagePath);
+
     }
 
 
@@ -56,11 +58,10 @@ public class ConfigWindow : Window, IDisposable
 
     public override void PreDraw()
     {
-        var StylePtr = ImGui.GetStyle();
-        ConfigWindowHelpers.oldTitleColorActive = StylePtr.Colors[(int)ImGuiCol.TitleBgActive];
-
-        StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = (new Vector4(081, 054, 148, 211) / 255f);
-
+        //PUSH
+        ConfigWindowHelpers.oldTitleColorActive = ConfigWindowHelpers.StylePtr.Colors[(int)ImGuiCol.TitleBgActive];
+        ConfigWindowHelpers.StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = (new Vector4(081, 054, 148, 211) / 255f);
+        
         base.PreDraw();
     }
 
@@ -69,7 +70,7 @@ public class ConfigWindow : Window, IDisposable
     /// </summary>
     public override void Draw()
     {
-        ConfigWindowHelpers.PushStyles();
+        //ConfigWindowHelpers.PushStyles();
         ConfigWindowHelpers.OpenReNamingWindow();
         ConfigWindowHelpers.OpenNamingWindow();
         ConfigWindowHelpers.ContextPopup();
@@ -109,15 +110,18 @@ public class ConfigWindow : Window, IDisposable
             ImGui.EndTabBar();
         }
 
-        ImGui.PopStyleVar(22);
-        ImGui.PopStyleColor(9);
+
     }
 
     public override void PostDraw()
     {
+        // POP
+        ImGui.PopStyleVar(22);
+        ImGui.PopStyleColor(11);
         var StylePtr = ImGui.GetStyle();
 
         StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = ConfigWindowHelpers.oldTitleColorActive;
+        StylePtr.Colors[(int)ImGuiCol.TitleBgCollapsed] = new Vector4(6, 6, 6, 217) / 255f;
 
 
         base.PostDraw();
