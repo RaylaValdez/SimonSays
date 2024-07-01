@@ -171,8 +171,7 @@ namespace SimonSays
 
             // Check if the player is part of the received party preset
             var ownName = Sausages.ClientState.LocalPlayer!.Name.ToString();
-            var playerPreset = preset.Members.FirstOrDefault(m => m.CharacterName == ownName);
-
+            var playerPreset = preset.Members.FirstOrDefault(m => m.CharacterName == ownName && !m.isAnchor);
             if (playerPreset == null)
             {
                 // Don't notify if the player is not part of the received preset
