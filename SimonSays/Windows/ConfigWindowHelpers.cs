@@ -245,8 +245,13 @@ internal static class ConfigWindowHelpers
                 }
                 ImGui.SameLine();
                 ImGui.Text("  ");
+
+ 
             }
         });
+
+        ImGui.Dummy(new Vector2(0, 5));
+
 
         ImGuiEx.ImGuiLineRightAlign("Settings_Override_Positon_Stop", () =>
         {

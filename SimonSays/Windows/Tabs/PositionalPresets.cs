@@ -30,7 +30,7 @@ namespace SimonSays.Windows.Tabs
             var LayoutsChildSize = new Vector2(-1, LeftSize.Y / 2.5f);
             var LayoutsSize = new Vector2(-1, -1);
             var MembersSize = new Vector2(-1, -1);
-            var MiddleSize = new Vector2(WindowWidth / 2, WindowHeight / 1.2f);
+            var MiddleSize = new Vector2(WindowWidth / 1.95f, WindowHeight / 1.2f);
             var RightSize = new Vector2(WindowWidth / 4.3f, WindowHeight / 1.2f);
 
             ImGui.NewLine();
@@ -396,7 +396,7 @@ namespace SimonSays.Windows.Tabs
             ImGui.SameLine();
             if (ImGui.BeginChild("right", RightSize, true, ImGuiWindowFlags.NoCollapse))
             {
-                if (ImGui.BeginChild("Properties", new Vector2(-1, ImGui.GetWindowHeight() - (RightSize.Y / 2.29f)), true, ImGuiWindowFlags.NoCollapse))
+                if (ImGui.BeginChild("Properties", new Vector2(-1, ImGui.GetWindowHeight() - (RightSize.Y / 2.29f)), true, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollWithMouse))
                 {
                     if (!ConfigWindowHelpers.GetSelectedMember().IsNullOrEmpty())
                     {
@@ -523,7 +523,7 @@ namespace SimonSays.Windows.Tabs
                     }
                 }
                 ImGui.EndChild();
-                if (ImGui.BeginChild("Actions", LayoutsChildSize, true, ImGuiWindowFlags.NoCollapse))
+                if (ImGui.BeginChild("Actions", LayoutsChildSize, true, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollWithMouse))
                 {
                     if (!ConfigWindowHelpers.selectedLayout.IsNullOrEmpty())
                     {
@@ -589,6 +589,18 @@ namespace SimonSays.Windows.Tabs
                                         Veggies.SendNotification("Instructions failed to send: " + ex.Message);
                                     }
                                 }
+                            }
+                            ImGui.SameLine();
+                            ImGui.Text("  ");
+                        });
+                        ImGui.Dummy(new Vector2(0, 10));
+                        ImGui.Text("Abort Movement");
+                        ImGui.SameLine();
+                        ImGuiEx.ImGuiLineRightAlign("OffsetAbort", () =>
+                        {
+                            if (ConfigWindowHelpers.IconButtonWithText(FontAwesomeIcon.Stop, "", "Stop all movement."))
+                            {
+                                Meat.StopScooch();
                             }
                             ImGui.SameLine();
                             ImGui.Text("  ");

@@ -3,7 +3,7 @@
     <PropertyGroup>
         <Authors></Authors>
         <Company></Company>
-        <Version>1.0.2.0</Version>
+        <Version>1.0.2.2</Version>
         <Description>
             Plugin to sync Emotes across clients.
         </Description>
@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <None Remove="ImGuiMethods\NewFile1.txt" />
+      <None Remove="SimonSays.json" />
     </ItemGroup>
 
     <ItemGroup>
@@ -78,9 +79,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="SimonSays.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+      <Content Include="SimonSays.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
       <None Update="ts500.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>

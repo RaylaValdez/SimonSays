@@ -33,7 +33,7 @@ namespace SimonSays.Windows.Tabs
             var RightchildSize = new System.Numerics.Vector2(WindowWidth / 2.035f, WindowHeight / 1.2f);
 
             ImGui.NewLine();
-            if (ImGui.BeginChild("Left", LeftChildSize, true, ImGuiWindowFlags.NoCollapse))
+            if (ImGui.BeginChild("Left", LeftChildSize, true, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollWithMouse))
             {
                 ImGui.TextWrapped("Catchphrase Options");
                 ImGui.Dummy(new System.Numerics.Vector2(0, 10));
@@ -100,7 +100,7 @@ namespace SimonSays.Windows.Tabs
             }
             ImGui.EndChild();
             ImGui.SameLine();
-            if (ImGui.BeginChild("Right", RightchildSize, true, ImGuiWindowFlags.NoCollapse))
+            if (ImGui.BeginChild("Right", RightchildSize, true, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollWithMouse))
             {
                 ImGui.TextWrapped("These are the channels SimonSays will listen to, waiting for your catchphrase.");
                 ImGui.Dummy(new System.Numerics.Vector2(0, 10));
