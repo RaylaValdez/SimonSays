@@ -39,9 +39,9 @@ public class ConfigWindow : Window, IDisposable
         "SimonSays Settings",
         ImGuiWindowFlags.NoScrollbar)
     {
-        this.Size = new System.Numerics.Vector2(500, 900);
-        this.SizeCondition = ImGuiCond.FirstUseEver;
-
+        this.Size = new System.Numerics.Vector2(1285, 815);
+        this.SizeCondition = ImGuiCond.FirstUseEver | ImGuiCond.Appearing;
+        var cunt = "cunt";
         var imagePath = Path.Combine(Potatoes.PluginInterfaceStatic!.AssemblyLocation.Directory?.FullName!, "ts500.png");
         ConfigWindowHelpers.aboutImage = Sausages.TextureProvider.GetFromFile(imagePath);
     }
