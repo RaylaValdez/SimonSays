@@ -50,7 +50,7 @@ namespace SimonSays.Windows.Tabs
                 ImGui.TextWrapped("Aliases :");
                 var sscfg = "/sscfg";
                 ImGui.SetNextItemWidth(CommandWidth);
-                ImGui.InputText("##/simonsaysconfig", ref sscfg, 50U, ImGuiInputTextFlags.ReadOnly);
+                ImGui.InputText("##/sscfg", ref sscfg, 50U, ImGuiInputTextFlags.ReadOnly);
                 ImGui.Dummy(new Vector2(0, 10));
 
                 ImGui.Text("Command :");

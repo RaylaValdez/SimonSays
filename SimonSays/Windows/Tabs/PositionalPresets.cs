@@ -465,26 +465,39 @@ namespace SimonSays.Windows.Tabs
                         ImGui.SameLine();
                         ImGuiEx.ImGuiLineRightAlign("Offsetcombo", () =>
                         {
+                            var ComboSize = new Vector2(150f, 600f);
+                            ImGui.SetNextWindowSize(ComboSize);
                             if (ImGui.BeginCombo("##EmoteCombo", emote))
                             {
-                                ImGui.InputText("##Search", ref ConfigWindowHelpers.filterText, ConfigWindow.BufferSize);
-                                foreach (var j in Sausages.Emotes)
+                                if (ImGui.BeginChild("##EmoteSearch",new Vector2(ComboSize.X * 1.7f,20f),false, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoScrollbar))
                                 {
-                                    var i = j.Replace("/", "");
-                                    if (!ConfigWindowHelpers.filterText.IsNullOrEmpty() && !i.Contains(ConfigWindowHelpers.filterText))
+                                    ImGui.InputText("##Search", ref ConfigWindowHelpers.filterText, ConfigWindow.BufferSize);
+                                }
+                                ImGui.EndChild();
+                                ImGui.Dummy(new Vector2(0f,5f));
+                                
+                                if (ImGui.BeginChild("##EmoteList", new Vector2(-1,-1),false, ImGuiWindowFlags.NoCollapse))
+                                {
+                                    foreach (var j in Sausages.Emotes)
                                     {
-                                        continue;
-                                    }
-                                    if (ImGui.Selectable(i, (i == member.emote)))
-                                    {
-                                        emote = i;
-                                    }
+                                        var i = j.Replace("/", "");
+                                        if (!ConfigWindowHelpers.filterText.IsNullOrEmpty() && !i.Contains(ConfigWindowHelpers.filterText))
+                                        {
+                                            continue;
+                                        }
+                                        if (ImGui.Selectable(i, (i == member.emote)))
+                                        {
+                                            emote = i;
+                                        }
 
-                                    if (i == member.emote)
-                                    {
-                                        ImGui.SetItemDefaultFocus();
+                                        if (i == member.emote)
+                                        {
+                                            ImGui.SetItemDefaultFocus();
+                                        }
                                     }
                                 }
+                                ImGui.EndChild();
+                                
                                 ImGui.EndCombo();
                             }
 
