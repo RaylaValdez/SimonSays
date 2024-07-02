@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Dalamud;
 using XivCommon;
 using Dalamud.Game.Text;
-// using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Common.Math;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -16,6 +16,8 @@ using XivCommon.Functions;
 using Dalamud.Game.Gui;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using System.Threading;
+using Dalamud.Game.ClientState.Objects.SubKinds;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using SimonSays.Helpers;
 
 namespace SimonSays
@@ -94,6 +96,7 @@ namespace SimonSays
             {
                 return;
             }
+
             // Check if the channel is enabled for the command, unless forced for testing
             Potatoes.Configuration.EnabledChannels.TryGetValue((int)Type, out var Enabled);
             if (!Enabled && !ForceForTesting)
@@ -156,8 +159,6 @@ namespace SimonSays
         }
 
 
-
-
         /// <summary>
         /// Initiates character movement towards the current target or prints a message if no target is selected.
         /// </summary>
@@ -171,6 +172,7 @@ namespace SimonSays
                 Sausages.Log.Debug("movement is null");
                 return;
             }
+
             // Clear any existing movement callbacks
             movement.ClearCallback();
 
@@ -179,7 +181,6 @@ namespace SimonSays
             {
                 // Initiate character movement towards the target with an offset
                 ScoochOnOver(Offset, Target);
-
             }
             else
             {
@@ -207,7 +208,6 @@ namespace SimonSays
                 // Disable character movement
                 movement.SoftDisable = true;
             }
-
         }
 
         public static void ScoochPresetOffset(Vector3? Offset, IGameObject Target, float Rotation)
@@ -229,30 +229,44 @@ namespace SimonSays
 
             // Get the target position and rotation
             Vector3 DesiredPosition = Target.Position;
-            var AnchorRotation = -Target.Rotation + (MathF.PI / 2f);
-            var DesiredRotation = (AnchorRotation - Rotation) % MathF.Tau;
+            var AnchorRotation = Target.Rotation;
 
+            // When target is not a player, use the DefaultRotation
+            if (Target is not IPlayerCharacter && Target.Address != 0)
+            {
+                unsafe
+                {
+                    var clientStructsObject = (GameObject*)Target.Address;
+                    var defaultRotation = clientStructsObject->DefaultRotation;
+                    Sausages.Log.Debug($"Got anchor as FFXIVClientStructs object, with a default rotation of {defaultRotation} rad, {defaultRotation / (MathF.PI / 180f)} deg. Original rotation was {AnchorRotation} rad, {AnchorRotation / (MathF.PI / 180f)} deg");
+                    AnchorRotation = defaultRotation;
+                }
+            }
+
+            var DesiredRotation = (AnchorRotation - Rotation) % MathF.Tau;
 
             // Handle invalid rotation values by using the character's rotation
             if (float.IsNaN(DesiredRotation) || float.IsInfinity(DesiredRotation))
             {
                 // Use the character's rotation as the target rotation
-                
+
                 DesiredRotation = Character.Rotation;
             }
 
             // Calculate the offset relative to the target
-            var offsetX = (-Offset.Value.X * MathF.Cos(AnchorRotation)) - (-Offset.Value.Z * MathF.Sin(AnchorRotation));
-            var offsetZ = (-Offset.Value.X * MathF.Sin(AnchorRotation)) + (-Offset.Value.Z * MathF.Cos(AnchorRotation));
+            var cRot = MathF.Cos(AnchorRotation);
+            var sRot = MathF.Sin(AnchorRotation);
+            var offsetX = (Offset.Value.X * cRot) - (Offset.Value.Z * sRot);
+            var offsetZ = (Offset.Value.Z * cRot) + (Offset.Value.X * sRot);
+            Sausages.Log.Debug($"Rotation {AnchorRotation} (deg: {AnchorRotation / (MathF.PI / 180)}), <{offsetX},{offsetZ}>");
 
             // Apply the offset to the target position
-            DesiredPosition.X += offsetZ;
-            DesiredPosition.Z += offsetX;
+            DesiredPosition.X += -offsetX;
+            DesiredPosition.Z += offsetZ;
 
 
             if (movement != null)
             {
-
                 // Set the desired position and rotation for character movement
                 movement.DesiredPosition = DesiredPosition;
                 movement.DesiredRotation = DesiredRotation;
@@ -307,7 +321,6 @@ namespace SimonSays
 
             if (movement != null)
             {
-
                 // Set the desired position and rotation for character movement
                 movement.DesiredPosition = TarPos;
                 movement.DesiredRotation = TarRot;
@@ -331,6 +344,7 @@ namespace SimonSays
                 Sausages.ChatGui.Print("You have not specified a valid emote");
                 return;
             }
+
             if (!SanitizeEmote(ref OtherEmote))
             {
                 Sausages.ChatGui.Print("You have not specified a valid other emote");
@@ -407,6 +421,5 @@ namespace SimonSays
             // Return the Offset
             return Offset;
         }
-
     }
 }
