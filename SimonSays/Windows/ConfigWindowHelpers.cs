@@ -415,7 +415,7 @@ internal static class ConfigWindowHelpers
     {
         if (ConfigWindowHelpers.namingWindowOpen)
         {
-            ImGui.SetNextWindowPos(new Vector2(ImGui.GetMainViewport().Size.X / 2f - 250,ImGui.GetMainViewport().Size.Y / 2 - 50));
+            ImGui.SetNextWindowPos(new Vector2((ImGui.GetMainViewport().Size.X / 2f) - 250,(ImGui.GetMainViewport().Size.Y / 2) - 50));
             ImGui.SetNextWindowSize(new Vector2(500,100),ImGuiCond.Appearing);
             if (ImGui.Begin("Preset Name", ref ConfigWindowHelpers.namingWindowOpen))
             {

@@ -229,23 +229,25 @@ namespace SimonSays
 
             // Get the target position and rotation
             Vector3 DesiredPosition = Target.Position;
-            var AnchorRotation = Target.Rotation;
-            var DesiredRotation = -Rotation;
+            var AnchorRotation = -Target.Rotation + (MathF.PI / 2f);
+            var DesiredRotation = (AnchorRotation - Rotation) % MathF.Tau;
+
 
             // Handle invalid rotation values by using the character's rotation
             if (float.IsNaN(DesiredRotation) || float.IsInfinity(DesiredRotation))
             {
                 // Use the character's rotation as the target rotation
+                
                 DesiredRotation = Character.Rotation;
             }
 
             // Calculate the offset relative to the target
-            var offsetX = (-Offset.Value.X * MathF.Cos(AnchorRotation)) - (Offset.Value.Z * MathF.Sin(AnchorRotation));
-            var offsetZ = (-Offset.Value.X * MathF.Sin(AnchorRotation)) + (Offset.Value.Z * MathF.Cos(AnchorRotation));
+            var offsetX = (-Offset.Value.X * MathF.Cos(AnchorRotation)) - (-Offset.Value.Z * MathF.Sin(AnchorRotation));
+            var offsetZ = (-Offset.Value.X * MathF.Sin(AnchorRotation)) + (-Offset.Value.Z * MathF.Cos(AnchorRotation));
 
             // Apply the offset to the target position
-            DesiredPosition.X += offsetX;
-            DesiredPosition.Z += offsetZ;
+            DesiredPosition.X += offsetZ;
+            DesiredPosition.Z += offsetX;
 
 
             if (movement != null)
