@@ -13,6 +13,9 @@ namespace SimonSays
         // pp: - preset position
         // pe: - preset emote
 
+        public const string Separator = "#";
+        public const string Ending = ";";
+
         private static string EncodeNumber(float number)
         {
             return number.ToString("N2", CultureInfo.GetCultureInfo("en-US")).Replace(",", "");
@@ -23,16 +26,28 @@ namespace SimonSays
             return number.ToString("N2", CultureInfo.GetCultureInfo("en-US")).Replace(",", "");
         }
 
-        private static string EncodeMember(PresetMember member)
+        private static string EncodeMemberPosition(PresetMember member)
         {
             var characterName = member.CharacterName;
 
             if (member.isAnchor)
             {
-                return characterName + " " + member.emote + ";";
+                return characterName + Ending;
             }
 
-            return characterName + " " + EncodeNumber(member.X) + " " + EncodeNumber(member.Y) + " " + EncodeNumber(member.ROT) + " " + member.emote + ";";
+            return characterName + Separator + EncodeNumber(member.X) + Separator + EncodeNumber(member.Y) + Separator + EncodeNumber(member.ROT) + Ending;
+        }
+
+        private static string EncodeMemberEmote(PresetMember member)
+        {
+            var characterName = member.CharacterName;
+
+            if (member.isAnchor)
+            {
+                return characterName + Separator + member.emote + Ending;
+            }
+
+            return characterName + Separator + member.emote + Ending;
         }
 
         /// <summary>
@@ -47,10 +62,11 @@ namespace SimonSays
         public static string CreatePartyChatPresetString(Preset preset, string catchphrase, bool doEmote)
         {
             var anchorMember = preset.Members.FirstOrDefault(m => m.isAnchor) ?? throw new Exception("Cannot send party message with no anchor in preset");
-            var outString = EncodeMember(anchorMember);
+
+            var outString = doEmote ? EncodeMemberEmote(anchorMember) : EncodeMemberPosition(anchorMember);
             foreach (var member in preset.Members.Where(m => m != anchorMember))
             {
-                outString += EncodeMember(member);
+                outString += doEmote ? EncodeMemberEmote(member) : EncodeMemberPosition(member);
             }
 
             if (outString.Length > 500 - 3 - catchphrase.Length - 3) // -3 because "/p " is 3 characters, minus an extra 3 because of the "pr:"
@@ -63,16 +79,18 @@ namespace SimonSays
 
         private static PresetMember? DecodeAnchorPartyChatMember(string memberString)
         {
-            var memberSplit = memberString.Split(" ");
-            if (memberSplit.Length != 3) // Character name (2) and emote
+            var memberSplit = memberString.Split(Separator);
+            if (memberSplit.Length != 1 && memberSplit.Length != 2) // Character name and optional emote
             {
                 return null;
             }
 
+            var emote = memberSplit.Length >= 2 ? memberSplit[1] : string.Empty;
+
             return new PresetMember()
             {
-                CharacterName = memberSplit[0] + " " + memberSplit[1],
-                emote = memberSplit[2],
+                CharacterName = memberSplit[0],
+                emote = emote,
                 isAnchor = true,
                 X = 0f,
                 Y = 0f,
@@ -85,21 +103,19 @@ namespace SimonSays
             return double.TryParse(numberString, out var result) ? result : 0.0;
         }
 
-        private static PresetMember? DecodePartyChatMember(string memberString)
+        private static PresetMember? DecodePartyChatMemberPosition(string memberString)
         {
-            var memberSplit = memberString.Split(" ");
+            var memberSplit = memberString.Split(Separator);
 
-            if (memberSplit.Length != 6) // Need character name (2), X, Y, ROT and emote
+            if (memberSplit.Length != 4) // Need character name, X, Y and ROT
             {
                 return null;
             }
 
-            var firstName = memberSplit[0];
-            var lastName = memberSplit[1];
-            var xString = memberSplit[2];
-            var yString = memberSplit[3];
-            var rotString = memberSplit[4];
-            var emote = memberSplit[5];
+            var characterName = memberSplit[0];
+            var xString = memberSplit[1];
+            var yString = memberSplit[2];
+            var rotString = memberSplit[3];
 
             var x = DecodeNumberString(xString);
             var y = DecodeNumberString(yString);
@@ -107,12 +123,35 @@ namespace SimonSays
 
             return new PresetMember()
             {
-                CharacterName = firstName + " " + lastName,
-                emote = emote,
+                CharacterName = characterName,
                 isAnchor = false,
+                emote = string.Empty,
                 X = x,
                 Y = y,
                 ROT = rot
+            };
+        }
+
+        private static PresetMember? DecodePartyChatMemberEmote(string memberString)
+        {
+            var memberSplit = memberString.Split(Separator);
+
+            if (memberSplit.Length != 2) // Need character name and emote
+            {
+                return null;
+            }
+
+            var characterName = memberSplit[0];
+            var emote = memberSplit[1];
+
+            return new PresetMember()
+            {
+                CharacterName = characterName,
+                emote = emote,
+                isAnchor = false,
+                X = 0f,
+                Y = 0f,
+                ROT = 0f
             };
         }
 
@@ -123,18 +162,21 @@ namespace SimonSays
         /// <returns>null when not a preset chat string. Otherwise returns the received preset</returns>
         private static Preset? DecodePartyChatPresetString(string chatString)
         {
+            var doEmote = false;
             var lastColon = chatString.LastIndexOf("pp:", StringComparison.InvariantCulture);
             if (lastColon < 0)
             {
                 lastColon = chatString.LastIndexOf("pe:", StringComparison.InvariantCulture);
+                doEmote = true;
             }
+
             if (lastColon < 0)
             {
                 return null;
             }
 
             var presetString = chatString[(lastColon + "pp:".Length)..]; // range indexer. Equivalent to Substring(lastColon)
-            var presetSplit = presetString.Split(";");
+            var presetSplit = presetString.Split(Ending);
 
             var preset = new Preset
             {
@@ -144,7 +186,7 @@ namespace SimonSays
             var isFirst = true;
             foreach (var split in presetSplit.Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                var member = isFirst ? DecodeAnchorPartyChatMember(split) : DecodePartyChatMember(split);
+                var member = isFirst ? DecodeAnchorPartyChatMember(split) : doEmote ? DecodePartyChatMemberEmote(split) : DecodePartyChatMemberPosition(split);
                 if (member != null)
                 {
                     preset.Members.Add(member);
@@ -166,6 +208,7 @@ namespace SimonSays
 
             if (preset == null)
             {
+                Sausages.Log.Debug("Party Chat Preset failed: Preset null");
                 return;
             }
 
@@ -175,6 +218,7 @@ namespace SimonSays
             if (playerPreset == null)
             {
                 // Don't notify if the player is not part of the received preset
+                Sausages.Log.Debug("Party Chat Preset cancelled: Not part of received preset");
                 return;
             }
 
@@ -182,6 +226,7 @@ namespace SimonSays
             var anchor = preset.Members.FirstOrDefault(m => m.isAnchor);
             if (anchor == null)
             {
+                Sausages.Log.Debug("Party Chat Preset failed: anchor cannot be found in the received preset");
                 // Don't do anything if the anchor cannot be found in the received preset
                 return;
             }
@@ -190,6 +235,7 @@ namespace SimonSays
             if (anchorObject == null)
             {
                 // Send a notification informing the player that they might not be in the same area as the preset's anchor
+                Sausages.Log.Debug("Party Chat Preset failed: Anchor object was null");
                 Veggies.SendNotification("Couldn't find the preset anchor member named " + anchor.CharacterName + ". Are you in the same area?");
                 return;
             }

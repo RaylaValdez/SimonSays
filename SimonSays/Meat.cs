@@ -19,6 +19,7 @@ using System.Threading;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using SimonSays.Helpers;
+using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace SimonSays
 {
@@ -234,12 +235,23 @@ namespace SimonSays
             // When target is not a player, use the DefaultRotation
             if (Target is not IPlayerCharacter && Target.Address != 0)
             {
+                // Don't use default rotation for the following types
+                var useDefaultRotation = Target.ObjectKind switch
+                {
+                    ObjectKind.Companion => false,
+                    ObjectKind.Aetheryte => false,
+                    _ => true,
+                };
+                
                 unsafe
                 {
-                    var clientStructsObject = (GameObject*)Target.Address;
-                    var defaultRotation = clientStructsObject->DefaultRotation;
-                    Sausages.Log.Debug($"Got anchor as FFXIVClientStructs object, with a default rotation of {defaultRotation} rad, {defaultRotation / (MathF.PI / 180f)} deg. Original rotation was {AnchorRotation} rad, {AnchorRotation / (MathF.PI / 180f)} deg");
-                    AnchorRotation = defaultRotation;
+                    if (useDefaultRotation)
+                    {
+                        var clientStructsObject = (GameObject*)Target.Address;
+                        var defaultRotation = clientStructsObject->DefaultRotation;
+                        Sausages.Log.Debug($"Got anchor as FFXIVClientStructs object, with a default rotation of {defaultRotation} rad, {defaultRotation / (MathF.PI / 180f)} deg. Original rotation was {AnchorRotation} rad, {AnchorRotation / (MathF.PI / 180f)} deg");
+                        AnchorRotation = defaultRotation;
+                    }
                 }
             }
 
@@ -267,7 +279,6 @@ namespace SimonSays
 
             if (movement != null)
             {
-                var isWalking = false;
                 // Set the desired position and rotation for character movement
                 movement.DesiredPosition = DesiredPosition;
                 movement.DesiredRotation = DesiredRotation;
@@ -275,8 +286,10 @@ namespace SimonSays
                 unsafe
                 {
                     var playerController = Control.Instance();
-                    isWalking = playerController->IsWalking;
-                    playerController->IsWalking = true;
+                    if (playerController != null)
+                    {
+                        playerController->IsWalking = true;
+                    }
                 }
 
 
@@ -288,7 +301,11 @@ namespace SimonSays
                     unsafe
                     {
                         var playerController = Control.Instance();
-                        playerController->IsWalking = isWalking;
+                        if (playerController != null)
+                        {
+                            Sausages.Log.Debug($"Resetting walking state to false");
+                            playerController->IsWalking = false;
+                        }
                     }
 
                 });
