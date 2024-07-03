@@ -240,6 +240,7 @@ namespace SimonSays
                 {
                     ObjectKind.Companion => false,
                     ObjectKind.Aetheryte => false,
+                    ObjectKind.EventNpc => false,
                     _ => true,
                 };
                 
