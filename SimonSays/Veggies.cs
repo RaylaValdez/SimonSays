@@ -28,9 +28,8 @@ namespace SimonSays
         public static IGameObject? GetNearestGameObjectByName(string name)
         {
             var gameObjects = Sausages.ObjectTable;
-            return gameObjects.Where(obj => string.Equals(obj.Name.ToString(), name, StringComparison.CurrentCultureIgnoreCase)) // where the name is the same
-                .OrderBy(obj => (obj.YalmDistanceX * obj.YalmDistanceX) + (obj.YalmDistanceZ * obj.YalmDistanceZ)) // order by distance squared
-                .FirstOrDefault(); // get first, which is nearest
+            return gameObjects.Where(obj => string.Equals(obj.Name.ToString(), name, StringComparison.CurrentCultureIgnoreCase))
+                              .MinBy(obj => (obj.YalmDistanceX * obj.YalmDistanceX) + (obj.YalmDistanceZ * obj.YalmDistanceZ)); // get nearest by squared distance
         }
     }
 }
