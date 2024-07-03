@@ -267,12 +267,31 @@ namespace SimonSays
 
             if (movement != null)
             {
+                var isWalking = false;
                 // Set the desired position and rotation for character movement
                 movement.DesiredPosition = DesiredPosition;
                 movement.DesiredRotation = DesiredRotation;
 
+                unsafe
+                {
+                    var playerController = Control.Instance();
+                    isWalking = playerController->IsWalking;
+                    playerController->IsWalking = true;
+                }
+
+
                 // Enable character movement
                 movement.SoftDisable = false;
+
+                movement.SetCallback(() =>
+                {
+                    unsafe
+                    {
+                        var playerController = Control.Instance();
+                        playerController->IsWalking = isWalking;
+                    }
+
+                });
             }
         }
 

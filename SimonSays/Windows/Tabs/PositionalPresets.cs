@@ -1,3 +1,4 @@
+using Dalamud.Game.Config;
 using Dalamud.Game.Text;
 using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
@@ -5,6 +6,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using ImGuiNET;
 using ImPlotNET;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using PunishLib.ImGuiMethods;
 using SimonSays.Helpers;
 using System;
@@ -15,6 +17,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Vector2 = System.Numerics.Vector2;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 
 namespace SimonSays.Windows.Tabs
 {
@@ -356,16 +359,53 @@ namespace SimonSays.Windows.Tabs
                                     {
                                         ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
                                     }
-                                    if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                                    if (ImGui.IsItemHovered())
                                     {
                                         // where a is [x,y] and b is [mouseX, mouseY] : (a squared) + (y squared) = vector magnitude aka distance
                                         var distance = ((X - mousePos.x) * (X - mousePos.x)) + ((Y - mousePos.y) * (Y - mousePos.y));
+                                        var verticalScrollInput = ImGui.GetIO().MouseWheel;
+
+                                        if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                                        {
+                                            if (distance < 0.15f)
+                                            {
+                                                ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
+                                                Veggies.SendNotification("Selected : " + ConfigWindowHelpers.GetSelectedMember());
+                                            }
+                                        }
+                                        
+                                        
 
                                         if (distance < 0.15f)
                                         {
-                                            ConfigWindowHelpers.SetSelectedMember(member.CharacterName);
-                                            Veggies.SendNotification("Selected : " + ConfigWindowHelpers.GetSelectedMember());
+                                            //Sausages.Log.Debug("Hovering Over " + member.CharacterName.ToString());
+                                            if (verticalScrollInput != 0f)
+                                            {
+                                                if (verticalScrollInput > 0f)
+                                                {
+                                                    //Sausages.Log.Debug("Scrolled Up While Hovering " + member.CharacterName.ToString());
+                                                    //Mouse Scrolled up
+                                                    rot += 15f.Degrees().Rad;
+                                                    if (rot >= 180f.Degrees().Rad)
+                                                    {
+                                                        rot -= 360f.Degrees().Rad;
+                                                    }
+                                                }
+
+                                                if (verticalScrollInput < 0f)
+                                                {
+                                                    //Sausages.Log.Debug("Scrolled Down While Hovering " + member.CharacterName.ToString());
+                                                    //Mouse scrolled down
+                                                    rot -= 15f.Degrees().Rad;
+                                                    if (rot <= -180f.Degrees().Rad)
+                                                    {
+                                                        rot += 360f.Degrees().Rad;
+                                                    }
+                                                }
+                                            }
                                         }
+                                        
+                                        
                                     }
                                     var initials = string.Join("", member.CharacterName.Split(" ").SelectMany(s => s.FirstOrDefault().ToString()));
 
@@ -375,6 +415,7 @@ namespace SimonSays.Windows.Tabs
 
                                     member.X = X;
                                     member.Y = Y;
+                                    member.ROT = rot;
 
                                     var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
                                     var options = jsonSerializerOptions;
@@ -401,7 +442,7 @@ namespace SimonSays.Windows.Tabs
                     if (!ConfigWindowHelpers.GetSelectedMember().IsNullOrEmpty())
                     {
                         var member = ConfigWindowHelpers.activePreset?.Members?.FirstOrDefault(((m) => m.CharacterName == ConfigWindowHelpers.GetSelectedMember())) ?? new PresetMember();
-
+                        var dragFloatWidth = 0f;
 
                         var x = (float)member.X;
                         var y = (float)member.Y;
@@ -455,6 +496,7 @@ namespace SimonSays.Windows.Tabs
                         ImGui.SameLine();
                         ImGuiEx.ImGuiLineRightAlign("Offsetrot", () =>
                         {
+                            dragFloatWidth = ImGui.CalcItemWidth();
                             rotchanged = ImGui.DragFloat("##rot", ref rot, 0.05f, 0f, 0f, "%.2f");
                             ImGui.SameLine();
                             ImGui.Text("  ");
@@ -467,11 +509,15 @@ namespace SimonSays.Windows.Tabs
                         {
                             var ComboSize = new Vector2(150f, 600f);
                             ImGui.SetNextWindowSize(ComboSize);
+
+                            ImGui.SetNextItemWidth(dragFloatWidth - 30f);
                             if (ImGui.BeginCombo("##EmoteCombo", emote))
                             {
-                                if (ImGui.BeginChild("##EmoteSearch",new Vector2(ComboSize.X * 1.7f,20f),false, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoScrollbar))
+                                if (ImGui.BeginChild("##EmoteSearch",new Vector2(-1 , 25f),false, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoScrollbar))
                                 {
-                                    ImGui.InputText("##Search", ref ConfigWindowHelpers.filterText, ConfigWindow.BufferSize);
+                                    ImGui.SetNextItemWidth(ComboSize.X - 10f);
+                                    ImGui.InputText("##S", ref ConfigWindowHelpers.filterText, ConfigWindow.BufferSize);
+                                    
                                 }
                                 ImGui.EndChild();
                                 ImGui.Dummy(new Vector2(0f,5f));
@@ -499,6 +545,14 @@ namespace SimonSays.Windows.Tabs
                                 ImGui.EndChild();
                                 
                                 ImGui.EndCombo();
+                                
+                            }
+                            ImGui.SameLine();
+                            ImGui.Dummy(new Vector2(5f, 0f));
+                            ImGui.SameLine();
+                            if (ConfigWindowHelpers.IconButtonWithText(FontAwesomeIcon.Trash, "", "Remove emote for Member"))
+                            {
+                                emote = string.Empty;
                             }
 
 
