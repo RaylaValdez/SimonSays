@@ -268,7 +268,7 @@ public unsafe class OverrideMovement : IDisposable
     private (Angle h, Angle v)? DirectionToDestination(bool allowVertical)
     {
         // Get the local player
-        var player = Sausages.ClientState.LocalPlayer;
+        var player = Sausages.ObjectTable.LocalPlayer;
 
         // Return null if the player is null
         if (player == null)
@@ -294,7 +294,12 @@ public unsafe class OverrideMovement : IDisposable
         var dirV = allowVertical ? Angle.FromDirection(dist.Y, new Vector2(dist.X, dist.Z).Length()) : default;
 
         // Get the active camera and calculate the camera direction
-        var camera = (CameraEx*)CameraManager.Instance()->GetActiveCamera();
+        var camera = CameraManager.Instance()->GetActiveCamera();
+        if (camera == null)
+        {
+            throw new Exception("Active camera was null");
+        }
+
         var cameraDir = camera->DirH.Radians() + 180.Degrees();
 
         if (float.IsNaN(dirH.Rad) || float.IsInfinity(dirH.Rad) || float.IsNaN(dirV.Rad) || float.IsInfinity(dirV.Rad))
@@ -319,7 +324,7 @@ public unsafe class OverrideMovement : IDisposable
     private float RotationToDestination()
     {
         // Get the local player
-        var player = Sausages.ClientState.LocalPlayer;
+        var player = Sausages.ObjectTable.LocalPlayer;
 
         // Return 0 if the player is null
         if (player == null)

@@ -213,7 +213,7 @@ namespace SimonSays
             }
 
             // Check if the player is part of the received party preset
-            var ownName = Sausages.ClientState.LocalPlayer!.Name.ToString();
+            var ownName = Sausages.ObjectTable.LocalPlayer!.Name.TextValue;
             var playerPreset = preset.Members.FirstOrDefault(m => m.CharacterName == ownName && !m.isAnchor);
             if (playerPreset == null)
             {
@@ -252,7 +252,7 @@ namespace SimonSays
             }
             else // Otherwise positional sync
             {
-                Meat.ScoochPresetOffset(new FFXIVClientStructs.FFXIV.Common.Math.Vector3((float)playerPreset.X, 0.0f, (float)playerPreset.Y), anchorObject, playerPreset.ROT);
+                Meat.ScoochPresetOffset(new System.Numerics.Vector3((float)playerPreset.X, 0.0f, (float)playerPreset.Y), anchorObject, playerPreset.ROT);
             }
         }
     }

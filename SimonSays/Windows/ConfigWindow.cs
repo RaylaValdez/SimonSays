@@ -1,75 +1,50 @@
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Text.Json;
-using System.Collections.Generic;
-using System.Linq;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
-using ImGuiNET;
-using Dalamud.Game.Text;
-using PunishLib.ImGuiMethods;
-using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Interface;
-using Dalamud.Interface.Components;
-using Dalamud.Interface.Textures;
-using Vector2 = System.Numerics.Vector2;
-using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using Vector4 = System.Numerics.Vector4;
-using SimonSays.Helpers;
-using Dalamud.Interface.ImGuiNotification;
-using ImPlotNET;
-using SimonSays.Windows.Tabs;
-
 
 namespace SimonSays.Windows;
 
 /// <summary>
 /// Represents a window for configuring settings.
 /// </summary>
-/// <remarks>
-/// This class inherits from the Window class and implements the IDisposable interface.
-/// </remarks>
 public class ConfigWindow : Window, IDisposable
 {
-    private static readonly bool EnableDebug = false;
+    private const bool EnableDebug = false;
     public const int BufferSize = 1024;
 
-    public ConfigWindow(Potatoes plugin) : base(
-        "SimonSays Settings",
-        ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConfigWindow"/> class.
+    /// </summary>
+    /// <param name="plugin">The plugin instance.</param>
+    public ConfigWindow(Potatoes plugin)
+        : base(
+            "SimonSays Settings",
+            ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         this.Size = new System.Numerics.Vector2(1285, 883);
         this.SizeCondition = ImGuiCond.FirstUseEver | ImGuiCond.Appearing;
 
         var imagePath = Path.Combine(Potatoes.PluginInterfaceStatic!.AssemblyLocation.Directory?.FullName!, "ts500.png");
         ConfigWindowHelpers.aboutImage = Sausages.TextureProvider.GetFromFile(imagePath);
-
     }
 
-
+    /// <inheritdoc/>
     public void Dispose()
     {
         GC.SuppressFinalize(this);
     }
 
-    public string SearchedEmoteFilter = string.Empty;
-
+    /// <inheritdoc/>
     public override void PreDraw()
     {
-        //PUSH
-        //ConfigWindowHelpers.oldTitleColorActive = ConfigWindowHelpers.StylePtr.Colors[(int)ImGuiCol.TitleBgActive];
-        //ConfigWindowHelpers.StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = (new Vector4(081, 054, 148, 211) / 255f);
         ConfigWindowHelpers.PushStyles();
         base.PreDraw();
     }
 
-    /// <summary>
-    /// Overrides the Draw method from the base class to define custom drawing behavior.
-    /// </summary>
+    /// <inheritdoc/>
     public override void Draw()
     {
-        //
         ConfigWindowHelpers.OpenReNamingWindow();
         ConfigWindowHelpers.OpenNamingWindow();
         ConfigWindowHelpers.ContextPopup();
@@ -79,19 +54,19 @@ public class ConfigWindow : Window, IDisposable
         {
             if (ImGui.BeginTabItem("Positional Presets"))
             {
-                PositionalPresets.Draw();
+                Tabs.PositionalPresets.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem("Settings"))
             {
-                Settings.Draw();
+                Tabs.Settings.Draw();
                 ImGui.EndTabItem();
             }
 
             if (ImGui.BeginTabItem("Usage"))
             {
-                Usage.Draw();
+                Tabs.Usage.Draw();
                 ImGui.EndTabItem();
             }
 
@@ -103,26 +78,19 @@ public class ConfigWindow : Window, IDisposable
 
             if (ImGui.BeginTabItem("About"))
             {
-                About.Draw();
+                Tabs.About.Draw();
                 ImGui.EndTabItem();
             }
+
             ImGui.EndTabBar();
         }
-
-
     }
 
+    /// <inheritdoc/>
     public override void PostDraw()
     {
-        // POP
         ImGui.PopStyleVar(22);
         ImGui.PopStyleColor(11);
-        //var StylePtr = ImGui.GetStyle();
-        //
-        //StylePtr.Colors[(int)ImGuiCol.TitleBgActive] = ConfigWindowHelpers.oldTitleColorActive;
-        //StylePtr.Colors[(int)ImGuiCol.TitleBgCollapsed] = new Vector4(6, 6, 6, 217) / 255f;
-
-
         base.PostDraw();
     }
 }

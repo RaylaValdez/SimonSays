@@ -1,134 +1,54 @@
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Components;
-using Dalamud.Interface;
-using ImGuiNET;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using Dalamud.Bindings.ImGui;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PunishLib.ImGuiMethods
+namespace SimonSays.ImGuiMethods;
+
+/// <summary>
+/// Small ImGui layout helpers. Originally derived from PunishLib (see PunishLib LICENSE).
+/// </summary>
+internal static class ImGuiEx
 {
-    internal static class ImGuiEx
+    private static readonly Dictionary<string, float> LineWidths = [];
+
+    /// <summary>
+    /// Draws the given content centered on the current line.
+    /// </summary>
+    /// <param name="id">A stable identifier used to remember the measured width.</param>
+    /// <param name="func">The draw action to invoke.</param>
+    public static void ImGuiLineCentered(string id, Action func)
     {
-        // Dictionary to store the widths of centered lines
-        private static readonly Dictionary<string, float> CenteredLineWidths = [];
-
-        // Method to draw a centered line in ImGui
-        public static void ImGuiLineCentered(string id, Action func)
+        if (LineWidths.TryGetValue(id, out var dims))
         {
-            // Check if the width of the line has been stored in the dictionary
-            if (CenteredLineWidths.TryGetValue(id, out var dims))
-            {
-                // Set the cursor position to center the line
-                ImGui.SetCursorPosX((ImGui.GetContentRegionAvail().X / 2) - (dims / 2));
-            }
-            var oldCur = ImGui.GetCursorPosX();
-            func();
-            ImGui.SameLine(0, 0);
-            // Calculate the width of the line and store it in the dictionary
-            CenteredLineWidths[id] = ImGui.GetCursorPosX() - oldCur;
-            ImGui.Dummy(Vector2.Zero);
+            ImGui.SetCursorPosX((ImGui.GetContentRegionAvail().X / 2) - (dims / 2));
         }
 
-        public static void ImGuiLineRightAlign(string id, Action func)
+        var oldCur = ImGui.GetCursorPosX();
+        func();
+        ImGui.SameLine(0, 0);
+        LineWidths[id] = ImGui.GetCursorPosX() - oldCur;
+        ImGui.Dummy(Vector2.Zero);
+    }
+
+    /// <summary>
+    /// Draws the given content right-aligned on the current line.
+    /// </summary>
+    /// <param name="id">A stable identifier used to remember the measured width.</param>
+    /// <param name="func">The draw action to invoke.</param>
+    public static void ImGuiLineRightAlign(string id, Action func)
+    {
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));
+        if (LineWidths.TryGetValue(id, out var dims))
         {
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));
-            // Check if the width of the line has been stored in the dictionary
-            if (CenteredLineWidths.TryGetValue(id, out var dims))
-            {
-                // Set the cursor position to right the line
-                ImGui.SetCursorPosX(ImGui.GetWindowWidth() - dims);
-            }
-            var oldCur = ImGui.GetCursorPosX();
-            func();
-            ImGui.SameLine(0, 0);
-            // Calculate the width of the line and store it in the dictionary
-            CenteredLineWidths[id] = ImGui.GetCursorPosX() - oldCur;
-            ImGui.Dummy(Vector2.Zero);
-            ImGui.PopStyleVar();
+            ImGui.SetCursorPosX(ImGui.GetWindowWidth() - dims);
         }
 
-        // Method to draw text in ImGui
-        public static void Text(string s)
-        {
-            ImGui.TextUnformatted(s);
-        }
-
-        // Method to draw colored text in ImGui
-        public static void Text(Vector4 col, string s)
-        {
-            // Push the text color to the ImGui style stack
-            ImGui.PushStyleColor(ImGuiCol.Text, col);
-            ImGui.TextUnformatted(s);
-            // Pop the text color from the ImGui style stack
-            ImGui.PopStyleColor();
-        }
-
-        // Method to draw multiple empty lines
-        public static void Spacer(int i)
-        {
-            var l = ImGui.GetTextLineHeight();
-            if (i > 0)
-            {
-                ImGui.Dummy(new Vector2(0, i * l));
-            }
-        }
-
-        public static bool DrawToggleButtonWithTooltip(string buttonId, string tooltip, FontAwesomeIcon icon, ref bool enabledState)
-        {
-            var result = false;
-            var buttonEnabled = enabledState;
-            if (buttonEnabled)
-            {
-                var imGuiCol = ImGuiCol.Button;
-                var healerGreen = ImGuiColors.HealerGreen;
-                healerGreen.W = 0.25f;
-                ImGui.PushStyleColor(imGuiCol, healerGreen);
-            }
-            if (ImGuiComponents.IconButton(buttonId, icon))
-            {
-                result = true;
-            }
-            if (ImGui.IsItemHovered())
-            {
-                ImGui.SetTooltip(tooltip);
-            }
-            if (buttonEnabled)
-            {
-                ImGui.PopStyleColor();
-            }
-            return result;
-        }
-
-        public static bool ColoredIconButtonWithText(FontAwesomeIcon icon, Vector4 color, string text)
-        {
-            ImGui.PushID(text);
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0.0f));
-            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(color.X, color.Y, color.Z, color.W));
-            var selected = ImGuiComponents.IconButton(icon);
-            ImGui.PopStyleColor();
-            ImGui.SameLine();
-            selected |= ImGui.Button(text);
-            ImGui.PopStyleVar();
-            ImGui.PopID();
-
-            return selected;
-        }
-
-        
-
-        public static void ColoredIconWithText(FontAwesomeIcon icon, Vector4 color, string text)
-        {
-            ImGui.PushFont(UiBuilder.IconFont);
-            ImGui.TextColored(color, icon.ToIconString());
-            ImGui.PopFont();
-            ImGui.SameLine();
-            ImGui.Text(text);
-        }
-
-       
+        var oldCur = ImGui.GetCursorPosX();
+        func();
+        ImGui.SameLine(0, 0);
+        LineWidths[id] = ImGui.GetCursorPosX() - oldCur;
+        ImGui.Dummy(Vector2.Zero);
+        ImGui.PopStyleVar();
     }
 }

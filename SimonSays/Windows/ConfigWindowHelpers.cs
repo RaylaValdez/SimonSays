@@ -1,32 +1,22 @@
-using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Game.Text;
-using Dalamud.Interface;
-using Dalamud.Interface.Components;
-using Dalamud.Interface.ImGuiNotification;
-using Dalamud.Interface.Textures;
-using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
-using Dalamud.Utility;
-using ImGuiNET;
-using ImPlotNET;
-using PunishLib.ImGuiMethods;
-using SimonSays.Helpers;
-using SimonSays.Windows;
-using SimonSays.Windows.Tabs;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using Vector2 = System.Numerics.Vector2;
-using Vector4 = System.Numerics.Vector4;
-using SimonSays;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
+using Dalamud.Interface.Components;
+using Dalamud.Interface.Textures;
+using Dalamud.Utility;
+using SimonSays.Helpers;
+using SimonSays.ImGuiMethods;
+
+namespace SimonSays.Windows;
 
 internal static class ConfigWindowHelpers
 {
     public static bool isFirstFrame = true;
-    public static Vector2 contextMenuPosition = new();
+    public static System.Numerics.Vector2 contextMenuPosition = new();
     public static string selectedLayout = string.Empty;
     private static string SelectedMember = string.Empty;
     public static bool namingWindowOpen = false;
@@ -36,36 +26,36 @@ internal static class ConfigWindowHelpers
     public static string nameBuffer = "Change Me";
     public static string filterText = string.Empty;
     public static string renameBuffer = string.Empty;
-    public static Vector4 oldTitleColorActive = Vector4.Zero;
     public static Preset? activePreset = null;
-    public static List<Vector4> memberColors =
-    [
-        new Vector4(0.722f, 0.325f, 0.623f, 1.0f),
-        new Vector4(0.7051666666666666f, 0.335625f, 0.605875f, 1.0f),
-        new Vector4(0.6883333333333332f, 0.34625f, 0.5887499999999999f, 1.0f),
-        new Vector4(0.6715f, 0.356875f, 0.5716249999999999f, 1.0f),
-        new Vector4(0.6546666666666667f, 0.36750000000000005f, 0.5545f, 1.0f),
-        new Vector4(0.6378333333333334f, 0.37812500000000004f, 0.537375f, 1.0f),
-        new Vector4(0.621f, 0.38875f, 0.52025f, 1.0f),
-        new Vector4(0.6041666666666666f, 0.399375f, 0.503125f, 1.0f),
-        new Vector4(0.5873333333333334f, 0.41000000000000003f, 0.48600000000000004f, 1.0f),
-        new Vector4(0.5705f, 0.42062499999999997f, 0.46887500000000004f, 1.0f),
-        new Vector4(0.5536666666666665f, 0.43125f, 0.45174999999999993f, 1.0f),
-        new Vector4(0.5368333333333333f, 0.44187499999999996f, 0.434625f, 1.0f),
-        new Vector4(0.52f, 0.4525f, 0.4175f, 1.0f),
-        new Vector4(0.5031666666666667f, 0.463125f, 0.40037500000000004f, 1.0f),
-        new Vector4(0.4863333333333334f, 0.47374999999999995f, 0.38325000000000004f, 1.0f),
-        new Vector4(0.46950000000000003f, 0.484375f, 0.36612500000000003f, 1.0f),
-        new Vector4(0.4526666666666668f, 0.49499999999999994f, 0.3490000000000001f, 1.0f),
-        new Vector4(0.4358333333333334f, 0.505625f, 0.33187500000000003f, 1.0f),
-        new Vector4(0.4190000000000001f, 0.5162499999999999f, 0.3147500000000001f, 1.0f),
-        new Vector4(0.4021666666666668f, 0.526875f, 0.29762500000000014f, 1.0f),
-        new Vector4(0.3853333333333334f, 0.5374999999999999f, 0.28050000000000014f, 1.0f),
-        new Vector4(0.3685000000000001f, 0.5481249999999999f, 0.26337500000000014f, 1.0f),
-        new Vector4(0.3516666666666668f, 0.5587499999999999f, 0.24625000000000014f, 1.0f),
-        new Vector4(0.3348333333333335f, 0.5693749999999999f, 0.22912500000000016f, 1.0f)
 
+    public static readonly List<System.Numerics.Vector4> memberColors =
+    [
+        new System.Numerics.Vector4(0.722f, 0.325f, 0.623f, 1.0f),
+        new System.Numerics.Vector4(0.7051666666666666f, 0.335625f, 0.605875f, 1.0f),
+        new System.Numerics.Vector4(0.6883333333333332f, 0.34625f, 0.5887499999999999f, 1.0f),
+        new System.Numerics.Vector4(0.6715f, 0.356875f, 0.5716249999999999f, 1.0f),
+        new System.Numerics.Vector4(0.6546666666666667f, 0.36750000000000005f, 0.5545f, 1.0f),
+        new System.Numerics.Vector4(0.6378333333333334f, 0.37812500000000004f, 0.537375f, 1.0f),
+        new System.Numerics.Vector4(0.621f, 0.38875f, 0.52025f, 1.0f),
+        new System.Numerics.Vector4(0.6041666666666666f, 0.399375f, 0.503125f, 1.0f),
+        new System.Numerics.Vector4(0.5873333333333334f, 0.41000000000000003f, 0.48600000000000004f, 1.0f),
+        new System.Numerics.Vector4(0.5705f, 0.42062499999999997f, 0.46887500000000004f, 1.0f),
+        new System.Numerics.Vector4(0.5536666666666665f, 0.43125f, 0.45174999999999993f, 1.0f),
+        new System.Numerics.Vector4(0.5368333333333333f, 0.44187499999999996f, 0.434625f, 1.0f),
+        new System.Numerics.Vector4(0.52f, 0.4525f, 0.4175f, 1.0f),
+        new System.Numerics.Vector4(0.5031666666666667f, 0.463125f, 0.40037500000000004f, 1.0f),
+        new System.Numerics.Vector4(0.4863333333333334f, 0.47374999999999995f, 0.38325000000000004f, 1.0f),
+        new System.Numerics.Vector4(0.46950000000000003f, 0.484375f, 0.36612500000000003f, 1.0f),
+        new System.Numerics.Vector4(0.45266666666666668f, 0.49499999999999994f, 0.3490000000000001f, 1.0f),
+        new System.Numerics.Vector4(0.43583333333333334f, 0.505625f, 0.33187500000000003f, 1.0f),
+        new System.Numerics.Vector4(0.4190000000000001f, 0.5162499999999999f, 0.3147500000000001f, 1.0f),
+        new System.Numerics.Vector4(0.4021666666666668f, 0.526875f, 0.29762500000000014f, 1.0f),
+        new System.Numerics.Vector4(0.3853333333333334f, 0.5374999999999999f, 0.28050000000000014f, 1.0f),
+        new System.Numerics.Vector4(0.3685000000000001f, 0.5481249999999999f, 0.26337500000000014f, 1.0f),
+        new System.Numerics.Vector4(0.3516666666666668f, 0.5587499999999999f, 0.24625000000000014f, 1.0f),
+        new System.Numerics.Vector4(0.3348333333333335f, 0.5693749999999999f, 0.22912500000000016f, 1.0f),
     ];
+
     public static string testText = "Simon Says : hum";
     public static ISharedImmediateTexture? aboutImage;
     public static ImGuiStylePtr StylePtr = ImGui.GetStyle();
@@ -80,11 +70,18 @@ internal static class ConfigWindowHelpers
         SelectedMember = value;
     }
 
+    /// <summary>
+    /// Draws an icon button with optional text and a tooltip.
+    /// </summary>
+    /// <param name="icon">The FontAwesome icon to draw.</param>
+    /// <param name="text">Optional text drawn next to the icon.</param>
+    /// <param name="tooltip">The tooltip shown on hover.</param>
+    /// <returns>True if either the icon or the text button was clicked.</returns>
     public static bool IconButtonWithText(FontAwesomeIcon icon, string text, string tooltip)
     {
         ImGui.PushID(text);
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0.0f));
-        var selected = ImGuiComponents.IconButton(icon); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Imgui icon button here
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new System.Numerics.Vector2(0.0f));
+        var selected = ImGuiComponents.IconButton(icon);
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip(tooltip);
@@ -99,6 +96,7 @@ internal static class ConfigWindowHelpers
                 ImGui.SetTooltip(tooltip);
             }
         }
+
         ImGui.PopStyleVar();
         ImGui.PopID();
 
@@ -111,40 +109,31 @@ internal static class ConfigWindowHelpers
     /// <param name="index">The index of the chat channel.</param>
     public static void DrawCheckbox(int index)
     {
-        // Get the key and value of the chat channel at the specified index
         var key = SaltAndPepper.ChatTypes.Keys.ToList()[index];
-        var Value = SaltAndPepper.ChatTypes[key];
+        var value = SaltAndPepper.ChatTypes[key];
         var channel = key;
 
-        // Get the previous configuration value for the channel
         Potatoes.Configuration!.EnabledChannels.TryGetValue(channel, out var prevVal);
 
-        // Draw the checkbox and update the configuration if the value changes
         var newVal = prevVal;
         ImGui.TableNextColumn();
-        if (ImGui.Checkbox(Value, ref newVal))
+        if (ImGui.Checkbox(value, ref newVal))
         {
             Potatoes.Configuration!.EnabledChannels[channel] = newVal;
             Potatoes.Configuration!.Save();
         }
     }
 
-    // Method to draw the "Enabled" checkbox
     /// <summary>
-    /// Draws the "Enabled" checkbox and updates the IsListening property in the configuration based on the user's selection.
+    /// Draws the "Enabled" checkbox and updates the IsListening configuration value.
     /// </summary>
     public static void DrawEnabled()
     {
-        // Get the current value of the IsListening property from the configuration
         var isListening = Potatoes.Configuration!.IsListening;
 
-        // Draw the "Enabled" checkbox and update the isListening variable with the new value
         if (ImGui.Checkbox("Enabled", ref isListening))
         {
-            // Update the IsListening property in the configuration with the new value
             Potatoes.Configuration!.IsListening = isListening;
-
-            // Save the updated configuration
             Potatoes.Configuration!.Save();
         }
     }
@@ -154,121 +143,84 @@ internal static class ConfigWindowHelpers
     /// </summary>
     public static void DrawCheckboxes()
     {
-        // Begin the table with a unique identifier and specify the number of columns and table flags
         ImGui.BeginTable("simonsaystable", 3, ImGuiTableFlags.Borders);
 
-        // Set up the column headers
         ImGui.TableSetupColumn("Channels");
-        ImGui.TableSetupColumn("");
-        ImGui.TableSetupColumn("");
+        ImGui.TableSetupColumn(string.Empty);
+        ImGui.TableSetupColumn(string.Empty);
         ImGui.TableHeadersRow();
 
-        // Get the list of chat types
-        var ChatTypes = SaltAndPepper.ChatTypes;
+        var chatTypes = SaltAndPepper.ChatTypes;
 
-        // Calculate the maximum number of rows in the table
-        var max = (int)Math.Ceiling(ChatTypes.Count / 3d);
+        var max = (int)Math.Ceiling(chatTypes.Count / 3d);
 
-        // Loop through each row in the table
-        for (var i = 0; i < Math.Ceiling(ChatTypes.Count / 3d); i++) // row loop
+        for (var i = 0; i < Math.Ceiling(chatTypes.Count / 3d); i++)
         {
-            // Loop through each column in the table
-            for (var j = 0; j < 3; j++) // column loop
+            for (var j = 0; j < 3; j++)
             {
-                // Check if the current index is out of bounds
-                if ((j * max) + i > ChatTypes.Count - 1)
-                    continue; // Move to the next iteration
+                if ((j * max) + i > chatTypes.Count - 1)
+                {
+                    continue;
+                }
 
-                // Calculate the index of the current checkbox
                 var index = (j * max) + i;
-                ConfigWindowHelpers.
-
-                                // Draw the checkbox for the current channel
-                                DrawCheckbox(index);
+                DrawCheckbox(index);
             }
         }
 
-        // End the table
         ImGui.EndTable();
     }
 
     /// <summary>
-    /// Draws a text box for the catch phrase and allows the user to modify it. 
-    /// The catch phrase is retrieved from the configuration and updated if modified.
-    /// The updated configuration is then saved.
+    /// Draws a text box for the catch phrase and saves it when modified.
     /// </summary>
     public static void DrawCatchPhBox()
     {
-        // Get the current catch phrase from the configuration
         var inputText = Potatoes.Configuration!.CatchPhrase;
         ImGui.SetNextItemWidth(250f);
-        // Draw the input text box and check if the text has been modified
-        if (ImGui.InputText("", ref inputText, 500U))
+        if (ImGui.InputText(string.Empty, ref inputText, 500))
         {
-            // Trim the input text and update the catch phrase in the configuration
             Potatoes.Configuration!.CatchPhrase = inputText.Trim();
-
-            // Save the updated configuration
             Potatoes.Configuration!.Save();
         }
     }
 
     /// <summary>
-    /// Draws miscellaneous options in the ImGui window, including a checkbox for motion only, an input text field, and a send button.
-    /// </summary>
-    public static void DrawMiscOptions()
-    {
-        
-    }
-
-    /// <summary>
-    /// Draws checkboxes for the experiment.
+    /// Draws the positional sync override buttons.
     /// </summary>
     public static void DrawExperimentCheckboxes()
     {
-        // Get the value of the PosSync property from the configuration object
-        var posSync = Potatoes.Configuration!.PosSync;
-            
-
-        // Display a colored text indicating that Position Sync requires a Target
         ImGui.TextColored(new System.Numerics.Vector4(160, 160, 160, 0.8f), "Position Sync requires a Target.");
 
         ImGuiEx.ImGuiLineRightAlign("Settings_Override_Position_Sync", () =>
         {
-            // If PosSync is true, display buttons for syncing position and stopping sync
             if (Potatoes.Configuration!.PosSync)
             {
                 if (ImGui.Button("Sync Position"))
                 {
-                    // Call the StartScooch method to sync the position
                     Meat.StartScooch();
                 }
+
                 ImGui.SameLine();
                 ImGui.Text("  ");
-
- 
             }
         });
 
-        ImGui.Dummy(new Vector2(0, 5));
-
+        ImGui.Dummy(new System.Numerics.Vector2(0, 5));
 
         ImGuiEx.ImGuiLineRightAlign("Settings_Override_Positon_Stop", () =>
         {
-            // If PosSync is true, display buttons for syncing position and stopping sync
             if (Potatoes.Configuration!.PosSync)
             {
-                if(ImGui.Button("Stop Sync"))
-{
-                    // Call the StopScooch method to stop syncing the position
+                if (ImGui.Button("Stop Sync"))
+                {
                     Meat.StopScooch();
                 }
+
                 ImGui.SameLine();
                 ImGui.Text("  ");
             }
         });
-
-
     }
 
     /// <summary>
@@ -276,69 +228,57 @@ internal static class ConfigWindowHelpers
     /// </summary>
     public static void DrawDebugPositionalInformation()
     {
-        // Check if the movement object is null
         if (Meat.movement == null)
+        {
             return;
+        }
 
-        // Display whether SoftDisable is true or false
         ImGui.Text($"SoftDisable: {(Meat.movement.SoftDisable ? "True" : "False")}");
-
-        // Display the distance to the target
         ImGui.Text($"Distance to target: {MathF.Sqrt(Meat.movement.DistanceSquared)}");
-
-        // Display the rotation distance in degrees
         ImGui.Text($"Rotation distance (deg): {Meat.movement.RotationDistance}");
 
-        // Get the current time
         var currTime = DateTime.Now;
 
-        // Display the time since the last movement
         ImGui.Text($"Time since last moved: {(currTime - Meat.movement.LastTimeMoved).TotalSeconds}");
-
-        // Display the time since the last turn
         ImGui.Text($"Time since last turned: {(currTime - Meat.movement.LastTimeTurned).TotalSeconds}");
 
-        // Add spacing between sections
         ImGui.Spacing();
 
-        // Get the target position and rotation
         var tarPos = Meat.movement.DesiredPosition;
-        var tarRot = Meat.movement.DesiredRotation;
+        var tarRot = AngleConversions.ToDeg(Meat.movement.DesiredRotation);
 
-        // Convert the rotation to degrees
-        tarRot = SimonSays.Helpers.AngleConversions.ToDeg(tarRot);
-
-        // Display the target destination
         ImGui.Text("Target Destination:");
         ImGui.Text($"X: {tarPos.X} Y: {tarPos.Y} Z: {tarPos.Z}");
         ImGui.Text($"Angle: {tarRot}");
 
-        // Add spacing between sections
         ImGui.Spacing();
 
-        // Display the last forward, left, and turn left values
         ImGui.Text($"Last Forward: {Meat.movement.LastForward}");
         ImGui.Text($"Last Left: {Meat.movement.LastLeft}");
         ImGui.Text($"Last Turn Left: {Meat.movement.LastTurnLeft}");
     }
 
+    /// <summary>
+    /// Pushes the custom SimonSays window styles. Must be balanced by the pops in PostDraw.
+    /// </summary>
     public static void PushStyles()
     {
-        // Custom Style
         // Variables
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(10, 10));
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(4, 4));
-        ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(4, 4));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(4, 4));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 4));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new System.Numerics.Vector2(10, 10));
+        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new System.Numerics.Vector2(4, 4));
+        ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new System.Numerics.Vector2(4, 4));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new System.Numerics.Vector2(4, 4));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new System.Numerics.Vector2(4, 4));
         ImGui.PushStyleVar(ImGuiStyleVar.IndentSpacing, 21f);
         ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarSize, 21f);
         ImGui.PushStyleVar(ImGuiStyleVar.GrabMinSize, 21f);
+
         // Borders
         ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
         ImGui.PushStyleVar(ImGuiStyleVar.ChildBorderSize, 1f);
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 0f);
         ImGui.PushStyleVar(ImGuiStyleVar.FrameBorderSize, 0f);
+
         // Rounding
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 6f);
         ImGui.PushStyleVar(ImGuiStyleVar.ChildRounding, 0f);
@@ -347,32 +287,34 @@ internal static class ConfigWindowHelpers
         ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarRounding, 9f);
         ImGui.PushStyleVar(ImGuiStyleVar.GrabRounding, 3f);
         ImGui.PushStyleVar(ImGuiStyleVar.TabRounding, 4f);
+
         // Alignment
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowTitleAlign, new Vector2(0.0f, 0.50f));
-        ImGui.PushStyleVar(ImGuiStyleVar.ButtonTextAlign, new Vector2(0.5f, 0.5f));
-        ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0, 0));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowTitleAlign, new System.Numerics.Vector2(0.0f, 0.50f));
+        ImGui.PushStyleVar(ImGuiStyleVar.ButtonTextAlign, new System.Numerics.Vector2(0.5f, 0.5f));
+        ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new System.Numerics.Vector2(0, 0));
+
         // Colors
-        ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(081, 054, 148, 211) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(130, 068, 153, 241) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(184, 083, 159, 241) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.Separator, new Vector4(130, 068, 153, 241) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.SeparatorHovered, new Vector4(130, 068, 153, 200) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.SeparatorActive, new Vector4(184, 083, 159, 241) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.ResizeGripActive, new Vector4(184, 083, 159, 241) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.TabHovered, new Vector4(130, 068, 153, 200) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.TabActive, new Vector4(184, 083, 159, 241) / 255f);
-        ImGui.PushStyleColor(ImGuiCol.Border, (new Vector4(0.35f, 0.35f, 0.35f, 0.75f)));
-        ImGui.PushStyleColor(ImGuiCol.FrameBg, (new Vector4(50, 46, 51, 122) / 255f));
+        ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new System.Numerics.Vector4(081, 054, 148, 211) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new System.Numerics.Vector4(130, 068, 153, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, new System.Numerics.Vector4(184, 083, 159, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.Separator, new System.Numerics.Vector4(130, 068, 153, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.SeparatorHovered, new System.Numerics.Vector4(130, 068, 153, 200) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.SeparatorActive, new System.Numerics.Vector4(184, 083, 159, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.ResizeGripActive, new System.Numerics.Vector4(184, 083, 159, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.TabHovered, new System.Numerics.Vector4(130, 068, 153, 200) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.TabActive, new System.Numerics.Vector4(184, 083, 159, 241) / 255f);
+        ImGui.PushStyleColor(ImGuiCol.Border, new System.Numerics.Vector4(0.35f, 0.35f, 0.35f, 0.75f));
+        ImGui.PushStyleColor(ImGuiCol.FrameBg, new System.Numerics.Vector4(50, 46, 51, 122) / 255f);
     }
 
+    /// <summary>
+    /// Draws the preset context popup menu.
+    /// </summary>
     public static void ContextPopup()
     {
-
-
-        var contextMenuSize = new Vector2(135, 34);
-        if (ConfigWindowHelpers.contextPopupOpen)
+        var contextMenuSize = new System.Numerics.Vector2(135, 34);
+        if (contextPopupOpen)
         {
-            // Set window size on the first frame
             if (isFirstFrame)
             {
                 contextMenuPosition = ImGui.GetMousePos();
@@ -382,139 +324,111 @@ internal static class ConfigWindowHelpers
             ImGui.SetNextWindowSize(contextMenuSize);
             ImGui.SetNextWindowPos(contextMenuPosition);
 
-            if (ImGui.Begin("Contextual Menu", ref ConfigWindowHelpers.contextPopupOpen, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar))
+            if (ImGui.Begin("Contextual Menu", ref contextPopupOpen, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar))
             {
-                Sausages.Log.Debug("You should be seeing a context menu right about now");
-
                 if (ImGui.Selectable("Rename Preset"))
                 {
-                    ImGui.SetNextWindowPos(new Vector2(10.0f, 100.0f));
-                    ImGui.SetNextWindowSize(new Vector2(200.0f, 60.0f));
-                    ConfigWindowHelpers.renamingWindowOpen = true;
-                    ConfigWindowHelpers.contextPopupOpen = false;
-                    ConfigWindowHelpers.renameBuffer = ConfigWindowHelpers.activePreset?.PresetName ?? "";
+                    ImGui.SetNextWindowPos(new System.Numerics.Vector2(10.0f, 100.0f));
+                    ImGui.SetNextWindowSize(new System.Numerics.Vector2(200.0f, 60.0f));
+                    renamingWindowOpen = true;
+                    contextPopupOpen = false;
+                    renameBuffer = activePreset?.PresetName ?? string.Empty;
                 }
             }
+
             ImGui.End();
+
             if (!ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
             {
-                ConfigWindowHelpers.contextPopupOpen = false;
+                contextPopupOpen = false;
             }
 
-            // Reset isFirstFrame if contextPopupOpen is false
-            if (!ConfigWindowHelpers.contextPopupOpen)
+            if (!contextPopupOpen)
             {
                 isFirstFrame = true;
             }
-
-
         }
     }
 
+    /// <summary>
+    /// Draws the preset naming window.
+    /// </summary>
     public static void OpenNamingWindow()
     {
-        if (ConfigWindowHelpers.namingWindowOpen)
+        if (!namingWindowOpen)
         {
-            ImGui.SetNextWindowPos(new Vector2((ImGui.GetMainViewport().Size.X / 2f) - 250,(ImGui.GetMainViewport().Size.Y / 2) - 50));
-            ImGui.SetNextWindowSize(new Vector2(500,100),ImGuiCond.Appearing);
-            if (ImGui.Begin("Preset Name", ref ConfigWindowHelpers.namingWindowOpen))
-            {
-                if (ImGui.BeginChild("##", new Vector2(-1, -1), true))
-                {
-                    ImGui.Text("Name");
-                    ImGui.SameLine();
-                    ImGui.InputText("##", ref ConfigWindowHelpers.nameBuffer, (uint)ConfigWindow.BufferSize);
-                    ImGui.SameLine();
-                    if (ConfigWindowHelpers.IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
-                    {
-                        var preset = new Preset
-                        {
-                            PresetName = ConfigWindowHelpers.nameBuffer,
-                        };
-
-                        var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
-                        var options = jsonSerializerOptions;
-                        var jsonString = JsonSerializer.Serialize(preset, options);
-                        File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.nameBuffer + ".json", jsonString);
-                        ConfigWindowHelpers.
-                                                namingWindowOpen = false;
-
-                    }
-                }
-                ImGui.EndChild();
-            }
-            ImGui.End();
+            return;
         }
+
+        ImGui.SetNextWindowPos(new System.Numerics.Vector2((ImGui.GetMainViewport().Size.X / 2f) - 250, (ImGui.GetMainViewport().Size.Y / 2) - 50));
+        ImGui.SetNextWindowSize(new System.Numerics.Vector2(500, 100), ImGuiCond.Appearing);
+        if (ImGui.Begin("Preset Name", ref namingWindowOpen))
+        {
+            if (ImGui.BeginChild("##", new System.Numerics.Vector2(-1, -1), true))
+            {
+                ImGui.Text("Name");
+                ImGui.SameLine();
+                ImGui.InputText("##", ref nameBuffer, ConfigWindow.BufferSize);
+                ImGui.SameLine();
+                if (IconButtonWithText(FontAwesomeIcon.Save, string.Empty, "Save"))
+                {
+                    var preset = new Preset
+                    {
+                        PresetName = nameBuffer,
+                    };
+
+                    var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
+                    var jsonString = JsonSerializer.Serialize(preset, jsonSerializerOptions);
+                    File.WriteAllText(Path.Combine(Potatoes.PresetDirectory, nameBuffer + ".json"), jsonString);
+                    namingWindowOpen = false;
+                }
+            }
+
+            ImGui.EndChild();
+        }
+
+        ImGui.End();
     }
 
+    /// <summary>
+    /// Draws the preset renaming window.
+    /// </summary>
     public static void OpenReNamingWindow()
     {
-        if (ConfigWindowHelpers.renamingWindowOpen)
+        if (!renamingWindowOpen)
         {
-
-            if (ImGui.Begin("Rename a preset", ref ConfigWindowHelpers.renamingWindowOpen))
-            {
-                if (ImGui.BeginChild("##", new Vector2(-1, -1), true))
-                {
-                    ImGui.Text("Name");
-                    ImGui.SameLine();
-                    ImGui.InputText("##", ref ConfigWindowHelpers.renameBuffer, (uint)ConfigWindow.BufferSize);
-                    ImGui.SameLine();
-                    if (ConfigWindowHelpers.IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
-                    {
-                        if (ConfigWindowHelpers.activePreset == null)
-                        {
-                            return;
-                        }
-                        var prevName = ConfigWindowHelpers.activePreset.PresetName;
-                        ConfigWindowHelpers.activePreset.PresetName = ConfigWindowHelpers.renameBuffer;
-
-                        var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
-                        var options = jsonSerializerOptions;
-                        var jsonString = JsonSerializer.Serialize(ConfigWindowHelpers.activePreset, options);
-                        File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.renameBuffer + ".json", jsonString);
-                        File.Delete(Potatoes.PresetDirectory + "/" + prevName + ".json");
-                        ConfigWindowHelpers.
-                                                renamingWindowOpen = false;
-
-                    }
-                }
-                ImGui.EndChild();
-            }
-            ImGui.End();
+            return;
         }
-    }
 
-    public static void OpenNewMemberWindow()
-    {
-        if (ConfigWindowHelpers.newMemberWindowOpen)
+        if (ImGui.Begin("Rename a preset", ref renamingWindowOpen))
         {
-
-            if (ImGui.Begin("Member's Character Name", ref ConfigWindowHelpers.newMemberWindowOpen))
+            if (ImGui.BeginChild("##", new System.Numerics.Vector2(-1, -1), true))
             {
-                if (ImGui.BeginChild("##", new Vector2(-1, -1), true))
+                ImGui.Text("Name");
+                ImGui.SameLine();
+                ImGui.InputText("##", ref renameBuffer, ConfigWindow.BufferSize);
+                ImGui.SameLine();
+                if (IconButtonWithText(FontAwesomeIcon.Save, string.Empty, "Save"))
                 {
-                    ImGui.Text("Character Name");
-                    ImGui.SameLine();
-                    ImGui.InputText("##", ref ConfigWindowHelpers.nameBuffer, (uint)ConfigWindow.BufferSize);
-                    ImGui.SameLine();
-                    if (ConfigWindowHelpers.IconButtonWithText(FontAwesomeIcon.Save, "", "Save"))
+                    if (activePreset == null)
                     {
-                        var preset = new Preset
-                        {
-                            PresetName = ConfigWindowHelpers.nameBuffer,
-                        };
-
-                        var jsonString = JsonSerializer.Serialize(preset);
-                        File.WriteAllText(Potatoes.PresetDirectory + "/" + ConfigWindowHelpers.nameBuffer + ".json", jsonString);
-                        ConfigWindowHelpers.
-                                                newMemberWindowOpen = false;
-
+                        return;
                     }
+
+                    var prevName = activePreset.PresetName;
+                    activePreset.PresetName = renameBuffer;
+
+                    var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
+                    var jsonString = JsonSerializer.Serialize(activePreset, jsonSerializerOptions);
+                    File.WriteAllText(Path.Combine(Potatoes.PresetDirectory, renameBuffer + ".json"), jsonString);
+                    File.Delete(Path.Combine(Potatoes.PresetDirectory, prevName + ".json"));
+                    renamingWindowOpen = false;
                 }
-                ImGui.EndChild();
             }
-            ImGui.End();
+
+            ImGui.EndChild();
         }
+
+        ImGui.End();
     }
 }

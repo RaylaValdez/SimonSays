@@ -1,35 +1,52 @@
-using Dalamud.Interface.ImGuiNotification;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using XivCommon;
-using Dalamud.Interface;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Interface.ImGuiNotification;
+using SimonSays.Helpers;
 
-namespace SimonSays
+namespace SimonSays;
+
+internal class Veggies
 {
-    internal class Veggies
+    /// <summary>
+    /// Sends a chat message as if the player typed it.
+    /// </summary>
+    /// <param name="message">The message to send.</param>
+    public static void SendChatMessageAsIfPlayer(string message)
     {
-        public static void SendChatMessageAsIfPlayer(string message)
+        try
         {
-            var Chat = new XivCommonBase(Potatoes.PluginInterfaceStatic!).Functions.Chat;
-            Chat.SendMessage(message);
+            ChatSender.Instance.SendMessage(message);
         }
+        catch (Exception ex)
+        {
+            Sausages.Log.Error(ex, $"Failed to send chat message: {message}");
+            SendNotification("SimonSays failed to send a chat message. " + ex.Message);
+        }
+    }
 
-        public static void SendNotification(string message)
+    /// <summary>
+    /// Shows an in-game notification.
+    /// </summary>
+    /// <param name="message">The notification content.</param>
+    public static void SendNotification(string message)
+    {
+        var notif = new Notification
         {
-            var notif = new Notification();
-            notif.Content = message;
-            Sausages.NotificationManager.AddNotification(notif);
-        }
+            Content = message,
+        };
+        Sausages.NotificationManager.AddNotification(notif);
+    }
 
-        public static IGameObject? GetNearestGameObjectByName(string name)
-        {
-            var gameObjects = Sausages.ObjectTable;
-            return gameObjects.Where(obj => string.Equals(obj.Name.ToString(), name, StringComparison.CurrentCultureIgnoreCase))
-                              .MinBy(obj => (obj.YalmDistanceX * obj.YalmDistanceX) + (obj.YalmDistanceZ * obj.YalmDistanceZ)); // get nearest by squared distance
-        }
+    /// <summary>
+    /// Gets the nearest game object with the given name.
+    /// </summary>
+    /// <param name="name">The name to search for.</param>
+    /// <returns>The nearest matching game object, or null.</returns>
+    public static IGameObject? GetNearestGameObjectByName(string name)
+    {
+        return Sausages.ObjectTable
+            .Where(obj => string.Equals(obj.Name.TextValue, name, StringComparison.CurrentCultureIgnoreCase))
+            .MinBy(obj => obj.CurrentDistance);
     }
 }
